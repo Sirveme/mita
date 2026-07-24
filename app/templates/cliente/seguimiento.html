@@ -1,0 +1,756 @@
+{% extends "base_pwa.html" %}
+
+{% block title %}Seguimiento del Servicio - MITA{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/global.css">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
+    color: white;
+    min-height: 100vh;
+}
+
+/* Header */
+.header-simple {
+    background: rgba(26, 35, 50, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-container-simple {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.header-title h1 {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.header-subtitle {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* Timeline Estados */
+.timeline-container {
+    background: rgba(26, 35, 50, 0.6);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 3rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 2rem;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-icon {
+    position: absolute;
+    left: -2.5rem;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.timeline-item.completed .timeline-icon {
+    background: #10b981;
+    border-color: #10b981;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
+.timeline-item.active .timeline-icon {
+    background: #FFCD11;
+    border-color: #FFCD11;
+    box-shadow: 0 0 20px rgba(255, 205, 17, 0.4);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.timeline-content h3 {
+    color: white;
+    margin-bottom: 0.5rem;
+    font-size: 1.125rem;
+}
+
+.timeline-content p {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+}
+
+.timeline-time {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+/* Técnico Card */
+.tecnico-card {
+    background: rgba(26, 35, 50, 0.6);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    display: none;
+}
+
+.tecnico-card.active {
+    display: block;
+}
+
+.tecnico-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.tecnico-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFCD11 0%, #FFE066 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f1419;
+    flex-shrink: 0;
+}
+
+.tecnico-info h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+}
+
+.tecnico-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #FFCD11;
+}
+
+.tecnico-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #FFCD11;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 0.25rem;
+}
+
+/* Mapa */
+.mapa-container {
+    background: rgba(26, 35, 50, 0.6);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    display: none;
+}
+
+.mapa-container.active {
+    display: block;
+}
+
+.mapa-placeholder {
+    width: 100%;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.eta-badge {
+    background: #FFCD11;
+    color: #0f1419;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+/* Botones */
+.actions-container {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn {
+    flex: 1;
+    min-width: 200px;
+    padding: 1rem;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #FFCD11;
+    color: #0f1419;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(255, 205, 17, 0.3);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Modal Calificación */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-content {
+    background: #1a2332;
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 100%;
+}
+
+.modal-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.modal-header h2 {
+    margin: 0 0 0.5rem 0;
+}
+
+.stars-rating {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 2rem 0;
+}
+
+.star {
+    font-size: 3rem;
+    color: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.star:hover,
+.star.active {
+    color: #FFCD11;
+    transform: scale(1.2);
+}
+
+textarea {
+    width: 100%;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: white;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 100px;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: #FFCD11;
+}
+
+@media (max-width: 768px) {
+    .tecnico-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .btn {
+        min-width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="header-simple">
+    <div class="header-container-simple">
+        <button class="btn-back" onclick="window.history.back()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="header-title">
+            <h1>Seguimiento del Servicio</h1>
+            <p class="header-subtitle" id="servicioTipo">Cambio de aceite</p>
+        </div>
+    </div>
+</header>
+
+<!-- Container -->
+<div class="container">
+    
+    <!-- Timeline Estados -->
+    <div class="timeline-container">
+        <h2 style="margin-bottom: 2rem;">Estado del Servicio</h2>
+        
+        <div class="timeline" id="timeline">
+            <!-- Estados se cargarán dinámicamente -->
+        </div>
+    </div>
+    
+    <!-- Card Técnico -->
+    <div class="tecnico-card" id="tecnicoCard">
+        <div class="tecnico-header">
+            <div class="tecnico-avatar" id="tecnicoAvatar">JD</div>
+            <div class="tecnico-info">
+                <h2 id="tecnicoNombre">Carlos Rodríguez</h2>
+                <div class="tecnico-rating">
+                    <span>⭐⭐⭐⭐⭐</span>
+                    <span id="tecnicoRating">4.8</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tecnico-stats">
+            <div class="stat-item">
+                <span class="stat-value" id="tecnicoServicios">127</span>
+                <span class="stat-label">Servicios</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="tecnicoPlaca">ABC-123</span>
+                <span class="stat-label">Placa</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="tecnicoVehiculo">Toyota</span>
+                <span class="stat-label">Vehículo</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mapa -->
+    <div class="mapa-container" id="mapaContainer">
+        <h2 style="margin-bottom: 1.5rem;">Ubicación en Tiempo Real</h2>
+        
+        <div class="mapa-placeholder">
+            <div class="eta-badge" id="etaBadge">
+                <i class="fas fa-clock"></i>
+                <span>Llegada en 15 minutos</span>
+            </div>
+            <p style="color: rgba(255, 255, 255, 0.6); margin-top: 1rem;">
+                <i class="fas fa-map-marker-alt"></i>
+                Mapa en tiempo real próximamente
+            </p>
+        </div>
+    </div>
+    
+    <!-- Acciones -->
+    <div class="actions-container">
+        <button class="btn btn-primary" id="btnChat" onclick="abrirChat()">
+            <i class="fas fa-comments"></i>
+            Chat con técnico
+        </button>
+        
+        <button class="btn btn-secondary" id="btnCancelar" onclick="cancelarServicio()" style="display: none;">
+            <i class="fas fa-times"></i>
+            Cancelar servicio
+        </button>
+        
+        <button class="btn btn-primary" id="btnCalificar" onclick="mostrarModalCalificacion()" style="display: none;">
+            <i class="fas fa-star"></i>
+            Calificar servicio
+        </button>
+    </div>
+</div>
+
+<!-- Modal Calificación -->
+<div class="modal-overlay" id="modalCalificacion">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>¿Cómo estuvo el servicio?</h2>
+            <p style="color: rgba(255, 255, 255, 0.6);">Tu opinión nos ayuda a mejorar</p>
+        </div>
+        
+        <div class="stars-rating" id="starsRating">
+            <span class="star" data-value="1">★</span>
+            <span class="star" data-value="2">★</span>
+            <span class="star" data-value="3">★</span>
+            <span class="star" data-value="4">★</span>
+            <span class="star" data-value="5">★</span>
+        </div>
+        
+        <textarea placeholder="Cuéntanos tu experiencia (opcional)" id="comentarioCalificacion"></textarea>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button class="btn btn-secondary" onclick="cerrarModalCalificacion()" style="flex: 1;">
+                Cancelar
+            </button>
+            <button class="btn btn-primary" onclick="enviarCalificacion()" style="flex: 1;">
+                Enviar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+<script>
+// ============================================
+// VARIABLES GLOBALES
+// ============================================
+
+let solicitudId = null;
+let estadoActual = 'pendiente_pago';
+let calificacionSeleccionada = 0;
+
+// Estados del servicio
+const ESTADOS = {
+    'pendiente_pago': {
+        icon: '💳',
+        titulo: 'Pendiente de pago',
+        descripcion: 'Completa el pago para continuar'
+    },
+    'pagado': {
+        icon: '✓',
+        titulo: 'Pago confirmado',
+        descripcion: 'Buscando técnico disponible...'
+    },
+    'buscando_tecnico': {
+        icon: '🔍',
+        titulo: 'Buscando técnico',
+        descripcion: 'Notificando a técnicos cercanos'
+    },
+    'tecnico_asignado': {
+        icon: '👨‍🔧',
+        titulo: 'Técnico asignado',
+        descripcion: 'Preparando herramientas y materiales'
+    },
+    'en_camino': {
+        icon: '🚗',
+        titulo: 'Técnico en camino',
+        descripcion: 'Tiempo estimado de llegada'
+    },
+    'en_ubicacion': {
+        icon: '📍',
+        titulo: 'Técnico en tu ubicación',
+        descripcion: 'Iniciando el servicio'
+    },
+    'en_progreso': {
+        icon: '🔧',
+        titulo: 'Servicio en progreso',
+        descripcion: 'Trabajando en tu vehículo'
+    },
+    'completado': {
+        icon: '✅',
+        titulo: 'Servicio completado',
+        descripcion: 'Por favor califica el servicio'
+    }
+};
+
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener solicitud_id de URL o localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    solicitudId = urlParams.get('id') || localStorage.getItem('solicitud_actual');
+    
+    if (solicitudId) {
+        cargarSolicitud();
+        // Actualizar cada 10 segundos
+        setInterval(cargarSolicitud, 10000);
+    } else {
+        alert('No se encontró la solicitud');
+        window.location.href = '/';
+    }
+    
+    // Event listeners calificación
+    document.querySelectorAll('.star').forEach(star => {
+        star.addEventListener('click', function() {
+            calificacionSeleccionada = parseInt(this.dataset.value);
+            actualizarEstrellas();
+        });
+    });
+});
+
+// ============================================
+// CARGAR SOLICITUD
+// ============================================
+
+async function cargarSolicitud() {
+    try {
+        const response = await fetch(`/api/v1/solicitudes/${solicitudId}`);
+        
+        if (!response.ok) {
+            throw new Error('Error al cargar solicitud');
+        }
+        
+        const solicitud = await response.json();
+        
+        // Actualizar estado
+        estadoActual = solicitud.estado;
+        
+        // Renderizar timeline
+        renderizarTimeline(solicitud.estado);
+        
+        // Mostrar técnico si está asignado
+        if (solicitud.tecnico_asignado_id) {
+            mostrarTecnico(solicitud.tecnico);
+        }
+        
+        // Mostrar mapa si está en camino
+        if (solicitud.estado === 'en_camino') {
+            document.getElementById('mapaContainer').classList.add('active');
+        }
+        
+        // Mostrar botón calificar si completado
+        if (solicitud.estado === 'completado' && !solicitud.calificacion) {
+            document.getElementById('btnCalificar').style.display = 'flex';
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// ============================================
+// RENDERIZAR TIMELINE
+// ============================================
+
+function renderizarTimeline(estadoActual) {
+    const timeline = document.getElementById('timeline');
+    timeline.innerHTML = '';
+    
+    const estadosOrdenados = Object.keys(ESTADOS);
+    const indexActual = estadosOrdenados.indexOf(estadoActual);
+    
+    estadosOrdenados.forEach((key, index) => {
+        const estado = ESTADOS[key];
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+        
+        if (index < indexActual) {
+            item.classList.add('completed');
+        } else if (index === indexActual) {
+            item.classList.add('active');
+        }
+        
+        item.innerHTML = `
+            <div class="timeline-icon">${estado.icon}</div>
+            <div class="timeline-content">
+                <h3>${estado.titulo}</h3>
+                <p>${estado.descripcion}</p>
+                ${index === indexActual ? '<p class="timeline-time">Ahora</p>' : ''}
+            </div>
+        `;
+        
+        timeline.appendChild(item);
+    });
+}
+
+// ============================================
+// MOSTRAR TÉCNICO
+// ============================================
+
+function mostrarTecnico(tecnico) {
+    document.getElementById('tecnicoCard').classList.add('active');
+    
+    // Actualizar datos
+    const iniciales = tecnico.nombre.split(' ').map(n => n[0]).join('');
+    document.getElementById('tecnicoAvatar').textContent = iniciales;
+    document.getElementById('tecnicoNombre').textContent = tecnico.nombre;
+    document.getElementById('tecnicoRating').textContent = tecnico.rating || '5.0';
+    document.getElementById('tecnicoServicios').textContent = tecnico.total_servicios || '0';
+    document.getElementById('tecnicoPlaca').textContent = tecnico.placa_vehiculo || '-';
+    document.getElementById('tecnicoVehiculo').textContent = tecnico.marca_vehiculo || '-';
+}
+
+// ============================================
+// ACCIONES
+// ============================================
+
+function abrirChat() {
+    if (window.chatWidget) {
+        window.chatWidget.toggle();
+    } else {
+        alert('Chat no disponible aún');
+    }
+}
+
+function cancelarServicio() {
+    if (confirm('¿Estás seguro de cancelar el servicio?')) {
+        // TODO: Implementar cancelación
+        alert('Función en desarrollo');
+    }
+}
+
+// ============================================
+// CALIFICACIÓN
+// ============================================
+
+function mostrarModalCalificacion() {
+    document.getElementById('modalCalificacion').classList.add('show');
+}
+
+function cerrarModalCalificacion() {
+    document.getElementById('modalCalificacion').classList.remove('show');
+}
+
+function actualizarEstrellas() {
+    document.querySelectorAll('.star').forEach((star, index) => {
+        if (index < calificacionSeleccionada) {
+            star.classList.add('active');
+        } else {
+            star.classList.remove('active');
+        }
+    });
+}
+
+async function enviarCalificacion() {
+    if (calificacionSeleccionada === 0) {
+        alert('Por favor selecciona una calificación');
+        return;
+    }
+    
+    const comentario = document.getElementById('comentarioCalificacion').value;
+    
+    try {
+        const response = await fetch(`/api/v1/solicitudes/${solicitudId}/calificar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                calificacion: calificacionSeleccionada,
+                comentario: comentario
+            })
+        });
+        
+        if (response.ok) {
+            alert('¡Gracias por tu calificación!');
+            cerrarModalCalificacion();
+            document.getElementById('btnCalificar').style.display = 'none';
+        }
+    } catch (error) {
+        alert('Error al enviar calificación');
+    }
+}
+</script>
+{% endblock %}

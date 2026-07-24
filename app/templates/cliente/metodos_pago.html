@@ -1,0 +1,517 @@
+{% extends "base_pwa.html" %}
+{% block title %}Método de Pago - MITA{% endblock %}
+    {% block extra_css %}
+        <link rel="stylesheet" href="/static/css/metodos_pago.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% endblock %}
+{% block content %}
+<body>
+    
+    <!-- Header -->
+    <header class="header-simple">
+        <div class="header-container">
+            <button class="btn-back" onclick="window.history.back()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="header-title">
+                <h1>Método de pago</h1>
+                <p class="subtitle">Selecciona cómo deseas pagar</p>
+            </div>
+            <div class="header-placeholder"></div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- Resumen del Servicio -->
+        <div class="resumen-servicio">
+            <h3><i class="fas fa-file-invoice"></i> Resumen del servicio</h3>
+            <div class="resumen-item">
+                <span>Servicio:</span>
+                <strong id="resumenServicio">-</strong>
+            </div>
+            <div class="resumen-item">
+                <span>Fecha y hora:</span>
+                <strong id="resumenFechaHora">-</strong>
+            </div>
+            <div class="resumen-item">
+                <span>Vehículo:</span>
+                <strong id="resumenVehiculo">-</strong>
+            </div>
+            <div class="resumen-item">
+                <span>Ubicación:</span>
+                <strong id="resumenUbicacion">-</strong>
+            </div>
+            <div class="resumen-total">
+                <span>Total a pagar:</span>
+                <strong id="totalPagar">S/. 0.00</strong>
+            </div>
+        </div>
+
+        <!-- Métodos de Pago -->
+        <div class="metodos-container">
+            <h3 class="section-title">
+                <i class="fas fa-credit-card"></i>
+                Selecciona tu método de pago
+            </h3>
+
+            <!-- TARJETA (CULQI) -->
+            <div class="metodo-card" data-metodo="tarjeta" onclick="seleccionarMetodo('tarjeta')">
+                <div class="metodo-header">
+                    <div class="metodo-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <div class="metodo-info">
+                        <h4>Tarjeta de débito o crédito</h4>
+                        <p>Visa, Mastercard, Diners Club</p>
+                    </div>
+                    <div class="metodo-check">
+                        <i class="fas fa-circle"></i>
+                    </div>
+                </div>
+                <div class="metodo-badge">
+                    <i class="fas fa-bolt"></i> Pago inmediato
+                </div>
+            </div>
+
+            <!-- YAPE (QR con Tunki) -->
+            <div class="metodo-card" data-metodo="yape" onclick="seleccionarMetodo('yape')">
+                <div class="metodo-header">
+                    <div class="metodo-icon" style="background: linear-gradient(135deg, #722c8b 0%, #4a1e5e 100%);">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    <div class="metodo-info">
+                        <h4>Yape</h4>
+                        <p>Escanea el QR con tu app</p>
+                    </div>
+                    <div class="metodo-check">
+                        <i class="fas fa-circle"></i>
+                    </div>
+                </div>
+                <div class="metodo-badge">
+                    <i class="fas fa-bolt"></i> Pago con código QR
+                </div>
+            </div>
+
+            <!-- PLIN -->
+            <div class="metodo-card" data-metodo="plin" onclick="seleccionarMetodo('plin')">
+                <div class="metodo-header">
+                    <div class="metodo-icon" style="background: linear-gradient(135deg, #00d4aa 0%, #00a080 100%);">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <div class="metodo-info">
+                        <h4>Plin</h4>
+                        <p>Multibanco - Pago con tu celular</p>
+                    </div>
+                    <div class="metodo-check">
+                        <i class="fas fa-circle"></i>
+                    </div>
+                </div>
+                <div class="metodo-badge warning">
+                    <i class="fas fa-clock"></i> Confirmación manual
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario Tarjeta (Culqi) -->
+        <div id="formularioTarjeta" class="pago-form" style="display: none;">
+            <h3 class="form-title">
+                <i class="fas fa-lock"></i>
+                Datos de tu tarjeta
+            </h3>
+            <p class="form-subtitle">Tus datos están protegidos y encriptados</p>
+
+            <div id="culqi-container"></div>
+
+            <div class="info-box">
+                <i class="fas fa-shield-alt"></i>
+                <p>Pago procesado de forma segura por Culqi. No almacenamos datos de tu tarjeta.</p>
+            </div>
+
+            <button class="btn-pagar" onclick="procesarPagoTarjeta()">
+                <i class="fas fa-lock"></i>
+                Pagar S/. <span id="montoPagarTarjeta">0.00</span>
+            </button>
+        </div>
+
+        <!-- Formulario Yape (QR con Tunki) -->
+        <div id="formularioYape" class="pago-form" style="display: none;">
+            <h3 class="form-title">
+                <i class="fas fa-qrcode"></i>
+                Paga con Yape
+            </h3>
+            <p class="form-subtitle">Escanea el código QR con tu app de Yape</p>
+
+            <!-- Estado inicial: Generar QR -->
+            <div id="yapeGenerarQR">
+                <div class="yape-info">
+                    <div class="yape-monto">
+                        <span>Total a pagar:</span>
+                        <strong>S/. <span id="montoYape">0.00</span></strong>
+                    </div>
+                </div>
+
+                <button class="btn-pagar yape-btn" onclick="generarQRYape()">
+                    <i class="fas fa-qrcode"></i>
+                    Generar código QR
+                </button>
+            </div>
+
+            <!-- Estado: Mostrando QR -->
+            <div id="yapeQRContainer" style="display: none;">
+                <div class="qr-wrapper">
+                    <img id="yapeQRImage" src="" alt="QR Yape" class="qr-image">
+                </div>
+
+                <div class="qr-timer">
+                    <i class="fas fa-clock"></i>
+                    <span>Expira en: </span>
+                    <strong id="yapeTimer">15:00</strong>
+                </div>
+
+                <div class="qr-instructions">
+                    <div class="instruction-step">
+                        <span class="step-number">1</span>
+                        <span>Abre tu app de Yape</span>
+                    </div>
+                    <div class="instruction-step">
+                        <span class="step-number">2</span>
+                        <span>Toca "Escanear QR"</span>
+                    </div>
+                    <div class="instruction-step">
+                        <span class="step-number">3</span>
+                        <span>Escanea este código</span>
+                    </div>
+                    <div class="instruction-step">
+                        <span class="step-number">4</span>
+                        <span>Confirma el pago</span>
+                    </div>
+                </div>
+
+                <div id="yapeDeepLinkContainer" style="display: none;">
+                    <p class="or-divider">─── o desde tu celular ───</p>
+                    <a id="yapeDeepLink" href="#" class="btn-yape-app">
+                        <i class="fas fa-external-link-alt"></i>
+                        Abrir app Yape
+                    </a>
+                </div>
+
+                <div class="info-box">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Esperando confirmación de pago...</p>
+                </div>
+
+                <button class="btn-secondary" onclick="cancelarPagoYape()">
+                    <i class="fas fa-times"></i>
+                    Cancelar y elegir otro método
+                </button>
+            </div>
+        </div>
+
+        <!-- Formulario Plin (manual) -->
+        <div id="formularioYapePlin" class="pago-form" style="display: none;">
+            <h3 class="form-title">
+                <i class="fas fa-mobile-alt"></i>
+                Instrucciones de pago
+            </h3>
+            
+            <div class="instrucciones-pago">
+                <div class="paso">
+                    <div class="paso-numero">1</div>
+                    <div class="paso-contenido">
+                        <h4>Abre tu app <span id="appNombre">Yape</span></h4>
+                        <p>Busca la opción "Yapear" o "Enviar dinero"</p>
+                    </div>
+                </div>
+                
+                <div class="paso">
+                    <div class="paso-numero">2</div>
+                    <div class="paso-contenido">
+                        <h4>Envía al siguiente número</h4>
+                        <div class="numero-destino">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span id="numeroDestino">999 888 777</span>
+                            <button class="btn-copy" onclick="copiarNumero()">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <p class="nombre-destinatario">
+                            <strong>MITA SAC</strong>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="paso">
+                    <div class="paso-numero">3</div>
+                    <div class="paso-contenido">
+                        <h4>Monto exacto a enviar</h4>
+                        <div class="monto-enviar">
+                            <span>S/.</span>
+                            <strong id="montoEnviar">0.00</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="paso">
+                    <div class="paso-numero">4</div>
+                    <div class="paso-contenido">
+                        <h4>Código de operación</h4>
+                        <div class="codigo-operacion">
+                            <code id="codigoOperacion">SERV-12345</code>
+                            <button class="btn-copy" onclick="copiarCodigo()">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <p>Incluye este código en el concepto/mensaje del pago</p>
+                    </div>
+                </div>
+                
+                <div class="paso">
+                    <div class="paso-numero">5</div>
+                    <div class="paso-contenido">
+                        <h4>Sube tu comprobante</h4>
+                        <p>Toma captura de pantalla del voucher de pago</p>
+                        
+                        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Click para subir imagen</p>
+                            <span>JPG, PNG (máx. 5MB)</span>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                        
+                        <div id="previewContainer" style="display: none;">
+                            <img id="imagePreview" src="" alt="Preview">
+                            <button class="btn-remove" onclick="removerImagen()">
+                                <i class="fas fa-times"></i> Cambiar imagen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p><strong>Tu solicitud quedará PENDIENTE</strong> hasta que nuestro equipo confirme el pago. Recibirás una notificación cuando sea aprobado (usualmente en menos de 10 minutos).</p>
+            </div>
+            
+            <button class="btn-pagar" id="btnEnviarComprobante" disabled onclick="enviarComprobante()">
+                <i class="fas fa-paper-plane"></i>
+                Enviar comprobante
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Modal de Carga -->
+    <div class="modal-overlay" id="modalCargando" style="display: none;">
+        <div class="modal-content loading">
+            <div class="spinner-large"></div>
+            <h3>Procesando pago...</h3>
+            <p>Por favor espera, no cierres esta ventana</p>
+        </div>
+    </div>
+
+    <!-- Modal de Éxito -->
+    <div class="modal-overlay" id="modalExito" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-icon success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>¡Pago confirmado!</h2>
+            <p id="mensajeExito">Tu pago ha sido procesado correctamente.</p>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="irABuscarMecanico()">
+                    <i class="fas fa-search"></i>
+                    Buscar mecánico
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Pendiente (Yape/Plin) -->
+    <div class="modal-overlay" id="modalPendiente" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-icon pending">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h2>Comprobante enviado</h2>
+            <p>Tu solicitud ha sido registrada con el código:</p>
+            <div class="codigo-servicio">
+                <code id="codigoServicioFinal">SERV-12345</code>
+            </div>
+            <p class="info-pendiente">Estamos verificando tu pago. Recibirás una notificación cuando sea confirmado (generalmente en menos de 10 minutos).</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="volverAlInicio()">
+                    <i class="fas fa-home"></i>
+                    Volver al inicio
+                </button>
+                <button class="btn-primary" onclick="verMisSolicitudes()">
+                    <i class="fas fa-list"></i>
+                    Ver mis solicitudes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+/* ===== MÉTODO DE PAGO: Ocultar fecha/hora en resumen ===== */
+#resumenFechaHoraPago,
+[data-resumen="fechaHora"],
+.resumen-fecha-hora-pago {
+    display: none !important;
+}
+
+/* Contenedor en página métodos pago */
+.resumen-item:has(#resumenFechaHoraPago),
+div:has(> #resumenFechaHoraPago),
+.form-group:has(#resumenFechaHoraPago) {
+    display: none !important;
+}
+
+/* ===== YAPE QR STYLES ===== */
+.yape-info {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.yape-monto {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.yape-monto span {
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+
+.yape-monto strong {
+    font-size: 2rem;
+    color: #FFCD11;
+}
+
+.yape-btn {
+    background: linear-gradient(135deg, #722c8b 0%, #4a1e5e 100%) !important;
+}
+
+.qr-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 16px;
+    margin: 1rem 0;
+}
+
+.qr-image {
+    width: 220px;
+    height: 220px;
+    border-radius: 8px;
+}
+
+.qr-timer {
+    text-align: center;
+    padding: 0.75rem;
+    background: rgba(255, 205, 17, 0.1);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    color: #FFCD11;
+}
+
+.qr-timer i {
+    margin-right: 0.5rem;
+}
+
+.qr-instructions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+}
+
+.instruction-step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.step-number {
+    width: 24px;
+    height: 24px;
+    background: #722c8b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: white;
+    flex-shrink: 0;
+}
+
+.or-divider {
+    text-align: center;
+    color: #6b7280;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+}
+
+.btn-yape-app {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #722c8b 0%, #4a1e5e 100%);
+    color: white;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.btn-secondary {
+    width: 100%;
+    padding: 1rem;
+    background: transparent;
+    border: 2px solid #4b5563;
+    color: #9ca3af;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-secondary:hover {
+    border-color: #FFCD11;
+    color: #FFCD11;
+}
+
+@media (max-width: 480px) {
+    .qr-instructions {
+        grid-template-columns: 1fr;
+    }
+
+    .qr-image {
+        width: 180px;
+        height: 180px;
+    }
+}
+
+    </style>    
+
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Culqi Checkout -->
+    <script src="https://checkout.culqi.com/js/v4"></script>
+    <script src="/static/js/metodos_pago.js"></script>
+{% endblock %}

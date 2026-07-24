@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MITA - Registro</title>
+    <link rel="stylesheet" href="/static/css/login_cliente.css">
+    <img src="/static/img/logo_serviplus.svg">
+</head>
+<body>
+    <div class="container">
+        <div class="logo-section">
+            <img src="img/logo_serviplus.svg" alt="MITA" class="logo">
+            <h1>Tu servicio, donde lo necesites</h1>
+        </div>
+
+        <div class="form-card">
+            <h2>Registrarse</h2>
+            
+            <form id="formRegistro" hx-post="/api/clientes/registro" hx-swap="outerHTML">
+                <div class="input-group">
+                    <label for="nombre">Nombre completo</label>
+                    <input type="text" id="nombre" name="nombre" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="dni">DNI</label>
+                    <input type="text" id="dni" name="dni" maxlength="8" pattern="[0-9]{8}" required>
+                    <button type="button" class="btn-secondary" onclick="validarDNI()">Validar RENIEC</button>
+                </div>
+
+                <div class="input-group">
+                    <label for="whatsapp">WhatsApp</label>
+                    <input type="tel" id="whatsapp" name="whatsapp" placeholder="999 999 999" pattern="[0-9]{9}" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="email">Email (opcional)</label>
+                    <input type="email" id="email" name="email">
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="terminos" required>
+                    <label for="terminos">Acepto los <a href="/terminos">términos y condiciones</a></label>
+                </div>
+
+                <button type="submit" class="btn-primary">Crear cuenta</button>
+            </form>
+
+            <p class="footer-text">
+                ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="/static/js/login_cliente.js"></script>
+</body>
+</html>

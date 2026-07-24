@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Ingreso de Técnicos - MITA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1A2332 0%, #2A3647 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 3rem 2rem;
+        }
+
+        .section {
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            color: #1A2332;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid #FFCD11;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-title i {
+            color: #FFCD11;
+        }
+
+        /* Comparación de Modelos */
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .model-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 2rem;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .model-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .model-card.recommended {
+            border-color: #FFCD11;
+            background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+        }
+
+        .recommended-badge {
+            position: absolute;
+            top: -15px;
+            right: 20px;
+            background: #FFCD11;
+            color: #1A2332;
+            padding: 0.5rem 1.5rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(255, 205, 17, 0.4);
+        }
+
+        .model-card h3 {
+            font-size: 1.5rem;
+            color: #1A2332;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .model-icon {
+            font-size: 2rem;
+        }
+
+        .pros-cons {
+            margin-top: 1.5rem;
+        }
+
+        .pros, .cons {
+            margin-bottom: 1rem;
+        }
+
+        .pros h4 {
+            color: #10B981;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cons h4 {
+            color: #EF4444;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pros ul, .cons ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .pros li {
+            padding: 0.25rem 0;
+            color: #059669;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cons li {
+            padding: 0.25rem 0;
+            color: #DC2626;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Flujo Visual */
+        .flow-container {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 15px;
+            margin: 2rem 0;
+        }
+
+        .phases {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .phase {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .phase-number {
+            position: absolute;
+            top: -20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .phase h3 {
+            color: #1A2332;
+            margin-bottom: 1rem;
+            padding-left: 60px;
+        }
+
+        .phase-content {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .step-icon {
+            font-size: 1.5rem;
+            color: #667eea;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            flex: 1;
+        }
+
+        .step-text strong {
+            display: block;
+            color: #1A2332;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Niveles de Verificación */
+        .verification-levels {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .level-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            border: 3px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .level-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .level-card.basic {
+            border-color: #3B82F6;
+        }
+
+        .level-card.medium {
+            border-color: #FFCD11;
+            background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+        }
+
+        .level-card.strict {
+            border-color: #10B981;
+        }
+
+        .level-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .level-badge {
+            font-size: 2.5rem;
+        }
+
+        .level-info h3 {
+            font-size: 1.3rem;
+            color: #1A2332;
+            margin-bottom: 0.25rem;
+        }
+
+        .level-info p {
+            color: #6B7280;
+            font-size: 0.9rem;
+        }
+
+        .requirements-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .requirements-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .requirements-list li:last-child {
+            border-bottom: none;
+        }
+
+        .requirements-list i {
+            color: #10B981;
+            font-size: 1.1rem;
+        }
+
+        .duration {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .duration strong {
+            display: block;
+            color: #1A2332;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .duration span {
+            color: #6B7280;
+            font-size: 0.9rem;
+        }
+
+        /* Datos Requeridos */
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .data-category {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid #FFCD11;
+        }
+
+        .data-category h4 {
+            color: #1A2332;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .data-category ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .data-category li {
+            padding: 0.5rem 0;
+            color: #4B5563;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .data-category li i {
+            color: #FFCD11;
+            font-size: 0.9rem;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 50px;
+            margin: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -38px;
+            top: 24px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 4px solid #667eea;
+            border-radius: 50%;
+        }
+
+        .timeline-item h4 {
+            color: #1A2332;
+            margin-bottom: 0.75rem;
+        }
+
+        .timeline-item p {
+            color: #6B7280;
+            margin-bottom: 0.5rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        .cta-section h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .btn-primary {
+            background: #FFCD11;
+            color: #1A2332;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(255, 205, 17, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border-color: white;
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            margin: 2rem 0;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .comparison-table thead {
+            background: linear-gradient(135deg, #1A2332 0%, #2A3647 100%);
+            color: white;
+        }
+
+        .comparison-table th {
+            padding: 1.5rem 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table th:first-child {
+            width: 30%;
+        }
+
+        .comparison-table td {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .comparison-table tbody tr:hover {
+            background: #fff9e6;
+        }
+
+        .check {
+            color: #10B981;
+            font-size: 1.3rem;
+        }
+
+        .cross {
+            color: #EF4444;
+            font-size: 1.3rem;
+        }
+
+        .warning {
+            color: #F59E0B;
+            font-size: 1.3rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .models-grid,
+            .verification-levels,
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .content {
+                padding: 2rem 1rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .cta-section {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- Header -->
+        <div class="header">
+            <h1>🔐 Sistema de Ingreso de Técnicos</h1>
+            <p>Documento de análisis y propuesta para MITA</p>
+        </div>
+
+        <div class="content">
+            
+            <!-- Introducción -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Introducción
+                </div>
+                <p style="font-size: 1.1rem; line-height: 1.8; color: #4B5563;">
+                    Este documento presenta los <strong>3 modelos de ingreso de técnicos</strong> al sistema MITA, 
+                    analizando ventajas, desventajas y proceso completo de implementación. El objetivo es facilitar 
+                    la toma de decisión estratégica sobre cómo gestionar el onboarding de técnicos en la plataforma.
+                </p>
+            </div>
+
+            <!-- Comparación de Modelos -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-balance-scale"></i>
+                    Comparación de Modelos
+                </div>
+
+                <div class="models-grid">
+                    
+                    <!-- Modelo 1 -->
+                    <div class="model-card recommended">
+                        <div class="recommended-badge">✨ Recomendado</div>
+                        <h3>
+                            <span class="model-icon">🔐</span>
+                            Modelo 1: Auto-registro con Aprobación
+                        </h3>
+                        <p><strong>Flujo:</strong> Registro → Revisión → Aprobación → Activo</p>
+                        
+                        <div class="pros-cons">
+                            <div class="pros">
+                                <h4><i class="fas fa-check-circle"></i> Ventajas</h4>
+                                <ul>
+                                    <li><i class="fas fa-check"></i> Escalable y controlado</li>
+                                    <li><i class="fas fa-check"></i> Control de calidad garantizado</li>
+                                    <li><i class="fas fa-check"></i> Reduce fraude y perfiles falsos</li>
+                                    <li><i class="fas fa-check"></i> Verificación de documentos</li>
+                                    <li><i class="fas fa-check"></i> Cumplimiento legal</li>
+                                </ul>
+                            </div>
+                            <div class="cons">
+                                <h4><i class="fas fa-exclamation-triangle"></i> Desventajas</h4>
+                                <ul>
+                                    <li><i class="fas fa-times"></i> Proceso tarda 24-48 horas</li>
+                                    <li><i class="fas fa-times"></i> Requiere personal administrativo</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modelo 2 -->
+                    <div class="model-card">
+                        <h3>
+                            <span class="model-icon">⚡</span>
+                            Modelo 2: Registro Directo
+                        </h3>
+                        <p><strong>Flujo:</strong> Registro → Verificación automática → Activo</p>
+                        
+                        <div class="pros-cons">
+                            <div class="pros">
+                                <h4><i class="fas fa-check-circle"></i> Ventajas</h4>
+                                <ul>
+                                    <li><i class="fas fa-check"></i> Rápido (inmediato)</li>
+                                    <li><i class="fas fa-check"></i> No requiere admin</li>
+                                    <li><i class="fas fa-check"></i> Crecimiento acelerado</li>
+                                </ul>
+                            </div>
+                            <div class="cons">
+                                <h4><i class="fas fa-exclamation-triangle"></i> Desventajas</h4>
+                                <ul>
+                                    <li><i class="fas fa-times"></i> Riesgo de perfiles falsos</li>
+                                    <li><i class="fas fa-times"></i> Calidad no garantizada</li>
+                                    <li><i class="fas fa-times"></i> Problemas legales potenciales</li>
+                                    <li><i class="fas fa-times"></i> Daño a reputación</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modelo 3 -->
+                    <div class="model-card">
+                        <h3>
+                            <span class="model-icon">🎯</span>
+                            Modelo 3: Solo Invitación
+                        </h3>
+                        <p><strong>Flujo:</strong> Admin invita → Técnico completa → Activo</p>
+                        
+                        <div class="pros-cons">
+                            <div class="pros">
+                                <h4><i class="fas fa-check-circle"></i> Ventajas</h4>
+                                <ul>
+                                    <li><i class="fas fa-check"></i> Máxima calidad</li>
+                                    <li><i class="fas fa-check"></i> Control total</li>
+                                    <li><i class="fas fa-check"></i> Relaciones confiables</li>
+                                </ul>
+                            </div>
+                            <div class="cons">
+                                <h4><i class="fas fa-exclamation-triangle"></i> Desventajas</h4>
+                                <ul>
+                                    <li><i class="fas fa-times"></i> Crecimiento muy lento</li>
+                                    <li><i class="fas fa-times"></i> No escalable</li>
+                                    <li><i class="fas fa-times"></i> Limita el marketplace</li>
+                                    <li><i class="fas fa-times"></i> Requiere mucho networking</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Tabla Comparativa -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-table"></i>
+                    Tabla Comparativa Detallada
+                </div>
+
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Criterio</th>
+                            <th>Modelo 1</th>
+                            <th>Modelo 2</th>
+                            <th>Modelo 3</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Velocidad de activación</strong></td>
+                            <td>24-48 horas</td>
+                            <td>Inmediato</td>
+                            <td>Variable</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Control de calidad</strong></td>
+                            <td><i class="fas fa-check check"></i> Alto</td>
+                            <td><i class="fas fa-times cross"></i> Bajo</td>
+                            <td><i class="fas fa-check check"></i> Muy Alto</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Escalabilidad</strong></td>
+                            <td><i class="fas fa-check check"></i> Alta</td>
+                            <td><i class="fas fa-check check"></i> Muy Alta</td>
+                            <td><i class="fas fa-times cross"></i> Baja</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Costo operativo</strong></td>
+                            <td><i class="fas fa-exclamation-triangle warning"></i> Medio</td>
+                            <td><i class="fas fa-check check"></i> Bajo</td>
+                            <td><i class="fas fa-times cross"></i> Alto</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Seguridad legal</strong></td>
+                            <td><i class="fas fa-check check"></i> Alta</td>
+                            <td><i class="fas fa-times cross"></i> Baja</td>
+                            <td><i class="fas fa-check check"></i> Muy Alta</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Experiencia del técnico</strong></td>
+                            <td><i class="fas fa-check check"></i> Buena</td>
+                            <td><i class="fas fa-check check"></i> Excelente</td>
+                            <td><i class="fas fa-exclamation-triangle warning"></i> Regular</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Riesgo de fraude</strong></td>
+                            <td><i class="fas fa-check check"></i> Bajo</td>
+                            <td><i class="fas fa-times cross"></i> Alto</td>
+                            <td><i class="fas fa-check check"></i> Muy Bajo</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Flujo Completo del Modelo Recomendado -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-project-diagram"></i>
+                    Flujo Completo: Modelo 1 (Recomendado)
+                </div>
+
+                <div class="flow-container">
+                    <div class="phases">
+                        
+                        <!-- Fase 1 -->
+                        <div class="phase">
+                            <div class="phase-number">1</div>
+                            <h3>Fase 1: Pre-Registro (Público)</h3>
+                            <div class="phase-content">
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-globe"></i></div>
+                                    <div class="step-text">
+                                        <strong>Acceso público</strong>
+                                        El técnico visita <code>/tecnico/registro</code> sin necesidad de credenciales
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-user-edit"></i></div>
+                                    <div class="step-text">
+                                        <strong>Formulario multi-paso</strong>
+                                        Completa: datos personales, DNI, teléfono, email, especialidad, experiencia
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-camera"></i></div>
+                                    <div class="step-text">
+                                        <strong>Subida de documentos</strong>
+                                        Foto DNI (frente/reverso), certificados técnicos, foto de perfil
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-check-square"></i></div>
+                                    <div class="step-text">
+                                        <strong>Aceptación de términos</strong>
+                                        Lee y acepta términos y condiciones, política de privacidad
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-paper-plane"></i></div>
+                                    <div class="step-text">
+                                        <strong>Envío de solicitud</strong>
+                                        Sistema genera ID único y notifica al equipo administrativo
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fase 2 -->
+                        <div class="phase">
+                            <div class="phase-number">2</div>
+                            <h3>Fase 2: Revisión Administrativa</h3>
+                            <div class="phase-content">
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-bell"></i></div>
+                                    <div class="step-text">
+                                        <strong>Notificación automática</strong>
+                                        Admin recibe alerta en dashboard + email + notificación push
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-search"></i></div>
+                                    <div class="step-text">
+                                        <strong>Revisión de documentos</strong>
+                                        Admin verifica: DNI válido, datos coherentes, certificados auténticos
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-shield-alt"></i></div>
+                                    <div class="step-text">
+                                        <strong>Verificaciones automáticas</strong>
+                                        Sistema consulta APIs: RENIEC (validar DNI), antecedentes (opcional)
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-gavel"></i></div>
+                                    <div class="step-text">
+                                        <strong>Decisión administrativa</strong>
+                                        APROBAR: crea cuenta | RECHAZAR: notifica motivo | PENDIENTE: solicita más info
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fase 3 -->
+                        <div class="phase">
+                            <div class="phase-number">3</div>
+                            <h3>Fase 3: Activación</h3>
+                            <div class="phase-content">
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-envelope"></i></div>
+                                    <div class="step-text">
+                                        <strong>Notificación de aprobación</strong>
+                                        Técnico recibe email y SMS: "¡Felicidades! Fuiste aprobado"
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-key"></i></div>
+                                    <div class="step-text">
+                                        <strong>Credenciales de acceso</strong>
+                                        Usuario: email registrado | Contraseña: generada automáticamente (temporal)
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-link"></i></div>
+                                    <div class="step-text">
+                                        <strong>Link de acceso directo</strong>
+                                        Email incluye botón: "Acceder a mi panel" → <code>/tecnico/login</code>
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-lock-open"></i></div>
+                                    <div class="step-text">
+                                        <strong>Primer login</strong>
+                                        Sistema detecta primer ingreso y redirige a onboarding obligatorio
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fase 4 -->
+                        <div class="phase">
+                            <div class="phase-number">4</div>
+                            <h3>Fase 4: Onboarding (Primera Vez)</h3>
+                            <div class="phase-content">
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-lock"></i></div>
+                                    <div class="step-text">
+                                        <strong>Cambio de contraseña</strong>
+                                        Obligatorio: crear contraseña segura (mín. 8 caracteres, mayúsculas, números)
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-user-cog"></i></div>
+                                    <div class="step-text">
+                                        <strong>Completar perfil profesional</strong>
+                                        Zonas de trabajo, horario disponible, métodos de cobro, bio/descripción
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-graduation-cap"></i></div>
+                                    <div class="step-text">
+                                        <strong>Tour guiado interactivo</strong>
+                                        Walkthrough del panel: cómo aceptar servicios, chat, navegación GPS
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-video"></i></div>
+                                    <div class="step-text">
+                                        <strong>Tutoriales opcionales</strong>
+                                        Videos cortos: mejores prácticas, tips para buenas calificaciones
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon"><i class="fas fa-toggle-on"></i></div>
+                                    <div class="step-text">
+                                        <strong>Activar disponibilidad</strong>
+                                        Técnico cambia a "En línea" cuando esté listo para recibir servicios
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Niveles de Verificación -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-layer-group"></i>
+                    Niveles de Verificación
+                </div>
+
+                <div class="verification-levels">
+                    
+                    <!-- Nivel Básico -->
+                    <div class="level-card basic">
+                        <div class="level-header">
+                            <div class="level-badge">🔵</div>
+                            <div class="level-info">
+                                <h3>Nivel 1: Básico</h3>
+                                <p>Verificación mínima requerida</p>
+                            </div>
+                        </div>
+                        <ul class="requirements-list">
+                            <li><i class="fas fa-check-circle"></i> DNI válido (RENIEC)</li>
+                            <li><i class="fas fa-check-circle"></i> Teléfono verificado (SMS)</li>
+                            <li><i class="fas fa-check-circle"></i> Email verificado</li>
+                            <li><i class="fas fa-check-circle"></i> Foto de perfil</li>
+                        </ul>
+                        <div class="duration">
+                            <strong>Duración</strong>
+                            <span>Inmediato (automatizado)</span>
+                        </div>
+                    </div>
+
+                    <!-- Nivel Medio -->
+                    <div class="level-card medium">
+                        <div class="level-header">
+                            <div class="level-badge">🟡</div>
+                            <div class="level-info">
+                                <h3>Nivel 2: Medio</h3>
+                                <p>Verificación recomendada ⭐</p>
+                            </div>
+                        </div>
+                        <ul class="requirements-list">
+                            <li><i class="fas fa-check-circle"></i> Todo lo del Nivel 1</li>
+                            <li><i class="fas fa-check-circle"></i> Certificados técnicos</li>
+                            <li><i class="fas fa-check-circle"></i> Referencias laborales (2)</li>
+                            <li><i class="fas fa-check-circle"></i> Entrevista virtual (15 min)</li>
+                        </ul>
+                        <div class="duration">
+                            <strong>Duración</strong>
+                            <span>24-48 horas</span>
+                        </div>
+                    </div>
+
+                    <!-- Nivel Estricto -->
+                    <div class="level-card strict">
+                        <div class="level-header">
+                            <div class="level-badge">🟢</div>
+                            <div class="level-info">
+                                <h3>Nivel 3: Estricto</h3>
+                                <p>Máxima confianza y seguridad</p>
+                            </div>
+                        </div>
+                        <ul class="requirements-list">
+                            <li><i class="fas fa-check-circle"></i> Todo lo del Nivel 2</li>
+                            <li><i class="fas fa-check-circle"></i> Antecedentes policiales</li>
+                            <li><i class="fas fa-check-circle"></i> Verificación presencial</li>
+                            <li><i class="fas fa-check-circle"></i> Capacitación MITA</li>
+                            <li><i class="fas fa-check-circle"></i> Examen teórico-práctico</li>
+                        </ul>
+                        <div class="duration">
+                            <strong>Duración</strong>
+                            <span>3-5 días hábiles</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Datos Requeridos -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-database"></i>
+                    Datos Requeridos del Técnico
+                </div>
+
+                <div class="data-grid">
+                    
+                    <div class="data-category">
+                        <h4><i class="fas fa-user"></i> Datos Personales</h4>
+                        <ul>
+                            <li><i class="fas fa-circle"></i> Nombre completo</li>
+                            <li><i class="fas fa-circle"></i> DNI</li>
+                            <li><i class="fas fa-circle"></i> Fecha de nacimiento</li>
+                            <li><i class="fas fa-circle"></i> Teléfono</li>
+                            <li><i class="fas fa-circle"></i> Email</li>
+                            <li><i class="fas fa-circle"></i> Dirección</li>
+                        </ul>
+                    </div>
+
+                    <div class="data-category">
+                        <h4><i class="fas fa-briefcase"></i> Datos Profesionales</h4>
+                        <ul>
+                            <li><i class="fas fa-circle"></i> Especialidades</li>
+                            <li><i class="fas fa-circle"></i> Años de experiencia</li>
+                            <li><i class="fas fa-circle"></i> Certificaciones</li>
+                            <li><i class="fas fa-circle"></i> Referencias</li>
+                            <li><i class="fas fa-circle"></i> Zonas de trabajo</li>
+                        </ul>
+                    </div>
+
+                    <div class="data-category">
+                        <h4><i class="fas fa-file-alt"></i> Documentos</h4>
+                        <ul>
+                            <li><i class="fas fa-circle"></i> Foto DNI (frente)</li>
+                            <li><i class="fas fa-circle"></i> Foto DNI (reverso)</li>
+                            <li><i class="fas fa-circle"></i> Foto de perfil</li>
+                            <li><i class="fas fa-circle"></i> Certificados (PDF)</li>
+                            <li><i class="fas fa-circle"></i> Antecedentes (opcional)</li>
+                        </ul>
+                    </div>
+
+                    <div class="data-category">
+                        <h4><i class="fas fa-wallet"></i> Datos Financieros</h4>
+                        <ul>
+                            <li><i class="fas fa-circle"></i> Cuenta bancaria</li>
+                            <li><i class="fas fa-circle"></i> CCI</li>
+                            <li><i class="fas fa-circle"></i> Yape/Plin (opcional)</li>
+                            <li><i class="fas fa-circle"></i> RUC (si aplica)</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Timeline de Implementación -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-calendar-check"></i>
+                    Timeline de Implementación
+                </div>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h4>Semana 1-2: Desarrollo del formulario</h4>
+                        <p>• Diseño y desarrollo del formulario multi-paso</p>
+                        <p>• Sistema de upload de documentos</p>
+                        <p>• Validaciones en tiempo real</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h4>Semana 3: Integración con APIs</h4>
+                        <p>• Integración RENIEC para validar DNI</p>
+                        <p>• Integración con servicio de SMS</p>
+                        <p>• Sistema de notificaciones por email</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h4>Semana 4: Panel administrativo</h4>
+                        <p>• Dashboard de solicitudes pendientes</p>
+                        <p>• Sistema de aprobación/rechazo</p>
+                        <p>• Historial de decisiones</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h4>Semana 5: Sistema de onboarding</h4>
+                        <p>• Tour interactivo del panel</p>
+                        <p>• Tutoriales en video</p>
+                        <p>• Configuración inicial de perfil</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h4>Semana 6: Testing y ajustes</h4>
+                        <p>• Pruebas con técnicos reales</p>
+                        <p>• Ajustes según feedback</p>
+                        <p>• Preparación para lanzamiento</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h4>Semana 7: Lanzamiento</h4>
+                        <p>• Publicación del sistema</p>
+                        <p>• Monitoreo en tiempo real</p>
+                        <p>• Soporte activo</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA Final -->
+            <div class="cta-section">
+                <h2>¿Listo para decidir?</h2>
+                <p>Nuestro equipo está preparado para implementar el modelo que elijas</p>
+                <div class="cta-buttons">
+                    <a href="#" class="btn btn-primary">
+                        <i class="fas fa-rocket"></i>
+                        Implementar Modelo 1 (Recomendado)
+                    </a>
+                    <a href="#" class="btn btn-secondary">
+                        <i class="fas fa-envelope"></i>
+                        Agendar reunión de análisis
+                    </a>
+                </div>
+                <p style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.8;">
+                    📧 Contacto: soporte@serviplus.pe | 📱 WhatsApp: +51 999 888 777
+                </p>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

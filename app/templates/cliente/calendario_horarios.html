@@ -1,0 +1,519 @@
+{% extends "base_pwa.html" %}
+{% block title %}Selecciona Fecha y Hora - MITA{% endblock %}
+    {% block extra_css %}
+        <link rel="stylesheet" href="/static/css/global.css">
+        <link rel="stylesheet" href="/static/css/calendario_horarios.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% endblock %}
+{% block content %}
+<body>
+    
+    <div class="container">
+        
+        <div class="header">
+            <h1><i class="fas fa-calendar-alt"></i> Selecciona Fecha y Hora</h1>
+            <p>Elige cuándo quieres que realicemos el servicio</p>
+        </div>
+
+        <!-- CALENDARIO -->
+        <div class="calendar-section">
+            <div class="section-title">
+                <i class="fas fa-calendar"></i>
+                Paso 1: Selecciona la fecha
+            </div>
+            
+            <div class="calendar-header">
+                <button onclick="cambiarMes(-1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <h3 id="mesActual">Diciembre 2024</h3>
+                <button onclick="cambiarMes(1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <div class="calendar-grid">
+                <div class="calendar-day-label">L</div>
+                <div class="calendar-day-label">M</div>
+                <div class="calendar-day-label">M</div>
+                <div class="calendar-day-label">J</div>
+                <div class="calendar-day-label">V</div>
+                <div class="calendar-day-label">S</div>
+                <div class="calendar-day-label">D</div>
+                <!-- Días se llenan con JS -->
+                <div id="calendarioDias"></div>
+            </div>
+
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                <p>Puedes agendar servicios hasta con 14 días de anticipación. Los horarios disponibles dependen de nuestros técnicos.</p>
+            </div>
+        </div>
+
+        <!-- HORARIOS -->
+        <div class="horarios-container" id="horariosContainer" style="display: none;">
+            <div class="section-title">
+                <i class="fas fa-clock"></i>
+                Paso 2: Selecciona la hora
+            </div>
+
+            <div class="fecha-seleccionada">
+                <div class="fecha-texto" id="fechaSeleccionadaTexto">-</div>
+            </div>
+
+            <div id="slotsContainer">
+                <!-- Slots se llenan con JS -->
+            </div>
+        </div>
+
+        <!-- RESUMEN -->
+        <div class="resumen-seleccion" id="resumenContainer" style="display: none;">
+            <h3><i class="fas fa-check-circle"></i> Resumen de tu selección</h3>
+            <div class="resumen-item">
+                <span class="resumen-label">Fecha:</span>
+                <span class="resumen-value" id="resumenFecha">-</span>
+            </div>
+            <div class="resumen-item">
+                <span class="resumen-label">Hora:</span>
+                <span class="resumen-value" id="resumenHora">-</span>
+            </div>
+            <div class="resumen-item">
+                <span class="resumen-label">Servicio:</span>
+                <span class="resumen-value" id="resumenServicio">Cambio de aceite</span>
+            </div>
+            <div class="resumen-item">
+                <span class="resumen-label">Duración estimada:</span>
+                <span class="resumen-value" id="resumenDuracion">1.5 horas</span>
+            </div>
+        </div>
+
+        <!-- Botones de Navegación -->
+        <div class="form-navigation" style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="button" class="btn-secondary" onclick="volverAlPaso3()"
+                    style="color: white !important;">
+                <i class="fas fa-arrow-left" style="color: white !important;"></i>
+                Anterior
+            </button>
+            
+            <button class="btn-primary" id="btnContinuar" disabled onclick="continuarAPago()">
+                Continuar al pago
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+
+    </div>
+<style>
+    /* Estilos específicos para esta plantilla */
+    /* ============================================
+   INDICADORES DE PASO
+   ============================================ */
+
+.progress-container {
+    margin-bottom: 2rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FFCD11 0%, #FFE066 100%);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+}
+
+.step-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #4a5568;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.step span {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+/* Paso completado (verde) */
+.step.completed .step-circle {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+    color: white !important;
+}
+
+.step.completed span {
+    color: #10b981 !important;
+}
+
+/* Paso actual (amarillo destacado) */
+.step.active .step-circle {
+    background: #FFCD11 !important;
+    border-color: #FFCD11 !important;
+    color: #0f1419 !important;
+    transform: scale(1.15);
+    box-shadow: 0 0 25px rgba(255, 205, 17, 0.6);
+}
+
+.step.active span {
+    color: #FFCD11 !important;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .step span {
+        font-size: 0.75rem;
+    }
+    
+    .step-circle {
+        width: 40px;
+        height: 40px;
+        font-size: 0.95rem;
+    }
+}
+
+/* ============================================
+   CALENDARIO
+   ============================================ */
+
+.calendar-section {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #FFCD11;
+    margin-bottom: 1.5rem;
+}
+
+.section-title i {
+    font-size: 1.5rem;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.calendar-header h3 {
+    font-size: 1.4rem;
+    color: #FFCD11;
+    font-weight: 600;
+}
+
+.calendar-header button {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: rgba(255, 205, 17, 0.1);
+    border: 1px solid #FFCD11;
+    color: #FFCD11;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.calendar-header button:hover {
+    background: #FFCD11;
+    color: #0f1419;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 1rem;
+}
+
+.calendar-day-label {
+    text-align: center;
+    padding: 0.75rem 0;
+    font-weight: 600;
+    color: #9ca3af;
+    font-size: 0.9rem;
+    background: rgba(255, 205, 17, 0.05);
+    border-radius: 8px;
+}
+
+#calendarioDias {
+    display: contents;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    color: #e5e7eb;
+}
+
+.calendar-day:hover:not(.disabled):not(.empty) {
+    background: rgba(255, 205, 17, 0.1);
+    border-color: #FFCD11;
+    transform: scale(1.05);
+}
+
+.calendar-day.selected {
+    background: #FFCD11 !important;
+    color: #0f1419 !important;
+    border-color: #FFCD11 !important;
+    font-weight: 700;
+}
+
+.calendar-day.today {
+    border: 2px solid #FFCD11;
+    font-weight: 600;
+}
+
+.calendar-day.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.calendar-day.empty {
+    background: transparent;
+    border: none;
+    cursor: default;
+}
+
+/* ============================================
+   HORARIOS
+   ============================================ */
+
+.horarios-container {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.fecha-seleccionada {
+    background: rgba(255, 205, 17, 0.1);
+    border: 1px solid #FFCD11;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.fecha-texto {
+    color: #FFCD11;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+#slotsContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.time-slot {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.time-slot:hover:not(.ocupado) {
+    background: rgba(255, 205, 17, 0.1);
+    border-color: #FFCD11;
+    transform: translateY(-2px);
+}
+
+.time-slot.selected {
+    background: #FFCD11 !important;
+    color: #0f1419 !important;
+    border-color: #FFCD11 !important;
+}
+
+.time-slot.ocupado {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.time-slot-hora {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.time-slot-estado {
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+.time-slot.selected .time-slot-estado {
+    color: #0f1419;
+    opacity: 0.8;
+}
+
+/* ============================================
+   INFO BOX
+   ============================================ */
+
+.info-box {
+    background: rgba(255, 205, 17, 0.1);
+    border: 1px solid #FFCD11;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.info-box i {
+    color: #FFCD11;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.info-box p {
+    color: #e5e7eb;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ============================================
+   BOTÓN CONTINUAR
+   ============================================ */
+
+#btnContinuar {
+    width: 100%;
+    padding: 1rem;
+    background: #FFCD11;
+    color: #0f1419;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+#btnContinuar:hover:not(:disabled) {
+    background: #e6b800;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(255, 205, 17, 0.3);
+}
+
+#btnContinuar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .calendar-section,
+    .horarios-container {
+        padding: 1.5rem;
+    }
+    
+    .calendar-grid {
+        gap: 4px;
+    }
+    
+    .calendar-day {
+        font-size: 0.9rem;
+    }
+    
+    #slotsContainer {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-grid {
+        gap: 2px;
+    }
+    
+    .calendar-day {
+        font-size: 0.85rem;
+    }
+}
+</style>
+
+
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        function volverAlPaso3() {
+            // Opción 1: Volver al formulario
+            window.location.href = '/cliente/servicio/aceite';
+            
+            // Opción 2: Ir al paso anterior (si hay navegación por pasos)
+            // window.history.back();
+        }
+    </script>
+
+    <script src="/static/js/calendario_horarios.js"></script>
+{% endblock %}

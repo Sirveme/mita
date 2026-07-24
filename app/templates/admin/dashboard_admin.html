@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#8B5CF6">
+    <title>Dashboard Admin - MITA</title>
+    <link rel="stylesheet" href="/static/css/colors_roles.css">
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           LAYOUT PRINCIPAL
+           ============================================ */
+
+        .admin-layout {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ============================================
+           SIDEBAR
+           ============================================ */
+
+        .admin-sidebar {
+            width: 280px;
+            background: var(--gradient-card);
+            border-right: 2px solid var(--admin-primary);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-logo i {
+            font-size: 2rem;
+            color: var(--admin-primary);
+        }
+
+        .sidebar-logo h2 {
+            font-size: 1.5rem;
+            color: var(--white);
+            font-weight: 800;
+        }
+
+        .sidebar-user {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+
+        .sidebar-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--admin-primary);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+
+        .sidebar-user-info {
+            flex: 1;
+        }
+
+        .sidebar-user-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .sidebar-user-role {
+            font-size: 0.75rem;
+            color: var(--admin-primary);
+            font-weight: 600;
+        }
+
+        /* Navegación */
+        .sidebar-nav {
+            flex: 1;
+            padding: 1.5rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .nav-items {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--white);
+            border-left-color: var(--admin-primary);
+        }
+
+        .nav-link.active {
+            background: rgba(139, 92, 246, 0.2);
+            color: var(--admin-primary);
+            border-left-color: var(--admin-primary);
+            font-weight: 600;
+        }
+
+        .nav-link i {
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--danger);
+            color: var(--white);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 10px;
+            min-width: 22px;
+            text-align: center;
+        }
+
+        /* Footer del sidebar */
+        .sidebar-footer {
+            padding: 1.5rem;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-logout {
+            width: 100%;
+            padding: 0.875rem;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* ============================================
+           CONTENIDO PRINCIPAL
+           ============================================ */
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .admin-header {
+            background: var(--gradient-card);
+            border-bottom: 2px solid rgba(139, 92, 246, 0.2);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-left h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-search {
+            position: relative;
+        }
+
+        .search-input {
+            width: 300px;
+            padding: 0.75rem 1rem 0.75rem 2.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            color: var(--white);
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--admin-primary);
+            width: 350px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-gray);
+            font-size: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-header {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .btn-header:hover {
+            background: var(--admin-light);
+            border-color: var(--admin-primary);
+            transform: scale(1.1);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            background: var(--danger);
+            color: var(--white);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.125rem 0.375rem;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        /* Contenido scrolleable */
+        .content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .content-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .content-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .content-scroll::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.5);
+            border-radius: 4px;
+        }
+
+        .content-scroll::-webkit-scrollbar-thumb:hover {
+            background: var(--admin-primary);
+        }
+
+        /* ============================================
+           MÉTRICAS RÁPIDAS
+           ============================================ */
+
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--gradient-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--admin-shadow);
+            border-color: var(--admin-primary);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.375rem 0.75rem;
+            border-radius: 15px;
+        }
+
+        .trend-up {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6EE7B7;
+        }
+
+        .trend-down {
+            background: rgba(239, 68, 68, 0.2);
+            color: #FCA5A5;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--white);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+            font-weight: 500;
+        }
+
+        .stat-details {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+
+        .stat-detail-item {
+            color: var(--text-gray);
+        }
+
+        .stat-detail-item strong {
+            color: var(--white);
+            margin-left: 0.25rem;
+        }
+
+        /* ============================================
+           GRÁFICOS
+           ============================================ */
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--gradient-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 2px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .chart-filters {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-filter-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-gray);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chart-filter-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--admin-primary);
+            color: var(--white);
+        }
+
+        .chart-filter-btn.active {
+            background: var(--admin-primary);
+            border-color: var(--admin-primary);
+            color: var(--white);
+        }
+
+        .chart-placeholder {
+            height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-gray);
+            font-size: 1rem;
+        }
+
+        /* ============================================
+           TABLAS
+           ============================================ */
+
+        .table-section {
+            background: var(--gradient-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--admin-primary);
+        }
+
+        .btn-view-all {
+            padding: 0.75rem 1.5rem;
+            background: rgba(139, 92, 246, 0.2);
+            color: var(--admin-primary);
+            border: 2px solid var(--admin-primary);
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-view-all:hover {
+            background: var(--admin-primary);
+            color: var(--white);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .data-table thead {
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .data-table th {
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--admin-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table th:first-child {
+            border-top-left-radius: 10px;
+        }
+
+        .data-table th:last-child {
+            border-top-right-radius: 10px;
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            font-size: 0.875rem;
+        }
+
+        .data-table tr:hover {
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar-small {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: var(--admin-primary);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .user-email {
+            font-size: 0.75rem;
+            color: var(--text-gray);
+        }
+
+        .status-badge {
+            padding: 0.375rem 0.875rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .status-activo {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6EE7B7;
+        }
+
+        .status-pendiente {
+            background: rgba(245, 158, 11, 0.2);
+            color: #FCD34D;
+        }
+
+        .status-inactivo {
+            background: rgba(239, 68, 68, 0.2);
+            color: #FCA5A5;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-table-action {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-table-action:hover {
+            background: var(--admin-primary);
+            transform: scale(1.1);
+        }
+
+        /* ============================================
+           ACTIVIDAD RECIENTE
+           ============================================ */
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .activity-item:hover {
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .activity-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-description {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        .activity-time {
+            font-size: 0.75rem;
+            color: var(--text-gray);
+            margin-top: 0.5rem;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+
+        @media (max-width: 1024px) {
+            .admin-sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                transform: translateX(-100%);
+            }
+
+            .admin-sidebar.show {
+                transform: translateX(0);
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-input {
+                width: 200px;
+            }
+
+            .search-input:focus {
+                width: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .header-search {
+                display: none;
+            }
+
+            .content-scroll {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-layout">
+        
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fas fa-crown"></i>
+                    <h2>MITA</h2>
+                </div>
+                <div class="sidebar-user">
+                    <div class="sidebar-avatar">AD</div>
+                    <div class="sidebar-user-info">
+                        <div class="sidebar-user-name">Admin</div>
+                        <div class="sidebar-user-role">Administrador</div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Principal</div>
+                    <ul class="nav-items">
+                        <li class="nav-item">
+                            <a href="/admin/dashboard" class="nav-link active">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/admin/analytics" class="nav-link">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Analytics</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestión</div>
+                    <ul class="nav-items">
+                        <li class="nav-item">
+                            <a href="/admin/tecnicos" class="nav-link">
+                                <i class="fas fa-users-cog"></i>
+                                <span>Técnicos</span>
+                                <span class="nav-badge">8</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/admin/clientes" class="nav-link">
+                                <i class="fas fa-users"></i>
+                                <span>Clientes</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/admin/proveedores" class="nav-link">
+                                <i class="fas fa-truck"></i>
+                                <span>Proveedores</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/admin/servicios" class="nav-link">
+                                <i class="fas fa-briefcase"></i>
+                                <span>Servicios</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Finanzas</div>
+                    <ul class="nav-items">
+                        <li class="nav-item">
+                            <a href="/admin/transacciones" class="nav-link">
+                                <i class="fas fa-dollar-sign"></i>
+                                <span>Transacciones</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/admin/retiros" class="nav-link">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>Retiros</span>
+                                <span class="nav-badge">3</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/admin/comisiones" class="nav-link">
+                                <i class="fas fa-percentage"></i>
+                                <span>Comisiones</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Moderación</div>
+                    <ul class="nav-items">
+                        <li class="nav-item">
+                            <a href="/admin/reportes" class="nav-link">
+                                <i class="fas fa-flag"></i>
+                                <span>Reportes</span>
+                                <span class="nav-badge">2</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/admin/chats" class="nav-link">
+                                <i class="fas fa-comments"></i>
+                                <span>Chats</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/admin/auditoria" class="nav-link">
+                                <i class="fas fa-clipboard-list"></i>
+                                <span>Auditoría</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Sistema</div>
+                    <ul class="nav-items">
+                        <li class="nav-item">
+                            <a href="/admin/configuracion" class="nav-link">
+                                <i class="fas fa-cog"></i>
+                                <span>Configuración</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/admin/notificaciones" class="nav-link">
+                                <i class="fas fa-bell"></i>
+                                <span>Notificaciones</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn-logout" onclick="cerrarSesion()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesión
+                </button>
+            </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <div class="main-content">
+            
+            <!-- Header -->
+            <header class="admin-header">
+                <div class="header-left">
+                    <h1>Dashboard General</h1>
+                    <div class="header-subtitle">
+                        <i class="fas fa-calendar"></i>
+                        <span>Jueves, 20 de Noviembre 2025</span>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <div class="header-search">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" placeholder="Buscar...">
+                    </div>
+
+                    <div class="header-actions">
+                        <button class="btn-header" title="Notificaciones">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">5</span>
+                        </button>
+                        <button class="btn-header" title="Mensajes">
+                            <i class="fas fa-envelope"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                        <button class="btn-header" title="Configuración">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Contenido Scrolleable -->
+            <div class="content-scroll">
+
+                <!-- Métricas Rápidas -->
+                <div class="quick-stats">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--success);">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="stat-trend trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>12.5%</span>
+                            </div>
+                        </div>
+                        <div class="stat-value">S/. 45,320</div>
+                        <div class="stat-label">Ingresos este mes</div>
+                        <div class="stat-details">
+                            <div class="stat-detail-item">
+                                Objetivo: <strong>S/. 50,000</strong>
+                            </div>
+                            <div class="stat-detail-item">
+                                <strong>90.6%</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: rgba(139, 92, 246, 0.2); color: var(--admin-primary);">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <div class="stat-trend trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>8.2%</span>
+                            </div>
+                        </div>
+                        <div class="stat-value">342</div>
+                        <div class="stat-label">Servicios completados</div>
+                        <div class="stat-details">
+                            <div class="stat-detail-item">
+                                Activos: <strong>23</strong>
+                            </div>
+                            <div class="stat-detail-item">
+                                Pendientes: <strong>15</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: rgba(255, 107, 53, 0.2); color: #FF6B35;">
+                                <i class="fas fa-users-cog"></i>
+                            </div>
+                            <div class="stat-trend trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>5.1%</span>
+                            </div>
+                        </div>
+                        <div class="stat-value">147</div>
+                        <div class="stat-label">Técnicos activos</div>
+                        <div class="stat-details">
+                            <div class="stat-detail-item">
+                                Online: <strong>89</strong>
+                            </div>
+                            <div class="stat-detail-item">
+                                Ocupados: <strong>23</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: rgba(255, 205, 17, 0.2); color: #FFCD11;">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-trend trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>15.3%</span>
+                            </div>
+                        </div>
+                        <div class="stat-value">1,234</div>
+                        <div class="stat-label">Usuarios registrados</div>
+                        <div class="stat-details">
+                            <div class="stat-detail-item">
+                                Nuevos hoy: <strong>12</strong>
+                            </div>
+                            <div class="stat-detail-item">
+                                Activos: <strong>890</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficos -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Ingresos mensuales</h3>
+                            <div class="chart-filters">
+                                <button class="chart-filter-btn active">Mes</button>
+                                <button class="chart-filter-btn">Trimestre</button>
+                                <button class="chart-filter-btn">Año</button>
+                            </div>
+                        </div>
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-line" style="font-size: 3rem; opacity: 0.3; margin-right: 1rem;"></i>
+                            <span>Gráfico de líneas (implementar con Chart.js)</span>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Servicios por categoría</h3>
+                            <div class="chart-filters">
+                                <button class="chart-filter-btn active">Semana</button>
+                                <button class="chart-filter-btn">Mes</button>
+                                <button class="chart-filter-btn">Año</button>
+                            </div>
+                        </div>
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-pie" style="font-size: 3rem; opacity: 0.3; margin-right: 1rem;"></i>
+                            <span>Gráfico de pastel (implementar con Chart.js)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Servicios Recientes -->
+                <div class="table-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-clock"></i>
+                            Servicios recientes
+                        </h3>
+                        <button class="btn-view-all" onclick="window.location.href='/admin/servicios'">
+                            Ver todos
+                            <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
+                        </button>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Técnico</th>
+                                <th>Servicio</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#1234</td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar-small">ML</div>
+                                        <div class="user-details">
+                                            <span class="user-name">María López</span>
+                                            <span class="user-email">maria@email.com</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar-small">JD</div>
+                                        <div class="user-details">
+                                            <span class="user-name">Juan Díaz</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Reparación eléctrica</td>
+                                <td><strong>S/. 180</strong></td>
+                                <td><span class="status-badge status-activo">Completado</span></td>
+                                <td>20 Nov, 10:30 AM</td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button class="btn-table-action" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-table-action" title="Descargar">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#1233</td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar-small">CR</div>
+                                        <div class="user-details">
+                                            <span class="user-name">Carlos Ruiz</span>
+                                            <span class="user-email">carlos@email.com</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar-small">MG</div>
+                                        <div class="user-details">
+                                            <span class="user-name">María González</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Gasfitería</td>
+                                <td><strong>S/. 120</strong></td>
+                                <td><span class="status-badge status-activo">En proceso</span></td>
+                                <td>20 Nov, 09:15 AM</td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button class="btn-table-action" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-table-action" title="Chat">
+                                            <i class="fas fa-comments"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#1232</td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar-small">AF</div>
+                                        <div class="user-details">
+                                            <span class="user-name">Ana Fernández</span>
+                                            <span class="user-email">ana@email.com</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar-small">LP</div>
+                                        <div class="user-details">
+                                            <span class="user-name">Luis Paredes</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Cambio de aceite</td>
+                                <td><strong>S/. 90</strong></td>
+                                <td><span class="status-badge status-pendiente">Pendiente</span></td>
+                                <td>20 Nov, 08:45 AM</td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button class="btn-table-action" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Actividad Reciente -->
+                <div class="table-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-history"></i>
+                            Actividad reciente
+                        </h3>
+                    </div>
+
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--success);">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Nuevo técnico aprobado</div>
+                                <div class="activity-description">Juan Díaz Pérez ha sido aprobado y activado en la plataforma</div>
+                                <div class="activity-time">Hace 10 minutos</div>
+                            </div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background: rgba(255, 107, 53, 0.2); color: #FF6B35;">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Servicio completado</div>
+                                <div class="activity-description">María López completó un servicio de electricidad por S/. 180</div>
+                                <div class="activity-time">Hace 25 minutos</div>
+                            </div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background: rgba(245, 158, 11, 0.2); color: var(--warning);">
+                                <i class="fas fa-flag"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Nuevo reporte</div>
+                                <div class="activity-description">Usuario reportó comportamiento inapropiado en chat</div>
+                                <div class="activity-time">Hace 1 hora</div>
+                            </div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background: rgba(59, 130, 246, 0.2); color: #3B82F6;">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Solicitud de retiro</div>
+                                <div class="activity-description">Carlos Gómez solicitó retiro de S/. 500 a su cuenta BCP</div>
+                                <div class="activity-time">Hace 2 horas</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/websocket_client.js"></script>
+    <script>
+        // Auto-conectar WebSocket para admin
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                wsClient.connect(token);
+                
+                // Manejar notificaciones en tiempo real
+                wsClient.on('notificacion', (data) => {
+                    console.log('Nueva notificación:', data);
+                    // Actualizar contador de notificaciones
+                    const badge = document.querySelector('.notification-badge');
+                    if (badge) {
+                        const count = parseInt(badge.textContent) || 0;
+                        badge.textContent = count + 1;
+                    }
+                });
+            }
+        });
+
+        function cerrarSesion() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                localStorage.removeItem('token');
+                wsClient.disconnect();
+                window.location.href = '/admin/login';
+            }
+        }
+
+        console.log('✅ Dashboard admin cargado');
+    </script>
+</body>
+</html>

@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MITA - Presentación de Propuestas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #FFCD11;
+            --dark: #1A2332;
+            --light: #F8F9FA;
+            --text: #2C3E50;
+            --success: #27AE60;
+            --info: #3498DB;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Header */
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .header .subtitle {
+            font-size: 1.25rem;
+            color: #6B7280;
+        }
+        
+        .header .date {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #9CA3AF;
+        }
+        
+        /* Navegación */
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .nav-tab {
+            flex: 1;
+            min-width: 200px;
+            padding: 1rem 1.5rem;
+            background: white;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .nav-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        
+        .nav-tab.active {
+            background: var(--primary);
+            color: var(--dark);
+            border-color: var(--primary);
+        }
+        
+        /* Contenido */
+        .content-section {
+            display: none;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h2 {
+            font-size: 2rem;
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+        
+        h3 {
+            font-size: 1.5rem;
+            color: var(--dark);
+            margin: 2rem 0 1rem;
+        }
+        
+        /* Comparación de versiones */
+        .versions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .version-card {
+            border: 2px solid #E5E7EB;
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .version-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: var(--primary);
+        }
+        
+        .version-card.recommended::before {
+            content: 'RECOMENDADA';
+            position: absolute;
+            top: 20px;
+            right: -35px;
+            background: var(--success);
+            color: white;
+            padding: 0.25rem 3rem;
+            transform: rotate(45deg);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        
+        .version-card h4 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+        
+        .version-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--light);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .version-screenshot {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        
+        .version-card.v1 .version-screenshot {
+            background: linear-gradient(135deg, #1A2332 0%, #0A0E1A 100%);
+        }
+        
+        .version-card.v2 .version-screenshot {
+            background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
+            color: #333;
+        }
+        
+        .version-card.v3 .version-screenshot {
+            background: linear-gradient(135deg, #1A2332 0%, #FFCD11 100%);
+        }
+        
+        .pros-cons {
+            margin: 1rem 0;
+        }
+        
+        .pros-cons h5 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .pros-cons ul {
+            list-style: none;
+            padding-left: 1.5rem;
+        }
+        
+        .pros-cons li {
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .pros-cons li::before {
+            position: absolute;
+            left: -1.5rem;
+        }
+        
+        .pros li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 700;
+        }
+        
+        .cons li::before {
+            content: '×';
+            color: #EF4444;
+            font-weight: 700;
+        }
+        
+        /* Fundamentos técnicos */
+        .fundamento-card {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .fundamento-card h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            color: var(--dark);
+        }
+        
+        .fundamento-card i {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        
+        /* Elementos faltantes */
+        .missing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .missing-item {
+            padding: 1rem;
+            background: #FEF3C7;
+            border: 2px solid #F59E0B;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .missing-item i {
+            font-size: 1.5rem;
+            color: #F59E0B;
+        }
+        
+        .priority-high {
+            background: #FEE2E2;
+            border-color: #EF4444;
+        }
+        
+        .priority-high i {
+            color: #EF4444;
+        }
+        
+        .priority-low {
+            background: #E0F2FE;
+            border-color: #3B82F6;
+        }
+        
+        .priority-low i {
+            color: #3B82F6;
+        }
+        
+        /* Roadmap */
+        .roadmap {
+            margin: 2rem 0;
+        }
+        
+        .roadmap-phase {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .roadmap-phase::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 60px;
+            bottom: -40px;
+            width: 2px;
+            background: var(--primary);
+        }
+        
+        .roadmap-phase:last-child::before {
+            display: none;
+        }
+        
+        .phase-number {
+            width: 60px;
+            height: 60px;
+            background: var(--primary);
+            color: var(--dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(255,205,17,0.3);
+        }
+        
+        .phase-content {
+            flex: 1;
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+        
+        .phase-content h4 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .phase-content ul {
+            margin-top: 0.5rem;
+            padding-left: 1.5rem;
+        }
+        
+        /* CTA */
+        .cta-section {
+            background: linear-gradient(135deg, var(--dark) 0%, #0A0E1A 100%);
+            color: white;
+            padding: 3rem;
+            border-radius: 16px;
+            text-align: center;
+            margin-top: 3rem;
+        }
+        
+        .cta-section h3 {
+            color: white;
+            margin: 0 0 1rem 0;
+        }
+        
+        .btn-primary {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            background: var(--primary);
+            color: var(--dark);
+            border-radius: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255,205,17,0.4);
+        }
+        
+        /* Tabla comparativa */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .comparison-table th {
+            background: var(--dark);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        
+        .comparison-table tbody tr:hover {
+            background: var(--light);
+        }
+        
+        .check {
+            color: var(--success);
+            font-size: 1.25rem;
+        }
+        
+        .times {
+            color: #EF4444;
+            font-size: 1.25rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .versions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .roadmap-phase {
+                flex-direction: column;
+            }
+            
+            .roadmap-phase::before {
+                left: 30px;
+                top: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-tools"></i> MITA</h1>
+            <p class="subtitle">Presentación de Propuestas de Diseño</p>
+            <p class="date"><i class="far fa-calendar"></i> Noviembre 2025 • Versión 1.0</p>
+        </div>
+        
+        <!-- Navegación por pestañas -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="showSection('resumen')">
+                <i class="fas fa-chart-line"></i> Resumen Ejecutivo
+            </div>
+            <div class="nav-tab" onclick="showSection('versiones')">
+                <i class="fas fa-palette"></i> Comparación de Versiones
+            </div>
+            <div class="nav-tab" onclick="showSection('fundamentos')">
+                <i class="fas fa-lightbulb"></i> Fundamentos Técnicos
+            </div>
+            <div class="nav-tab" onclick="showSection('faltantes')">
+                <i class="fas fa-clipboard-list"></i> Elementos Faltantes
+            </div>
+            <div class="nav-tab" onclick="showSection('roadmap')">
+                <i class="fas fa-road"></i> Hoja de Ruta
+            </div>
+        </div>
+        
+        <!-- SECCIÓN 1: RESUMEN EJECUTIVO -->
+        <div id="resumen" class="content-section active">
+            <h2><i class="fas fa-chart-line"></i> Resumen Ejecutivo</h2>
+            
+            <h3>Objetivo del Proyecto</h3>
+            <p style="font-size: 1.125rem; margin-bottom: 2rem;">
+                Desarrollar una <strong>Progressive Web App (PWA)</strong> que conecte clientes con técnicos profesionales 
+                para servicios a domicilio, enfocándose en <strong>experiencia móvil premium</strong> y 
+                <strong>conversión eficiente</strong>.
+            </p>
+            
+            <h3>Lo que hemos construido hasta ahora</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
+                <div class="fundamento-card">
+                    <h4><i class="fas fa-code"></i> Estructura Backend</h4>
+                    <p>FastAPI + PostgreSQL + SQLAlchemy configurado y desplegado en Railway</p>
+                </div>
+                <div class="fundamento-card">
+                    <h4><i class="fas fa-paint-brush"></i> 3 Propuestas de Diseño</h4>
+                    <p>Versiones Dark, Clean y Hybrid Professional completamente funcionales</p>
+                </div>
+                <div class="fundamento-card">
+                    <h4><i class="fas fa-mobile-alt"></i> Responsive Design</h4>
+                    <p>Optimizado para móvil, tablet y desktop con enfoque mobile-first</p>
+                </div>
+                <div class="fundamento-card">
+                    <h4><i class="fas fa-rocket"></i> Deployed Live</h4>
+                    <p>Aplicación funcionando en Railway con base de datos PostgreSQL</p>
+                </div>
+            </div>
+            
+            <h3>Stack Tecnológico</h3>
+            <table class="comparison-table">
+                <tr>
+                    <th>Componente</th>
+                    <th>Tecnología</th>
+                    <th>Ventaja</th>
+                </tr>
+                <tr>
+                    <td><strong>Backend</strong></td>
+                    <td>Python + FastAPI</td>
+                    <td>Alta performance, fácil escalabilidad</td>
+                </tr>
+                <tr>
+                    <td><strong>Base de Datos</strong></td>
+                    <td>PostgreSQL</td>
+                    <td>Robusto, confiable, soporta millones de registros</td>
+                </tr>
+                <tr>
+                    <td><strong>Frontend</strong></td>
+                    <td>HTMX + Vanilla JS</td>
+                    <td>Ligero, rápido, sin dependencias pesadas</td>
+                </tr>
+                <tr>
+                    <td><strong>Notificaciones</strong></td>
+                    <td>Firebase Cloud Messaging</td>
+                    <td>Confiable, push notifications reales</td>
+                </tr>
+                <tr>
+                    <td><strong>Hosting</strong></td>
+                    <td>Railway</td>
+                    <td>Deploy automático, fácil escalabilidad</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- SECCIÓN 2: COMPARACIÓN DE VERSIONES -->
+        <div id="versiones" class="content-section">
+            <h2><i class="fas fa-palette"></i> Comparación de las 3 Propuestas</h2>
+            
+            <div class="versions-grid">
+                <!-- Versión 1: Dark Tech -->
+                <div class="version-card v1">
+                    <h4>Versión 1: Dark Tech</h4>
+                    <span class="version-tag">Energía • Joven • Gaming</span>
+                    
+                    <div class="version-screenshot">
+                        <div>
+                            <i class="fas fa-moon" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                            <p>Fondo oscuro con<br>gradientes animados</p>
+                        </div>
+                    </div>
+                    
+                    <p><strong>Estilo:</strong> Oscuro, animaciones llamativas, gradientes en movimiento</p>
+                    
+                    <div class="pros-cons">
+                        <h5 class="pros"><i class="fas fa-check-circle"></i> Fortalezas</h5>
+                        <ul class="pros">
+                            <li>Alto impacto visual ("WOW factor")</li>
+                            <li>Atractivo para público joven tech-savvy</li>
+                            <li>Diferenciación en el mercado</li>
+                            <li>Animaciones que captan atención</li>
+                        </ul>
+                        
+                        <h5 class="cons"><i class="fas fa-times-circle"></i> Consideraciones</h5>
+                        <ul class="cons">
+                            <li>Puede cansar vista en uso prolongado</li>
+                            <li>Menor legibilidad en exteriores</li>
+                            <li>Puede parecer "demasiado gaming"</li>
+                        </ul>
+                    </div>
+                    
+                    <p><strong>Target:</strong> 18-35 años, urbano, tecnológico</p>
+                </div>
+                
+                <!-- Versión 2: Clean Premium -->
+                <div class="version-card v2">
+                    <h4>Versión 2: Clean Premium</h4>
+                    <span class="version-tag">Minimalista • Profesional • Apple-like</span>
+                    
+                    <div class="version-screenshot">
+                        <div>
+                            <i class="fas fa-sun" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                            <p>Fondo claro, estilo<br>minimalista premium</p>
+                        </div>
+                    </div>
+                    
+                    <p><strong>Estilo:</strong> Claro, espacios amplios, tipografía elegante, sutileza</p>
+                    
+                    <div class="pros-cons">
+                        <h5 class="pros"><i class="fas fa-check-circle"></i> Fortalezas</h5>
+                        <ul class="pros">
+                            <li>Máxima legibilidad</li>
+                            <li>Percepción de calidad premium</li>
+                            <li>Apariencia profesional confiable</li>
+                            <li>Público más amplio</li>
+                        </ul>
+                        
+                        <h5 class="cons"><i class="fas fa-times-circle"></i> Consideraciones</h5>
+                        <ul class="cons">
+                            <li>Menos impacto inicial</li>
+                            <li>Puede parecer "genérico"</li>
+                            <li>Requiere contenido de alta calidad</li>
+                        </ul>
+                    </div>
+                    
+                    <p><strong>Target:</strong> 25-55 años, todos los niveles socioeconómicos</p>
+                </div>
+                
+                <!-- Versión 3: Hybrid Professional -->
+                <div class="version-card v3 recommended">
+                    <h4>Versión 3: Hybrid Professional</h4>
+                    <span class="version-tag" style="background: var(--success); color: white;">Recomendada</span>
+                    
+                    <div class="version-screenshot">
+                        <div>
+                            <i class="fas fa-video" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                            <p>Video vertical + diseño<br>híbrido profesional</p>
+                        </div>
+                    </div>
+                    
+                    <p><strong>Estilo:</strong> Video prominente, iconos profesionales, balance dark/light</p>
+                    
+                    <div class="pros-cons">
+                        <h5 class="pros"><i class="fas fa-check-circle"></i> Fortalezas</h5>
+                        <ul class="pros">
+                            <li><strong>Video explica el servicio visualmente</strong></li>
+                            <li>Balance perfecto: impacto + profesionalismo</li>
+                            <li>Iconos Font Awesome (no emojis infantiles)</li>
+                            <li>Mejor tasa de conversión esperada</li>
+                            <li>Combina lo mejor de V1 y V2</li>
+                        </ul>
+                        
+                        <h5 class="cons"><i class="fas fa-times-circle"></i> Consideraciones</h5>
+                        <ul class="cons">
+                            <li>Requiere video de calidad producido</li>
+                            <li>Mayor consumo de datos inicial</li>
+                        </ul>
+                    </div>
+                    
+                    <p><strong>Target:</strong> 22-50 años, clases A/B, buscan confiabilidad</p>
+                </div>
+            </div>
+            
+            <h3>Tabla Comparativa Técnica</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Característica</th>
+                        <th>V1 Dark</th>
+                        <th>V2 Clean</th>
+                        <th>V3 Hybrid</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Tasa de conversión esperada</strong></td>
+                        <td>Alta (energía)</td>
+                        <td>Alta (confianza)</td>
+                        <td><strong>Muy Alta</strong> (equilibrio)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Legibilidad móvil</strong></td>
+                        <td>Media</td>
+                        <td>Excelente</td>
+                        <td>Excelente</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tiempo de carga</strong></td>
+                        <td>Rápido</td>
+                        <td>Muy rápido</td>
+                        <td>Medio (por video)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Diferenciación</strong></td>
+                        <td>Alta</td>
+                        <td>Media</td>
+                        <td>Muy Alta</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Profesionalismo percibido</strong></td>
+                        <td>Medio</td>
+                        <td>Muy Alto</td>
+                        <td>Muy Alto</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Accesibilidad</strong></td>
+                        <td>Media</td>
+                        <td>Excelente</td>
+                        <td>Muy Buena</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- SECCIÓN 3: FUNDAMENTOS TÉCNICOS -->
+        <div id="fundamentos" class="content-section">
+            <h2><i class="fas fa-lightbulb"></i> Fundamentos Técnicos</h2>
+            
+            <h3>1. UX (User Experience) - Experiencia de Usuario</h3>
+            
+            <div class="fundamento-card">
+                <h4><i class="fas fa-mobile-alt"></i> Mobile-First Design</h4>
+                <p><strong>Fundamento:</strong> 85% de los usuarios en Perú acceden desde móviles.</p>
+                <p><strong>Implementación:</strong></p>
+                <ul>
+                    <li>Botones grandes (mínimo 44x44px) para fácil tap</li>
+                    <li>Navegación inferior fija (thumb-friendly)</li>
+                    <li>Formularios simples con mínimos campos</li>
+                    <li>Carga progresiva de contenido</li>
+                </ul>
+            </div>
+            
+            <div class="fundamento-card">
+                <h4><i class="fas fa-bolt"></i> Principio de 3 Clicks</h4>
+                <p><strong>Fundamento:</strong> Usuario debe poder solicitar un servicio en máximo 3 clics.</p>
+                <p><strong>Flujo actual:</strong></p>
+                <ul>
+                    <li><strong>Click 1:</strong> Seleccionar servicio (ej: Cambio de aceite)</li>
+                    <li><strong>Click 2:</strong> Confirmar datos y ubicación</li>
+                    <li><strong>Click 3:</strong> Pagar y confirmar</li>
+                </ul>
+            </div>
+            
+            <div class="fundamento-card">
+                <h4><i class="fas fa-eye"></i> Jerarquía Visual</h4>
+                <p><strong>Fundamento:</strong> El ojo humano escanea en patrón F o Z.</p>
+                <p><strong>Implementación:</strong></p>
+                <ul>
+                    <li>Video/Hero en la parte superior (máxima atención)</li>
+                    <li>CTAs (Call To Action) con color amarillo distintivo</li>
+                    <li>Servicios en cards visuales con iconos claros</li>
+                    <li>Testimonios con fotos reales (confianza)</li>
+                </ul>
+            </div>
+            
+            <h3>2. UI (User Interface) - Interfaz de Usuario</h3>
+            
+            <div class="fundamento-card">
+                <h4><i class="fas fa-palette"></i> Psicología del Color</h4>
+                <p><strong>Amarillo (#FFCD11):</strong></p>
+                <ul>
+                    <li>Asociado con optimismo, energía y rapidez</li>
+                    <li>Alta visibilidad (llama la atención)</li>
+                    <li>Marca CAT = confiabilidad industrial</li>
+                </ul>
+                <p><strong>Azul Oscuro (#1A2332):</strong></p>
+                <ul>
+                    <li>Confianza, profesionalismo, estabilidad</li>
+                    <li>Balance perfecto con amarillo</li>
+                </ul>
+            </div>
+            
+            <div class="fundamento-card">
+                <h4><i class="fas fa-text-height"></i> Tipografía</h4>
+                <p><strong>Fundamento:</strong> Sans-serif para web (mejor legibilidad en pantallas).</p>
+                <p><strong>Sistema de fuentes:</strong></p>
+                <ul>
+                    <li>Inter/SF Pro: Moderna, limpia, excelente en pantallas pequeñas</li>
+                    <li>Tamaños: Mínimo 16px en móvil (accesibilidad)</li>
+                    <li>Contraste: Mínimo 4.5:1 (WCAG AA)</li>
+                </ul>
+            </div>
+            
+            <div class="fundamento-card">
+                <h4><i class="fas fa-icons"></i> Iconografía</h4>
+                <p><strong>Fundamento:</strong> Procesamos imágenes 60,000x más rápido que texto.</p>
+                <p><strong>Implementación:</strong></p>
+                <ul>
+                    <li><strong>V3 usa Font Awesome:</strong> Iconos profesionales, consistentes</li>
+                    <li>Evitamos emojis (pueden verse infantiles en contexto B2C serio)</li>
+                    <li>Cada servicio tiene ícono único reconocible</li>
+                </ul>
+            </div>
+            
+            <h3>3. Marketing Digital</h3>
+            
+            <div class="fundamento-card">
+                <h4><i class="fas fa-chart-line"></i> Optimización de Conversión (CRO)</h4>
+                <p><strong>Elementos implementados:</strong></p>
+                <ul>
+                    <li><strong>Social Proof:</strong> "2,500+ servicios realizados" (confianza)</li>
+                    <li><strong>Urgencia:</strong> "Técnicos disponibles ahora" (FOMO)</li>
+                    <li><strong>Claridad:</strong> Precios desde el inicio (transparencia)</li>
+                    <li><strong>Garantías:</strong> "30 días de garantía" (reduce riesgo percibido)</li>
+                </ul>
+            </div>
+            
+            <div class="fundamento-card">
+                <h4><i class="fas fa-user-check"></i> Reducción de Fricción</h4>
+                <p><strong>Fundamento:</strong> Cada campo extra en formulario reduce conversión 4-5%.</p>
+                <p><strong>Estrategia:</strong></p>
+                <ul>
+                    <li>Login con WhatsApp (sin password, 1 campo menos)</li>
+                    <li>Geolocalización automática (sin escribir dirección)</li>
+                    <li>Pago con Yape/Plin (familiaridad = confianza)</li>
+                </ul>
+            </div>
+            
+            <h3>4. PWA (Progressive Web App)</h3>
+            
+            <div class="fundamento-card">
+                <h4><i class="fas fa-download"></i> ¿Por qué PWA en lugar de App Nativa?</h4>
+                <p><strong>Ventajas:</strong></p>
+                <ul>
+                    <li><strong>Sin descarga:</strong> Funciona inmediatamente desde el navegador</li>
+                    <li><strong>Instalable:</strong> Se puede "agregar a inicio" como app nativa</li>
+                    <li><strong>Offline:</strong> Funciona sin internet (caché)</li>
+                    <li><strong>Push notifications:</strong> Igual que app nativa</li>
+                    <li><strong>Costo:</strong> 1 desarrollo vs 2 (iOS + Android)</li>
+                    <li><strong>Actualizaciones:</strong> Instantáneas (sin App Store delays)</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- SECCIÓN 4: ELEMENTOS FALTANTES -->
+        <div id="faltantes" class="content-section">
+            <h2><i class="fas fa-clipboard-list"></i> Elementos Faltantes a Desarrollar</h2>
+            
+            <h3>Prioridad Alta (Críticos para MVP)</h3>
+            <div class="missing-grid">
+                <div class="missing-item priority-high">
+                    <i class="fas fa-file-alt"></i>
+                    <div>
+                        <strong>Formularios de solicitud</strong>
+                        <p>Para cada servicio (4 formularios)</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item priority-high">
+                    <i class="fas fa-user-circle"></i>
+                    <div>
+                        <strong>Registro/Login cliente</strong>
+                        <p>WhatsApp + DNI + ubicación</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item priority-high">
+                    <i class="fas fa-user-tie"></i>
+                    <div>
+                        <strong>Panel del técnico</strong>
+                        <p>Dashboard + aceptar servicios</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item priority-high">
+                    <i class="fas fa-credit-card"></i>
+                    <div>
+                        <strong>Integración de pagos</strong>
+                        <p>Culqi + Yape/Plin</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item priority-high">
+                    <i class="fas fa-bell"></i>
+                    <div>
+                        <strong>Sistema de notificaciones</strong>
+                        <p>Firebase FCM setup completo</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item priority-high">
+                    <i class="fas fa-video"></i>
+                    <div>
+                        <strong>Video institucional</strong>
+                        <p>15-30 segundos vertical</p>
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Prioridad Media (Importantes)</h3>
+            <div class="missing-grid">
+                <div class="missing-item">
+                    <i class="fas fa-history"></i>
+                    <div>
+                        <strong>Historial de servicios</strong>
+                        <p>Cliente ve servicios pasados</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item">
+                    <i class="fas fa-star"></i>
+                    <div>
+                        <strong>Sistema de calificaciones</strong>
+                        <p>Cliente califica técnico</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <div>
+                        <strong>Integración tienda aceites</strong>
+                        <p>API o catálogo productos</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item">
+                    <i class="fas fa-user-shield"></i>
+                    <div>
+                        <strong>Panel administrativo</strong>
+                        <p>Ver servicios, usuarios, reportes</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item">
+                    <i class="fas fa-wallet"></i>
+                    <div>
+                        <strong>Panel de ganancias técnico</strong>
+                        <p>Ver pagos, comisiones</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <div>
+                        <strong>Analytics dashboard</strong>
+                        <p>Métricas de uso y conversión</p>
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Prioridad Baja (Mejoras futuras)</h3>
+            <div class="missing-grid">
+                <div class="missing-item priority-low">
+                    <i class="fas fa-comments"></i>
+                    <div>
+                        <strong>Chat en tiempo real</strong>
+                        <p>Cliente-técnico</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item priority-low">
+                    <i class="fas fa-gift"></i>
+                    <div>
+                        <strong>Sistema de referidos</strong>
+                        <p>Descuentos por recomendar</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item priority-low">
+                    <i class="fas fa-ticket-alt"></i>
+                    <div>
+                        <strong>Cupones de descuento</strong>
+                        <p>Códigos promocionales</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item priority-low">
+                    <i class="fas fa-language"></i>
+                    <div>
+                        <strong>Multiidioma</strong>
+                        <p>Español/Inglés</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item priority-low">
+                    <i class="fas fa-blog"></i>
+                    <div>
+                        <strong>Blog/Contenido</strong>
+                        <p>Tips de mantenimiento, SEO</p>
+                    </div>
+                </div>
+                
+                <div class="missing-item priority-low">
+                    <i class="fas fa-mobile-alt"></i>
+                    <div>
+                        <strong>App nativa iOS/Android</strong>
+                        <p>Si PWA no es suficiente</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECCIÓN 5: HOJA DE RUTA -->
+        <div id="roadmap" class="content-section">
+            <h2><i class="fas fa-road"></i> Hoja de Ruta de Desarrollo</h2>
+            
+            <p style="font-size: 1.125rem; margin-bottom: 2rem;">
+                Plan de desarrollo ágil con entregas semanales para validar rápidamente con usuarios reales.
+            </p>
+            
+            <div class="roadmap">
+                <div class="roadmap-phase">
+                    <div class="phase-number">1</div>
+                    <div class="phase-content">
+                        <h4>Fase 1: Decisión de Diseño (Esta reunión)</h4>
+                        <p><strong>Duración:</strong> 1-2 días</p>
+                        <p><strong>Objetivo:</strong> Cliente elige versión o elementos a combinar</p>
+                        <ul>
+                            <li>Revisión de las 3 propuestas</li>
+                            <li>Decisión sobre paleta de colores y estilo</li>
+                        <!--    
+                            <li>Aprobación de video institucional (guion/storyboard)</li>
+                        -->
+                            <li>Priorización de funcionalidades</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="roadmap-phase">
+                    <div class="phase-number">2</div>
+                    <div class="phase-content">
+                        <h4>Fase 2: Flujo Cliente Completo (Semanas 1-2)</h4>
+                        <p><strong>Duración:</strong> 2 semanas</p>
+                        <p><strong>Entregables:</strong></p>
+                        <ul>
+                            <li>Registro/Login con WhatsApp y validación DNI</li>
+                            <li>Formularios de solicitud para 4 servicios</li>
+                            <li>Integración con tienda de aceites (catálogo)</li>
+                            <li>Página "Buscando técnico" con estados</li>
+                            <li>Confirmación y tracking de servicio</li>
+                        </ul>
+                        <p><strong>Demo al final de semana 2</strong></p>
+                    </div>
+                </div>
+                
+                <div class="roadmap-phase">
+                    <div class="phase-number">3</div>
+                    <div class="phase-content">
+                        <h4>Fase 3: Panel del Técnico (Semanas 3-4)</h4>
+                        <p><strong>Duración:</strong> 2 semanas</p>
+                        <p><strong>Entregables:</strong></p>
+                        <ul>
+                            <li>Registro de técnicos con verificación</li>
+                            <li>Dashboard con solicitudes disponibles</li>
+                            <li>Sistema de notificaciones push (Firebase)</li>
+                            <li>Aceptar/rechazar servicios</li>
+                            <li>Marcar servicio como completado</li>
+                            <li>Ver historial y ganancias</li>
+                        </ul>
+                        <p><strong>Demo al final de semana 4</strong></p>
+                    </div>
+                </div>
+                
+                <div class="roadmap-phase">
+                    <div class="phase-number">4</div>
+                    <div class="phase-content">
+                        <h4>Fase 4: Pagos y Calificaciones (Semanas 5-6)</h4>
+                        <p><strong>Duración:</strong> 2 semanas</p>
+                        <p><strong>Entregables:</strong></p>
+                        <ul>
+                            <li>Integración Culqi (tarjetas)</li>
+                            <li>Integración Yape/Plin (via Tunki o similar)</li>
+                            <li>Sistema de calificaciones cliente→técnico</li>
+                            <li>Historial de transacciones</li>
+                            <li>Gestión de reembolsos</li>
+                        </ul>
+                        <p><strong>MVP funcional completo</strong></p>
+                    </div>
+                </div>
+                
+                <div class="roadmap-phase">
+                    <div class="phase-number">5</div>
+                    <div class="phase-content">
+                        <h4>Fase 5: Panel Admin y Testing (Semanas 7-8)</h4>
+                        <p><strong>Duración:</strong> 2 semanas</p>
+                        <p><strong>Entregables:</strong></p>
+                        <ul>
+                            <li>Dashboard administrativo completo</li>
+                            <li>Gestión de usuarios (clientes/técnicos)</li>
+                            <li>Reportes y analytics</li>
+                            <li>Testing exhaustivo (usuarios beta)</li>
+                            <li>Corrección de bugs</li>
+                            <li>Optimización de performance</li>
+                        </ul>
+                        <p><strong>Lanzamiento Beta</strong></p>
+                    </div>
+                </div>
+                
+                <div class="roadmap-phase">
+                    <div class="phase-number">6</div>
+                    <div class="phase-content">
+                        <h4>Fase 6: Lanzamiento y Mejoras (Semanas 9+)</h4>
+                        <p><strong>Duración:</strong> Continuo</p>
+                        <p><strong>Actividades:</strong></p>
+                        <ul>
+                            <li>Lanzamiento oficial</li>
+                            <li>Marketing y adquisición de usuarios</li>
+                            <li>Monitoreo de métricas clave</li>
+                            <li>Iteración basada en feedback real</li>
+                            <li>Implementación de funcionalidades fase 2</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Carácter de PWA (Progressive Web App)</h3>
+            <div class="fundamento-card">
+                <h4><i class="fas fa-mobile-screen-button"></i> Sensación de App Nativa</h4>
+                <p>A partir de la Fase 2, implementaremos características PWA:</p>
+                <ul>
+                    <li><strong>Instalable:</strong> Botón "Agregar a pantalla de inicio"</li>
+                    <li><strong>Splash screen:</strong> Pantalla de carga con logo al abrir</li>
+                    <li><strong>Sin barra de navegador:</strong> Modo "standalone" (fullscreen)</li>
+                    <li><strong>Icono en launcher:</strong> Como cualquier app nativa</li>
+                    <li><strong>Gestos nativos:</strong> Swipe, pull-to-refresh, etc.</li>
+                    <li><strong>Offline mode:</strong> Funciona sin internet (básico)</li>
+                    <li><strong>Push notifications:</strong> Notificaciones reales en dispositivo</li>
+                </ul>
+                <p><strong>Resultado:</strong> Usuario no notará diferencia vs app de Google Play/App Store</p>
+            </div>
+        </div>
+        
+        <!-- CTA Final -->
+        <div class="cta-section">
+            <h3>Próximos Pasos</h3>
+            <p style="margin-bottom: 2rem; font-size: 1.125rem;">
+                ¿Listo para definir el diseño y arrancar el desarrollo?
+            </p>
+            <a href="#" class="btn-primary" onclick="alert('Aquí iría formulario de feedback o agendar reunión')">
+                <i class="fas fa-calendar-check"></i> Agendar reunión de decisión
+            </a>
+            <a href="#" class="btn-primary" onclick="alert('Aquí iría formulario de comentarios')">
+                <i class="fas fa-comments"></i> Dejar comentarios
+            </a>
+            <p style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.8;">
+                <i class="fas fa-clock"></i> Duración estimada de reunión: 30-45 minutos
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        function showSection(sectionId) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Quitar active de todas las tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar sección seleccionada
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Marcar tab como active
+            event.target.closest('.nav-tab').classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>

@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1A2332">
+    <title>MITA - Servicios técnicos profesionales a domicilio</title>
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="/static/css/home_cliente_v3.css">
+    <!-- Font Awesome para iconos profesionales -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    
+    <!-- Header Profesional -->
+    <header class="header-professional">
+        <div class="header-container">
+            <div class="logo-professional">
+                <div class="logo-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <span class="logo-text">MITA</span>
+            </div>
+            
+            <nav class="main-nav">
+                <a href="#servicios" class="nav-link">Servicios</a>
+                <a href="#como-funciona" class="nav-link">Cómo funciona</a>
+                <a href="#garantias" class="nav-link">Garantías</a>
+            </nav>
+            
+            <div class="header-right">
+                <button class="btn-icon-header" onclick="abrirNotificaciones()">
+                    <i class="far fa-bell"></i>
+                    <span class="notification-dot"></span>
+                </button>
+                <button class="btn-icon-header" onclick="abrirPerfil()">
+                    <i class="far fa-user-circle"></i>
+                </button>
+                <button class="btn-header-cta" onclick="scrollToServices()">
+                    Solicitar servicio
+                </button>
+            </div>
+            
+            <!-- Menú móvil -->
+            <button class="btn-menu-mobile" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero con Video Vertical -->
+    <section class="hero-video-section">
+        <div class="video-container-main">
+            <!-- Video vertical principal -->
+            <div class="video-player-wrapper">
+                <video 
+                    id="heroVideo" 
+                    class="hero-video"
+                    playsinline
+                    muted
+                    poster="/static/img/video-poster-vertical.jpg">
+                    <source src="/static/vid/presentacion.mp4" type="video/mp4">
+                    <source src="/static/vid/presentacion.webm" type="video/webm">
+                </video>
+                
+                <!-- Overlay gradiente -->
+                <div class="video-overlay-gradient"></div>
+                
+                <!-- Contenido sobre el video -->
+                <div class="video-content-overlay">
+                    <div class="video-badge">
+                        <i class="fas fa-star"></i>
+                        <span>Más de 2,500 servicios realizados</span>
+                    </div>
+                    
+                    <h1 class="video-hero-title">
+                        Servicios técnicos<br>
+                        <span class="title-highlight">profesionales</span><br>
+                        a domicilio
+                    </h1>
+                    
+                    <p class="video-hero-subtitle">
+                        Conectamos técnicos certificados con quienes<br class="hide-mobile">
+                        necesitan servicios de calidad en su hogar
+                    </p>
+                    
+                    <div class="video-features-row">
+                        <div class="video-feature-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Verificados</span>
+                        </div>
+                        <div class="video-feature-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Rápidos</span>
+                        </div>
+                        <div class="video-feature-item">
+                            <i class="fas fa-award"></i>
+                            <span>Garantizados</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Controles de video -->
+                <div class="video-controls-overlay">
+                    <button class="btn-video-control" id="playPauseBtn" onclick="toggleVideoPlay()">
+                        <i class="fas fa-play" id="playIcon"></i>
+                    </button>
+                    <button class="btn-video-control" id="muteBtn" onclick="toggleVideoMute()">
+                        <i class="fas fa-volume-mute" id="volumeIcon"></i>
+                    </button>
+                </div>
+                
+                <!-- Barra de progreso del video -->
+                <div class="video-progress-container">
+                    <div class="video-progress-bar" id="videoProgress"></div>
+                </div>
+            </div>
+            
+            <!-- Mensaje al terminar el video / CTA -->
+            <div class="video-end-cta" id="videoEndCTA">
+                <div class="end-cta-content">
+                    <h2>¿Listo para comenzar?</h2>
+                    <p>Descubre nuestros servicios y agenda tu cita ahora</p>
+                    <button class="btn-cta-primary" onclick="scrollToServices()">
+                        <i class="fas fa-th-large"></i>
+                        Ver servicios disponibles
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Indicador de scroll -->
+        <div class="scroll-indicator-wrapper" onclick="scrollToServices()">
+            <div class="scroll-mouse">
+                <div class="scroll-wheel"></div>
+            </div>
+            <p class="scroll-text">Desliza para explorar</p>
+        </div>
+    </section>
+
+    <!-- Cómo Funciona -->
+    <section class="how-it-works-professional" id="como-funciona">
+        <div class="container-professional">
+            <div class="section-header-pro">
+                <span class="section-tag">Proceso</span>
+                <h2 class="section-title-pro">Tres pasos simples</h2>
+                <p class="section-description-pro">
+                    Resolvemos tu problema de manera eficiente y profesional
+                </p>
+            </div>
+            
+            <div class="process-timeline">
+                <div class="process-step">
+                    <div class="step-number-circle">
+                        <span class="step-num">01</span>
+                    </div>
+                    <div class="step-icon-pro">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="step-title-pro">Solicita el servicio</h3>
+                    <p class="step-description-pro">
+                        Selecciona el tipo de servicio, fecha y ubicación desde nuestra plataforma
+                    </p>
+                </div>
+                
+                <div class="process-connector"></div>
+                
+                <div class="process-step">
+                    <div class="step-number-circle">
+                        <span class="step-num">02</span>
+                    </div>
+                    <div class="step-icon-pro">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h3 class="step-title-pro">Asignamos técnico</h3>
+                    <p class="step-description-pro">
+                        Conectamos con el profesional verificado más cercano disponible
+                    </p>
+                </div>
+                
+                <div class="process-connector"></div>
+                
+                <div class="process-step">
+                    <div class="step-number-circle">
+                        <span class="step-num">03</span>
+                    </div>
+                    <div class="step-icon-pro">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3 class="step-title-pro">Servicio completo</h3>
+                    <p class="step-description-pro">
+                        Trabajo profesional garantizado con seguimiento post-servicio
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Servicios Profesionales -->
+    <section class="services-professional" id="servicios">
+        <div class="container-professional">
+            <div class="section-header-pro">
+                <span class="section-tag">Servicios</span>
+                <h2 class="section-title-pro">¿Qué necesitas?</h2>
+                <p class="section-description-pro">
+                    Soluciones profesionales para tu hogar y vehículo
+                </p>
+            </div>
+            
+            <div class="services-grid-pro">
+                
+                <!-- Servicio 1: Cambio de Aceite -->
+                <article class="service-card-pro" onclick="irAServicio('aceite')">
+                    <div class="service-icon-container" style="--service-color: #FFCD11;">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <div class="service-content-pro">
+                        <div class="service-header-pro">
+                            <h3>Cambio de aceite</h3>
+                            <span class="service-price-tag">Desde S/50</span>
+                        </div>
+                        <p class="service-desc-pro">
+                            Servicio móvil con aceites premium y filtros de alta calidad
+                        </p>
+                        <ul class="service-benefits">
+                            <li><i class="fas fa-check"></i> Servicio a domicilio</li>
+                            <li><i class="fas fa-check"></i> Duración: 30-45 min</li>
+                            <li><i class="fas fa-check"></i> Aceite y filtro incluidos</li>
+                        </ul>
+                        <button class="btn-service-pro">
+                            Solicitar ahora
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="service-badge-corner">Popular</div>
+                </article>
+                
+                <!-- Servicio 2: Electricidad -->
+                <article class="service-card-pro" onclick="irAServicio('electricidad')">
+                    <div class="service-icon-container" style="--service-color: #4A90E2;">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="service-content-pro">
+                        <div class="service-header-pro">
+                            <h3>Electricidad</h3>
+                            <span class="service-price-tag">Desde S/80</span>
+                        </div>
+                        <p class="service-desc-pro">
+                            Instalaciones y reparaciones eléctricas certificadas y seguras
+                        </p>
+                        <ul class="service-benefits">
+                            <li><i class="fas fa-check"></i> Técnicos certificados</li>
+                            <li><i class="fas fa-check"></i> Diagnóstico incluido</li>
+                            <li><i class="fas fa-check"></i> Garantía de trabajo</li>
+                        </ul>
+                        <button class="btn-service-pro">
+                            Solicitar ahora
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </article>
+                
+                <!-- Servicio 3: Gasfitería -->
+                <article class="service-card-pro" onclick="irAServicio('gasfiteria')">
+                    <div class="service-icon-container" style="--service-color: #27AE60;">
+                        <i class="fas fa-wrench"></i>
+                    </div>
+                    <div class="service-content-pro">
+                        <div class="service-header-pro">
+                            <h3>Gasfitería</h3>
+                            <span class="service-price-tag">Desde S/70</span>
+                        </div>
+                        <p class="service-desc-pro">
+                            Reparaciones de agua, desagüe y sistemas sanitarios
+                        </p>
+                        <ul class="service-benefits">
+                            <li><i class="fas fa-check"></i> Urgencias 24/7</li>
+                            <li><i class="fas fa-check"></i> Herramientas propias</li>
+                            <li><i class="fas fa-check"></i> Trabajo garantizado</li>
+                        </ul>
+                        <button class="btn-service-pro">
+                            Solicitar ahora
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="service-badge-corner">24/7</div>
+                </article>
+                
+                <!-- Servicio 4: Electrodomésticos -->
+                <article class="service-card-pro" onclick="irAServicio('electrodomesticos')">
+                    <div class="service-icon-container" style="--service-color: #9B59B6;">
+                        <i class="fas fa-tv"></i>
+                    </div>
+                    <div class="service-content-pro">
+                        <div class="service-header-pro">
+                            <h3>Electrodomésticos</h3>
+                            <span class="service-price-tag">Desde S/90</span>
+                        </div>
+                        <p class="service-desc-pro">
+                            Reparación especializada de lavadoras, refrigeradoras y más
+                        </p>
+                        <ul class="service-benefits">
+                            <li><i class="fas fa-check"></i> Técnicos especializados</li>
+                            <li><i class="fas fa-check"></i> Repuestos originales</li>
+                            <li><i class="fas fa-check"></i> Garantía 30 días</li>
+                        </ul>
+                        <button class="btn-service-pro">
+                            Solicitar ahora
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </article>
+                
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonios -->
+    <section class="testimonials-professional">
+        <div class="container-professional">
+            <div class="section-header-pro">
+                <span class="section-tag">Testimonios</span>
+                <h2 class="section-title-pro">Lo que dicen nuestros clientes</h2>
+            </div>
+            
+            <div class="testimonials-slider" id="testimonialsSlider">
+                
+                <div class="testimonial-card-pro">
+                    <div class="testimonial-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text-pro">
+                        "Excelente servicio. El mecánico llegó puntual, cambió el aceite en 40 minutos y dejó todo limpio. La plataforma es muy fácil de usar."
+                    </p>
+                    <div class="testimonial-author-pro">
+                        <div class="author-avatar-pro">
+                            <img src="/static/img/avatars/maria.jpg" alt="María López" onerror="this.parentElement.innerHTML='ML'">
+                        </div>
+                        <div class="author-details">
+                            <h4>María López</h4>
+                            <p>San Isidro • Cambio de aceite</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card-pro">
+                    <div class="testimonial-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text-pro">
+                        "Resolvieron mi problema eléctrico en menos de 2 horas. El técnico era muy profesional y explicó todo. Totalmente recomendado."
+                    </p>
+                    <div class="testimonial-author-pro">
+                        <div class="author-avatar-pro">
+                            <img src="/static/img/avatars/carlos.jpg" alt="Carlos Ruiz" onerror="this.parentElement.innerHTML='ML'">
+                        </div>
+                        <div class="author-details">
+                            <h4>Carlos Ruiz</h4>
+                            <p>Miraflores • Electricidad</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card-pro">
+                    <div class="testimonial-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text-pro">
+                        "Mi lavadora dejó de funcionar y en 24 horas ya tenían un técnico en casa. La repararon el mismo día. Excelente experiencia."
+                    </p>
+                    <div class="testimonial-author-pro">
+                        <div class="author-avatar-pro">
+                            <img src="/static/img/avatars/ana.jpg" alt="Ana Fernández" onerror="this.parentElement.innerHTML='ML'">
+                        </div>
+                        <div class="author-details">
+                            <h4>Ana Fernández</h4>
+                            <p>Surco • Electrodomésticos</p>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="testimonials-navigation">
+                <button class="btn-testimonial-nav" onclick="prevTestimonialPro()">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="testimonials-dots" id="testimonialsDots"></div>
+                <button class="btn-testimonial-nav" onclick="nextTestimonialPro()">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Garantías y Ventajas -->
+    <section class="guarantees-section" id="garantias">
+        <div class="container-professional">
+            <div class="guarantees-grid">
+                <div class="guarantee-card">
+                    <div class="guarantee-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h3>Técnicos verificados</h3>
+                    <p>Todos nuestros profesionales pasan rigurosas verificaciones de antecedentes y certificaciones</p>
+                </div>
+                
+                <div class="guarantee-card">
+                    <div class="guarantee-icon">
+                        <i class="fas fa-award"></i>
+                    </div>
+                    <h3>Garantía de servicio</h3>
+                    <p>30 días de garantía en todos los trabajos realizados. Tu tranquilidad es nuestra prioridad</p>
+                </div>
+                
+                <div class="guarantee-card">
+                    <div class="guarantee-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h3>Pago seguro</h3>
+                    <p>Transacciones protegidas con encriptación de última generación. Múltiples métodos de pago</p>
+                </div>
+                
+                <div class="guarantee-card">
+                    <div class="guarantee-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3>Soporte 24/7</h3>
+                    <p>Nuestro equipo de atención al cliente está disponible para ayudarte en cualquier momento</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Final -->
+    <section class="cta-final-professional">
+        <div class="cta-final-content">
+            <h2>¿Necesitas un servicio ahora?</h2>
+            <p>Únete a miles de clientes satisfechos que confían en MITA</p>
+            <button class="btn-cta-large-pro" onclick="scrollToServices()">
+                <i class="fas fa-calendar-check"></i>
+                Solicitar servicio
+            </button>
+            <div class="cta-stats">
+                <div class="cta-stat">
+                    <strong>2,500+</strong>
+                    <span>Servicios completados</span>
+                </div>
+                <div class="cta-stat">
+                    <strong>150+</strong>
+                    <span>Técnicos activos</span>
+                </div>
+                <div class="cta-stat">
+                    <strong>4.9/5</strong>
+                    <span>Calificación promedio</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer-professional">
+        <div class="footer-container">
+            <div class="footer-main">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <i class="fas fa-tools"></i>
+                        <span>MITA</span>
+                    </div>
+                    <p class="footer-tagline">
+                        Servicios técnicos profesionales a domicilio
+                    </p>
+                    <div class="footer-social">
+                        <a href="#" class="social-link"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-links-group">
+                    <h4>Servicios</h4>
+                    <a href="/cliente/servicio/aceite">Cambio de aceite</a>
+                    <a href="/cliente/servicio/electricidad">Electricidad</a>
+                    <a href="/cliente/servicio/gasfiteria">Gasfitería</a>
+                    <a href="/cliente/servicio/electrodomesticos">Electrodomésticos</a>
+                </div>
+                
+                <div class="footer-links-group">
+                    <h4>Empresa</h4>
+                    <a href="/nosotros">Nosotros</a>
+                    <a href="/tecnicos">Únete como técnico</a>
+                    <a href="/blog">Blog</a>
+                    <a href="/contacto">Contacto</a>
+                </div>
+                
+                <div class="footer-links-group">
+                    <h4>Legal</h4>
+                    <a href="/politicas/garantias">Garantías</a>
+                    <a href="/politicas/devoluciones">Devoluciones</a>
+                    <a href="/terminos">Términos y condiciones</a>
+                    <a href="/privacidad">Privacidad</a>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 MITA. Todos los derechos reservados.</p>
+                <p>Hecho con <i class="fas fa-heart"></i> en Lima, Perú</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav-professional">
+        <a href="/cliente/home" class="nav-item-bottom active">
+            <i class="fas fa-home"></i>
+            <span>Inicio</span>
+        </a>
+        <a href="/cliente/servicios" class="nav-item-bottom">
+            <i class="fas fa-th-large"></i>
+            <span>Servicios</span>
+        </a>
+        <a href="/cliente/historial" class="nav-item-bottom">
+            <i class="fas fa-history"></i>
+            <span>Historial</span>
+        </a>
+        <a href="/cliente/perfil" class="nav-item-bottom">
+            <i class="fas fa-user"></i>
+            <span>Perfil</span>
+        </a>
+    </nav>
+
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/home_cliente_v3.js"></script>
+</body>
+</html>

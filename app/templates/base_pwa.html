@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Servicios técnicos automotrices a domicilio en Lima">
+    <meta name="theme-color" content="#FFCD11">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MITA">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/icon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/icon-180x180.png">
+    
+    <title>{% block title %}MITA - Servicios a Domicilio{% endblock %}</title>
+    
+    <!-- Estilos -->
+    <!-- CSS base será agregado por cada template -->
+    <!--<link rel="stylesheet" href="/static/css/style.css">-->
+
+    <!-- Notificaciones CSS -->
+    <link rel="stylesheet" href="/static/css/notifications.css">
+    <!-- Chat Widget CSS -->
+    <link rel="stylesheet" href="/static/css/chat-widget.css">
+
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        /* Estilos para instalación PWA */
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #FFCD11 0%, #f5b800 100%);
+            color: #0f1419;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            z-index: 9999;
+            max-width: 90%;
+        }
+        
+        .install-prompt.show {
+            display: flex;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .install-prompt button {
+            background: #0f1419;
+            color: #FFCD11;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .install-prompt button:hover {
+            transform: scale(1.05);
+        }
+        
+        .install-prompt .close-btn {
+            background: transparent;
+            color: #0f1419;
+            padding: 0.5rem;
+            font-size: 1.2rem;
+        }
+        
+        /* Update available banner */
+        .update-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #0f1419;
+            color: #FFCD11;
+            padding: 1rem;
+            text-align: center;
+            display: none;
+            z-index: 9999;
+        }
+        
+        .update-banner.show {
+            display: block;
+        }
+        
+        .update-banner button {
+            background: #FFCD11;
+            color: #0f1419;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            margin-left: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- Banner de actualización -->
+    <div id="updateBanner" class="update-banner">
+        <span>🎉 Nueva versión disponible</span>
+        <button onclick="updateApp()">Actualizar ahora</button>
+    </div>
+    
+    <!-- Prompt de instalación PWA -->
+    <div id="installPrompt" class="install-prompt">
+        <div>
+            <strong>📱 Instala MITA</strong>
+            <p style="margin: 0; font-size: 0.9rem;">Acceso rápido desde tu pantalla de inicio</p>
+        </div>
+        <button id="installBtn">Instalar</button>
+        <button class="close-btn" onclick="closeInstallPrompt()">✕</button>
+    </div>
+    
+    <!-- Contenido principal -->
+    {% block content %}{% endblock %}
+    
+    <!-- Scripts Core -->
+    <script src="/static/js/core/push-manager.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        // ============================================
+        // REGISTRAR SERVICE WORKER
+        // ============================================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw.js', {
+                        scope: '/'
+                    });
+                    
+                    console.log('✅ Service Worker registrado:', registration.scope);
+                    
+                    // Detectar actualizaciones
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // Nueva versión disponible
+                                showUpdateBanner();
+                            }
+                        });
+                    });
+                    
+                    // Revisar actualizaciones cada hora
+                    setInterval(() => {
+                        registration.update();
+                    }, 60 * 60 * 1000);
+                    
+                } catch (error) {
+                    console.error('❌ Error registrando Service Worker:', error);
+                }
+            });
+        }
+        
+        // ============================================
+        // PROMPT DE INSTALACIÓN PWA
+        // ============================================
+        window.deferredPrompt = null;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('📱 Prompt de instalación disponible');
+            
+            // Prevenir el prompt automático
+            e.preventDefault();
+            
+            // Guardar el evento para usarlo después
+            window.deferredPrompt = e;
+            
+            // Mostrar nuestro prompt personalizado
+            showInstallPrompt();
+        });
+        
+        function showInstallPrompt() {
+            const prompt = document.getElementById('installPrompt');
+            
+            // No mostrar si ya lo rechazó antes
+            if (localStorage.getItem('installPromptDismissed') === 'true') {
+                return;
+            }
+            
+            // Mostrar después de 3 segundos
+            setTimeout(() => {
+                prompt.classList.add('show');
+            }, 3000);
+        }
+        
+        document.getElementById('installBtn')?.addEventListener('click', async () => {
+            if (!window.deferredPrompt) {
+                return;
+            }
+            
+            // Mostrar prompt nativo
+            window.deferredPrompt.prompt();
+            
+            // Esperar respuesta del usuario
+            const { outcome } = await window.deferredPrompt.userChoice;
+            
+            console.log(`Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación`);
+            
+            // Limpiar
+            window.deferredPrompt = null;
+            closeInstallPrompt();
+        });
+        
+        function closeInstallPrompt() {
+            const prompt = document.getElementById('installPrompt');
+            prompt.classList.remove('show');
+            localStorage.setItem('installPromptDismissed', 'true');
+        }
+        
+        // Detectar cuando se instaló
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ PWA instalada exitosamente');
+            closeInstallPrompt();
+            
+            // Analytics (opcional)
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'pwa_installed');
+            }
+        });
+        
+        // ============================================
+        // ACTUALIZAR APP
+        // ============================================
+        function showUpdateBanner() {
+            const banner = document.getElementById('updateBanner');
+            banner.classList.add('show');
+        }
+        
+        function updateApp() {
+            // Enviar mensaje al SW para que se active
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'SKIP_WAITING'
+                });
+            }
+            
+            // Recargar página
+            window.location.reload();
+        }
+        
+        // Escuchar cuando el nuevo SW tome control
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('🔄 Nuevo Service Worker activado');
+        });
+        
+        // ============================================
+        // INICIALIZAR PUSH NOTIFICATIONS
+        // ============================================
+        let pushManager = null;
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Inicializar Push Manager
+            pushManager = new PushNotificationManager();
+            await pushManager.init();
+            
+            // Hacer disponible globalmente
+            window.pushManager = pushManager;
+            
+            console.log('✅ Push Manager inicializado');
+        });
+        
+        // ============================================
+        // DETECTAR MODO STANDALONE
+        // ============================================
+        function isStandalone() {
+            return window.matchMedia('(display-mode: standalone)').matches ||
+                   window.navigator.standalone === true;
+        }
+        
+        if (isStandalone()) {
+            console.log('📱 App ejecutándose en modo standalone (PWA)');
+            document.body.classList.add('standalone-mode');
+        }
+        
+        // ============================================
+        // NETWORK STATUS
+        // ============================================
+        window.addEventListener('online', () => {
+            console.log('🌐 Conexión restaurada');
+            document.body.classList.remove('offline');
+            
+            // Mostrar toast
+            showToast('Conexión restaurada', 'success');
+        });
+        
+        window.addEventListener('offline', () => {
+            console.log('⚠️ Sin conexión');
+            document.body.classList.add('offline');
+            
+            // Mostrar toast
+            showToast('Sin conexión a internet', 'warning');
+        });
+        
+        // ============================================
+        // TOAST NOTIFICATIONS (simple)
+        // ============================================
+        function showToast(message, type = 'info') {
+            // TODO: Implementar UI de toast
+            console.log(`[Toast ${type}] ${message}`);
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+
+<!-- Botón Instalar PWA (flotante) -->
+<button id="installAppBtn" class="install-app-btn" style="display: none;">
+    <span class="install-icon">📱</span>
+    <span class="install-text">Instalar App</span>
+</button>
+
+<style>
+.install-app-btn {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    background: linear-gradient(135deg, #FFCD11 0%, #f5b800 100%);
+    color: #0f1419;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(255, 205, 17, 0.4);
+    z-index: 9998;
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.install-app-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(255, 205, 17, 0.6);
+}
+
+.install-app-btn:active {
+    transform: translateY(-1px);
+}
+
+.install-icon {
+    font-size: 1.2rem;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.install-text {
+    font-weight: 700;
+}
+
+/* Ocultar cuando ya está instalado */
+.standalone-mode .install-app-btn {
+    display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .install-app-btn {
+        bottom: 20px;
+        right: 20px;
+        left: 20px;
+        justify-content: center;
+    }
+}
+</style>
+
+
+
+<script>
+        // ============================================
+        // AUTO-INICIALIZAR WEBSOCKET
+        // ============================================
+        let wsManager = null;
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Ya tenemos pushManager global de antes
+            
+            // Crear WebSocket Manager
+            wsManager = new WebSocketManager();
+            
+            // Hacer disponible globalmente
+            window.wsManager = wsManager;
+            
+            // Intentar conectar si hay token
+            const token = localStorage.getItem('token');
+            const userId = sessionStorage.getItem('userId');
+            const userRole = sessionStorage.getItem('userRole') || 'cliente';
+            
+            if (token && userId) {
+                console.log('🔌 Auto-conectando WebSocket...');
+                
+                try {
+                    await wsManager.connect(parseInt(userId), userRole);
+                    console.log('✅ WebSocket conectado automáticamente');
+                } catch (error) {
+                    console.warn('⚠️ No se pudo conectar WebSocket:', error.message);
+                }
+            } else {
+                console.log('ℹ️ Sin token/userId - WebSocket no conectado');
+                console.log('💡 Para conectar: await wsManager.connect(userId, role)');
+            }
+            
+            // Escuchar eventos importantes
+            wsManager.on('connected', () => {
+                console.log('🎉 WebSocket conectado');
+                showToast('Conectado en tiempo real', 'success');
+            });
+            
+            wsManager.on('disconnected', () => {
+                console.log('🔌 WebSocket desconectado');
+            });
+            
+            wsManager.on('reconnecting', (data) => {
+                console.log(`🔄 Reconectando... (intento ${data.attempt})`);
+            });
+            
+            wsManager.on('chat_message', (data) => {
+                console.log('💬 Nuevo mensaje:', data);
+                showToast(`${data.emisor_nombre}: ${data.mensaje}`, 'info');
+                // TODO: Mostrar en UI
+            });
+            
+            wsManager.on('tecnico_asignado', (data) => {
+                console.log('🔧 Técnico asignado:', data);
+                showToast(`Técnico asignado: ${data.tecnico.nombre}`, 'success');
+                // TODO: Redirigir a seguimiento
+            });
+            
+            wsManager.on('estado_servicio_actualizado', (data) => {
+                console.log('📊 Estado actualizado:', data);
+                showToast(data.mensaje, 'info');
+                // TODO: Actualizar UI
+            });
+        });
+        
+        // Helper para testing
+        window.testWS = async function() {
+            if (!wsManager) {
+                console.error('❌ wsManager no inicializado');
+                return;
+            }
+            
+            if (!wsManager.isOnline()) {
+                console.error('❌ WebSocket no conectado');
+                return;
+            }
+            
+            console.log('🧪 Testing WebSocket...');
+            
+            // Test ping
+            wsManager.send({ tipo: 'ping' });
+            
+            // Test stats
+            console.log('📊 Stats:', wsManager.getStats());
+            
+            console.log('✅ Test enviado');
+        };
+    </script>
+
+<!-- ============================================ -->
+<!-- SCRIPTS CORE - ORDEN IMPORTANTE -->
+<!-- ============================================ -->
+
+<!-- 1. Push Notifications Manager -->
+<script src="/static/js/core/push-manager.js"></script>
+
+<!-- 2. Notification UI (usa Push Manager) -->
+<script src="/static/js/components/notification-ui.js"></script>
+
+<!-- 2.5 Chat Widget -->
+<script src="/static/js/components/chat-widget.js"></script>
+
+<!-- 3. Auth Mock (usuarios ficticios) -->
+<script src="/static/js/core/auth-manager.js"></script>
+
+<script src="/static/js/components/session-indicator.js"></script>
+
+<script src="/static/js/core/solicitud-manager.js"></script>
+
+<!-- 4. WebSocket Mock (usa Auth y Notifications) -->
+<script src="/static/js/core/websocket-manager.js"></script>
+
+<!-- 5. Demo Scripts (usa todos los anteriores) -->
+<!--<script src="/static/js/demo.js"></script>-->
+
+</body>
+</html>

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base de Datos MITA - Diagrama ER</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f1419;
+            color: #ffffff;
+            padding: 2rem;
+            overflow-x: auto;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #FFCD11;
+            margin-bottom: 1rem;
+        }
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 3rem;
+        }
+        .diagram-container {
+            background: #1a1f2e;
+            border-radius: 12px;
+            padding: 3rem;
+            min-width: 1400px;
+            border: 1px solid #374151;
+        }
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        .table-card {
+            background: #242939;
+            border-radius: 8px;
+            border: 2px solid #374151;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .table-card:hover {
+            border-color: #FFCD11;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(255, 205, 17, 0.2);
+        }
+        .table-header {
+            background: linear-gradient(135deg, #FFCD11 0%, #fbbf24 100%);
+            color: #0f1419;
+            padding: 1rem;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .table-header.secondary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        .table-header.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        .table-body {
+            padding: 0;
+        }
+        .field {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #374151;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .field:last-child {
+            border-bottom: none;
+        }
+        .field.pk {
+            background: rgba(255, 205, 17, 0.1);
+            font-weight: bold;
+        }
+        .field.fk {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+        .field-icon {
+            width: 20px;
+            font-size: 0.85rem;
+        }
+        .field-name {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+        }
+        .field-type {
+            color: #10b981;
+            font-size: 0.85rem;
+            font-family: 'Courier New', monospace;
+        }
+        .relations-container {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: #242939;
+            border-radius: 8px;
+            border: 1px solid #374151;
+        }
+        .relations-title {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: #FFCD11;
+            text-align: center;
+        }
+        .relation {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: #1a1f2e;
+            border-radius: 6px;
+            border-left: 4px solid;
+        }
+        .relation.one-to-many {
+            border-color: #3b82f6;
+        }
+        .relation.many-to-many {
+            border-color: #f59e0b;
+        }
+        .relation-type {
+            font-weight: bold;
+            min-width: 120px;
+            color: #FFCD11;
+        }
+        .relation-description {
+            flex: 1;
+            color: #b3b8c2;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #242939;
+            border-radius: 6px;
+        }
+        .legend-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        .notes {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #2d3348;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+        }
+        .notes h3 {
+            color: #10b981;
+            margin-bottom: 1rem;
+        }
+        .notes ul {
+            list-style-position: inside;
+            color: #b3b8c2;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 BASE DE DATOS MITA</h1>
+        <p class="subtitle">Diagrama Entidad-Relación completo con todas las tablas</p>
+
+        <div class="diagram-container">
+            <!-- GRID DE TABLAS -->
+            <div class="tables-grid">
+                
+                <!-- USUARIOS -->
+                <div class="table-card">
+                    <div class="table-header">
+                        👤 usuarios
+                    </div>
+                    <div class="table-body">
+                        <div class="field pk">
+                            <span class="field-icon">🔑</span>
+                            <span class="field-name">id</span>
+                            <span class="field-type">SERIAL PK</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📧</span>
+                            <span class="field-name">email</span>
+                            <span class="field-type">VARCHAR UNIQUE</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">🔒</span>
+                            <span class="field-name">password_hash</span>
+                            <span class="field-type">VARCHAR</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">👤</span>
+                            <span class="field-name">nombre</span>
+                            <span class="field-type">VARCHAR</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📱</span>
+                            <span class="field-name">telefono</span>
+                            <span class="field-type">VARCHAR</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">🎭</span>
+                            <span class="field-name">rol</span>
+                            <span class="field-type">ENUM</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📅</span>
+                            <span class="field-name">created_at</span>
+                            <span class="field-type">TIMESTAMP</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">✅</span>
+                            <span class="field-name">activo</span>
+                            <span class="field-type">BOOLEAN</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TÉCNICOS -->
+                <div class="table-card">
+                    <div class="table-header secondary">
+                        🔧 tecnicos
+                    </div>
+                    <div class="table-body">
+                        <div class="field pk">
+                            <span class="field-icon">🔑</span>
+                            <span class="field-name">id</span>
+                            <span class="field-type">SERIAL PK</span>
+                        </div>
+                        <div class="field fk">
+                            <span class="field-icon">🔗</span>
+                            <span class="field-name">usuario_id</span>
+                            <span class="field-type">INT FK</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">🆔</span>
+                            <span class="field-name">dni</span>
+                            <span class="field-type">VARCHAR UNIQUE</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📄</span>
+                            <span class="field-name">cv_url</span>
+                            <span class="field-type">VARCHAR</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">⭐</span>
+                            <span class="field-name">rating</span>
+                            <span class="field-type">DECIMAL</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📊</span>
+                            <span class="field-name">servicios_completados</span>
+                            <span class="field-type">INT</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">💰</span>
+                            <span class="field-name">saldo_disponible</span>
+                            <span class="field-type">DECIMAL</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">🏦</span>
+                            <span class="field-name">cci</span>
+                            <span class="field-type">VARCHAR(20)</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">✅</span>
+                            <span class="field-name">verificado</span>
+                            <span class="field-type">BOOLEAN</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TÉCNICOS HORARIOS -->
+                <div class="table-card">
+                    <div class="table-header secondary">
+                        🕐 tecnicos_horarios
+                    </div>
+                    <div class="table-body">
+                        <div class="field pk">
+                            <span class="field-icon">🔑</span>
+                            <span class="field-name">id</span>
+                            <span class="field-type">SERIAL PK</span>
+                        </div>
+                        <div class="field fk">
+                            <span class="field-icon">🔗</span>
+                            <span class="field-name">tecnico_id</span>
+                            <span class="field-type">INT FK</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📅</span>
+                            <span class="field-name">dia_semana</span>
+                            <span class="field-type">INT (0-6)</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">🕐</span>
+                            <span class="field-name">hora_inicio</span>
+                            <span class="field-type">TIME</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">🕐</span>
+                            <span class="field-name">hora_fin</span>
+                            <span class="field-type">TIME</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">✅</span>
+                            <span class="field-name">activo</span>
+                            <span class="field-type">BOOLEAN</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SERVICIOS TIPOS -->
+                <div class="table-card">
+                    <div class="table-header success">
+                        🛠️ servicios_tipos
+                    </div>
+                    <div class="table-body">
+                        <div class="field pk">
+                            <span class="field-icon">🔑</span>
+                            <span class="field-name">id</span>
+                            <span class="field-type">SERIAL PK</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📝</span>
+                            <span class="field-name">nombre</span>
+                            <span class="field-type">VARCHAR</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">⏱️</span>
+                            <span class="field-name">duracion_horas</span>
+                            <span class="field-type">DECIMAL</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">⏱️</span>
+                            <span class="field-name">intervalo_minutos</span>
+                            <span class="field-type">INT</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">💵</span>
+                            <span class="field-name">precio_base</span>
+                            <span class="field-type">DECIMAL</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">✅</span>
+                            <span class="field-name">activo</span>
+                            <span class="field-type">BOOLEAN</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SERVICIOS -->
+                <div class="table-card">
+                    <div class="table-header success">
+                        📋 servicios
+                    </div>
+                    <div class="table-body">
+                        <div class="field pk">
+                            <span class="field-icon">🔑</span>
+                            <span class="field-name">id</span>
+                            <span class="field-type">SERIAL PK</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">🔖</span>
+                            <span class="field-name">codigo</span>
+                            <span class="field-type">VARCHAR UNIQUE</span>
+                        </div>
+                        <div class="field fk">
+                            <span class="field-icon">🔗</span>
+                            <span class="field-name">cliente_id</span>
+                            <span class="field-type">INT FK</span>
+                        </div>
+                        <div class="field fk">
+                            <span class="field-icon">🔗</span>
+                            <span class="field-name">tecnico_id</span>
+                            <span class="field-type">INT FK NULL</span>
+                        </div>
+                        <div class="field fk">
+                            <span class="field-icon">🔗</span>
+                            <span class="field-name">tipo_servicio_id</span>
+                            <span class="field-type">INT FK</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📅</span>
+                            <span class="field-name">fecha_programada</span>
+                            <span class="field-type">DATE</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">🕐</span>
+                            <span class="field-name">hora_programada</span>
+                            <span class="field-type">TIME</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📊</span>
+                            <span class="field-name">estado</span>
+                            <span class="field-type">ENUM</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">💰</span>
+                            <span class="field-name">monto_total</span>
+                            <span class="field-type">DECIMAL</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📍</span>
+                            <span class="field-name">direccion</span>
+                            <span class="field-type">VARCHAR</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📅</span>
+                            <span class="field-name">created_at</span>
+                            <span class="field-type">TIMESTAMP</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VEHÍCULOS -->
+                <div class="table-card">
+                    <div class="table-header">
+                        🚗 vehiculos
+                    </div>
+                    <div class="table-body">
+                        <div class="field pk">
+                            <span class="field-icon">🔑</span>
+                            <span class="field-name">id</span>
+                            <span class="field-type">SERIAL PK</span>
+                        </div>
+                        <div class="field fk">
+                            <span class="field-icon">🔗</span>
+                            <span class="field-name">cliente_id</span>
+                            <span class="field-type">INT FK</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">🔖</span>
+                            <span class="field-name">placa</span>
+                            <span class="field-type">VARCHAR UNIQUE</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">🏭</span>
+                            <span class="field-name">marca</span>
+                            <span class="field-type">VARCHAR</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">🚙</span>
+                            <span class="field-name">modelo</span>
+                            <span class="field-type">VARCHAR</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📅</span>
+                            <span class="field-name">anio</span>
+                            <span class="field-type">INT</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">🎨</span>
+                            <span class="field-name">color</span>
+                            <span class="field-type">VARCHAR</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📏</span>
+                            <span class="field-name">kilometraje</span>
+                            <span class="field-type">INT</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGOS -->
+                <div class="table-card">
+                    <div class="table-header">
+                        💳 pagos
+                    </div>
+                    <div class="table-body">
+                        <div class="field pk">
+                            <span class="field-icon">🔑</span>
+                            <span class="field-name">id</span>
+                            <span class="field-type">SERIAL PK</span>
+                        </div>
+                        <div class="field fk">
+                            <span class="field-icon">🔗</span>
+                            <span class="field-name">servicio_id</span>
+                            <span class="field-type">INT FK</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">💳</span>
+                            <span class="field-name">metodo_pago</span>
+                            <span class="field-type">ENUM</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">💰</span>
+                            <span class="field-name">monto</span>
+                            <span class="field-type">DECIMAL</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📊</span>
+                            <span class="field-name">estado</span>
+                            <span class="field-type">ENUM</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">🔖</span>
+                            <span class="field-name">transaccion_id</span>
+                            <span class="field-type">VARCHAR</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📸</span>
+                            <span class="field-name">comprobante_url</span>
+                            <span class="field-type">VARCHAR NULL</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📅</span>
+                            <span class="field-name">fecha_pago</span>
+                            <span class="field-type">TIMESTAMP</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOTIFICACIONES -->
+                <div class="table-card">
+                    <div class="table-header secondary">
+                        🔔 notificaciones
+                    </div>
+                    <div class="table-body">
+                        <div class="field pk">
+                            <span class="field-icon">🔑</span>
+                            <span class="field-name">id</span>
+                            <span class="field-type">SERIAL PK</span>
+                        </div>
+                        <div class="field fk">
+                            <span class="field-icon">🔗</span>
+                            <span class="field-name">usuario_id</span>
+                            <span class="field-type">INT FK</span>
+                        </div>
+                        <div class="field fk">
+                            <span class="field-icon">🔗</span>
+                            <span class="field-name">servicio_id</span>
+                            <span class="field-type">INT FK NULL</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📝</span>
+                            <span class="field-name">titulo</span>
+                            <span class="field-type">VARCHAR</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📄</span>
+                            <span class="field-name">mensaje</span>
+                            <span class="field-type">TEXT</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📊</span>
+                            <span class="field-name">tipo</span>
+                            <span class="field-type">ENUM</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">👁️</span>
+                            <span class="field-name">leida</span>
+                            <span class="field-type">BOOLEAN</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📅</span>
+                            <span class="field-name">created_at</span>
+                            <span class="field-type">TIMESTAMP</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MENSAJES CHAT -->
+                <div class="table-card">
+                    <div class="table-header secondary">
+                        💬 mensajes_chat
+                    </div>
+                    <div class="table-body">
+                        <div class="field pk">
+                            <span class="field-icon">🔑</span>
+                            <span class="field-name">id</span>
+                            <span class="field-type">SERIAL PK</span>
+                        </div>
+                        <div class="field fk">
+                            <span class="field-icon">🔗</span>
+                            <span class="field-name">servicio_id</span>
+                            <span class="field-type">INT FK</span>
+                        </div>
+                        <div class="field fk">
+                            <span class="field-icon">🔗</span>
+                            <span class="field-name">remitente_id</span>
+                            <span class="field-type">INT FK</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📝</span>
+                            <span class="field-name">contenido</span>
+                            <span class="field-type">TEXT</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📊</span>
+                            <span class="field-name">tipo</span>
+                            <span class="field-type">ENUM</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">👁️</span>
+                            <span class="field-name">leido</span>
+                            <span class="field-type">BOOLEAN</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-icon">📅</span>
+                            <span class="field-name">created_at</span>
+                            <span class="field-type">TIMESTAMP</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RELACIONES -->
+            <div class="relations-container">
+                <h2 class="relations-title">🔗 RELACIONES ENTRE TABLAS</h2>
+                
+                <div class="relation one-to-many">
+                    <span class="relation-type">1:N</span>
+                    <span class="relation-description"><strong>usuarios</strong> → <strong>tecnicos</strong> (Un usuario puede ser técnico, pero no todos los usuarios son técnicos)</span>
+                </div>
+
+                <div class="relation one-to-many">
+                    <span class="relation-type">1:N</span>
+                    <span class="relation-description"><strong>tecnicos</strong> → <strong>tecnicos_horarios</strong> (Un técnico tiene múltiples horarios por día de semana)</span>
+                </div>
+
+                <div class="relation one-to-many">
+                    <span class="relation-type">1:N</span>
+                    <span class="relation-description"><strong>usuarios</strong> (cliente) → <strong>servicios</strong> (Un cliente solicita múltiples servicios)</span>
+                </div>
+
+                <div class="relation one-to-many">
+                    <span class="relation-type">1:N</span>
+                    <span class="relation-description"><strong>tecnicos</strong> → <strong>servicios</strong> (Un técnico atiende múltiples servicios)</span>
+                </div>
+
+                <div class="relation one-to-many">
+                    <span class="relation-type">1:N</span>
+                    <span class="relation-description"><strong>servicios_tipos</strong> → <strong>servicios</strong> (Un tipo de servicio tiene múltiples instancias de servicio)</span>
+                </div>
+
+                <div class="relation one-to-many">
+                    <span class="relation-type">1:N</span>
+                    <span class="relation-description"><strong>usuarios</strong> (cliente) → <strong>vehiculos</strong> (Un cliente puede tener múltiples vehículos)</span>
+                </div>
+
+                <div class="relation one-to-many">
+                    <span class="relation-type">1:1</span>
+                    <span class="relation-description"><strong>servicios</strong> → <strong>pagos</strong> (Un servicio tiene UN pago asociado)</span>
+                </div>
+
+                <div class="relation one-to-many">
+                    <span class="relation-type">1:N</span>
+                    <span class="relation-description"><strong>usuarios</strong> → <strong>notificaciones</strong> (Un usuario recibe múltiples notificaciones)</span>
+                </div>
+
+                <div class="relation one-to-many">
+                    <span class="relation-type">1:N</span>
+                    <span class="relation-description"><strong>servicios</strong> → <strong>mensajes_chat</strong> (Un servicio tiene múltiples mensajes de chat)</span>
+                </div>
+
+                <div class="relation one-to-many">
+                    <span class="relation-type">1:N</span>
+                    <span class="relation-description"><strong>usuarios</strong> → <strong>mensajes_chat</strong> (Un usuario envía múltiples mensajes)</span>
+                </div>
+            </div>
+
+            <!-- LEYENDA -->
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: rgba(255, 205, 17, 0.3);"></div>
+                    <span>🔑 Primary Key (PK)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: rgba(59, 130, 246, 0.3);"></div>
+                    <span>🔗 Foreign Key (FK)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #FFCD11;"></div>
+                    <span>Tabla Principal</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #3b82f6;"></div>
+                    <span>Tabla Secundaria</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #10b981;"></div>
+                    <span>Tabla de Servicios</span>
+                </div>
+            </div>
+
+            <!-- NOTAS -->
+            <div class="notes">
+                <h3>📝 NOTAS IMPORTANTES</h3>
+                <ul>
+                    <li><strong>usuarios.rol</strong> → ENUM('cliente', 'tecnico', 'admin', 'proveedor')</li>
+                    <li><strong>servicios.estado</strong> → ENUM('pendiente', 'preautorizado', 'buscando_tecnico', 'asignado', 'en_proceso', 'completado', 'cancelado')</li>
+                    <li><strong>pagos.estado</strong> → ENUM('pendiente', 'preautorizado', 'confirmado', 'rechazado', 'reembolsado')</li>
+                    <li><strong>pagos.metodo_pago</strong> → ENUM('culqi', 'yape', 'plin', 'efectivo')</li>
+                    <li><strong>notificaciones.tipo</strong> → ENUM('info', 'success', 'warning', 'error', 'servicio')</li>
+                    <li><strong>mensajes_chat.tipo</strong> → ENUM('texto', 'imagen', 'audio', 'ubicacion', 'sistema')</li>
+                    <li><strong>tecnicos_horarios</strong> → Un técnico puede tener múltiples registros (uno por día de semana)</li>
+                    <li><strong>servicios.tecnico_id</strong> → NULL hasta que un técnico acepte el servicio</li>
+                    <li>Usar <strong>PostgreSQL</strong> en Railway (no SQLite)</li>
+                    <li>Timestamps con <strong>timezone</strong> (TIMESTAMP WITH TIME ZONE)</li>
+                    <li>Índices en: codigo, placa, email, fecha_programada, estado</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

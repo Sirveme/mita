@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#8B5CF6">
+    <title>Gestión de Técnicos - Admin MITA</title>
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Colores del Admin */
+            --admin-primary: #8B5CF6;
+            --admin-secondary: #A855F7;
+            --admin-light: rgba(139, 92, 246, 0.1);
+            
+            /* Colores base */
+            --bg-dark: #0A0E1A;
+            --dark-blue: #1A2332;
+            --medium-blue: #2A3647;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --white: #FFFFFF;
+            --text-light: #E5E7EB;
+            --text-gray: #9CA3AF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            padding-bottom: 2rem;
+        }
+
+        /* Sidebar */
+        .admin-sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-right: 2px solid var(--admin-primary);
+            padding: 2rem 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            padding: 0 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-logo i {
+            font-size: 2rem;
+            color: var(--admin-primary);
+        }
+
+        .sidebar-logo h2 {
+            font-size: 1.5rem;
+            color: var(--white);
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--white);
+            border-left-color: var(--admin-primary);
+        }
+
+        .nav-link.active {
+            background: rgba(139, 92, 246, 0.2);
+            color: var(--admin-primary);
+            border-left-color: var(--admin-primary);
+            font-weight: 600;
+        }
+
+        .nav-link i {
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .content-header {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid var(--admin-primary);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--admin-primary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--admin-primary);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .badge-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #FCD34D;
+        }
+
+        .badge-active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6EE7B7;
+        }
+
+        .badge-rejected {
+            background: rgba(239, 68, 68, 0.2);
+            color: #FCA5A5;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        /* Tabs */
+        .tabs-container {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-radius: 16px;
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            overflow: hidden;
+        }
+
+        .tabs-nav {
+            display: flex;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 1.25rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-gray);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .tab-button:hover {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--white);
+        }
+
+        .tab-button.active {
+            color: var(--admin-primary);
+            border-bottom-color: var(--admin-primary);
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .tab-badge {
+            background: rgba(139, 92, 246, 0.3);
+            color: var(--white);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .tab-button.active .tab-badge {
+            background: var(--admin-primary);
+        }
+
+        .tab-content {
+            padding: 2rem;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Filters */
+        .filters-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 0.875rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--white);
+            font-size: 0.95rem;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--admin-primary);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .filter-select {
+            padding: 0.875rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--white);
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--admin-primary);
+        }
+
+        /* Solicitudes List */
+        .solicitudes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .solicitud-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .solicitud-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--admin-primary);
+        }
+
+        .solicitud-card.urgent {
+            border-color: var(--warning);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+        }
+
+        .solicitud-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .solicitud-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .solicitud-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--admin-primary);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .solicitud-details h3 {
+            font-size: 1.25rem;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .solicitud-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .meta-item i {
+            color: var(--admin-primary);
+        }
+
+        .solicitud-status {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-end;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-pendiente {
+            background: rgba(245, 158, 11, 0.2);
+            color: #FCD34D;
+            border: 2px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .urgent-badge {
+            background: rgba(239, 68, 68, 0.2);
+            color: #FCA5A5;
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .solicitud-data {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .data-item {
+            background: rgba(139, 92, 246, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .data-label {
+            font-size: 0.75rem;
+            color: var(--text-gray);
+            margin-bottom: 0.25rem;
+        }
+
+        .data-value {
+            font-size: 0.95rem;
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .solicitud-docs {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .doc-badge {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6EE7B7;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .doc-badge:hover {
+            background: rgba(16, 185, 129, 0.3);
+            transform: scale(1.05);
+        }
+
+        .solicitud-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-small {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #DC2626 100%);
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93C5FD;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-info:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 14, 26, 0.9);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 2px solid var(--admin-primary);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .modal-close {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--white);
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--danger);
+            transform: rotate(90deg);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--white);
+            font-size: 0.95rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--admin-primary);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: var(--admin-primary);
+            margin-bottom: 1.5rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            color: var(--white);
+            margin-bottom: 0.75rem;
+        }
+
+        .empty-state p {
+            color: var(--text-gray);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .admin-sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .filters-bar {
+                flex-direction: column;
+            }
+
+            .filter-input {
+                min-width: 100%;
+            }
+
+            .solicitud-data {
+                grid-template-columns: 1fr;
+            }
+
+            .solicitud-actions {
+                flex-direction: column;
+            }
+
+            .header-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <i class="fas fa-crown"></i>
+            <h2>Admin Panel</h2>
+        </div>
+
+        <ul class="sidebar-nav">
+            <li class="nav-item">
+                <a href="/admin/dashboard" class="nav-link">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/tecnicos" class="nav-link active">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Gestión de Técnicos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/clientes" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    <span>Clientes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/servicios" class="nav-link">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Servicios</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/finanzas" class="nav-link">
+                    <i class="fas fa-dollar-sign"></i>
+                    <span>Finanzas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/reportes" class="nav-link">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Reportes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/configuracion" class="nav-link">
+                    <i class="fas fa-cog"></i>
+                    <span>Configuración</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Header -->
+        <div class="content-header">
+            <div class="header-top">
+                <h1 class="page-title">
+                    <i class="fas fa-users-cog"></i>
+                    Gestión de Técnicos
+                </h1>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="abrirModalRegistroVIP()">
+                        <i class="fas fa-user-plus"></i>
+                        Registrar Técnico VIP
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportarDatos()">
+                        <i class="fas fa-download"></i>
+                        Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: var(--warning);">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <span class="stat-badge badge-pending">Pendientes</span>
+                </div>
+                <div class="stat-value" id="totalPendientes">8</div>
+                <div class="stat-label">Solicitudes por revisar</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--success);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <span class="stat-badge badge-active">Activos</span>
+                </div>
+                <div class="stat-value" id="totalActivos">147</div>
+                <div class="stat-label">Técnicos activos</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(139, 92, 246, 0.2); color: var(--admin-primary);">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <span class="stat-badge badge-active">VIP</span>
+                </div>
+                <div class="stat-value" id="totalVIP">23</div>
+                <div class="stat-label">Técnicos VIP</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(239, 68, 68, 0.2); color: var(--danger);">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <span class="stat-badge badge-rejected">Rechazados</span>
+                </div>
+                <div class="stat-value" id="totalRechazados">12</div>
+                <div class="stat-label">Esta semana</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <div class="tabs-nav">
+                <button class="tab-button active" onclick="openTab(event, 'pendientesTab')">
+                    <i class="fas fa-clock"></i>
+                    Pendientes
+                    <span class="tab-badge">8</span>
+                </button>
+                <button class="tab-button" onclick="openTab(event, 'activosTab')">
+                    <i class="fas fa-check-circle"></i>
+                    Activos
+                    <span class="tab-badge">147</span>
+                </button>
+                <button class="tab-button" onclick="openTab(event, 'vipTab')">
+                    <i class="fas fa-crown"></i>
+                    VIP
+                    <span class="tab-badge">23</span>
+                </button>
+                <button class="tab-button" onclick="openTab(event, 'rechazadosTab')">
+                    <i class="fas fa-times-circle"></i>
+                    Rechazados
+                </button>
+            </div>
+
+            <!-- Tab: Pendientes -->
+            <div id="pendientesTab" class="tab-content active">
+                <div class="filters-bar">
+                    <input type="text" class="filter-input" placeholder="Buscar por nombre, DNI o email...">
+                    <select class="filter-select">
+                        <option value="">Todas las especialidades</option>
+                        <option value="electricidad">Electricidad</option>
+                        <option value="gasfiteria">Gasfitería</option>
+                        <option value="aceite">Cambio de aceite</option>
+                        <option value="electrodomesticos">Electrodomésticos</option>
+                    </select>
+                    <select class="filter-select">
+                        <option value="">Ordenar por</option>
+                        <option value="fecha_desc">Más recientes</option>
+                        <option value="fecha_asc">Más antiguos</option>
+                        <option value="urgente">Urgentes primero</option>
+                    </select>
+                </div>
+
+                <div class="solicitudes-list">
+                    
+                    <!-- Solicitud 1 - Urgente -->
+                    <div class="solicitud-card urgent">
+                        <div class="solicitud-header">
+                            <div class="solicitud-info">
+                                <div class="solicitud-avatar">JD</div>
+                                <div class="solicitud-details">
+                                    <h3>Juan Díaz Pérez</h3>
+                                    <div class="solicitud-meta">
+                                        <span class="meta-item">
+                                            <i class="fas fa-calendar"></i>
+                                            Hace 2 horas
+                                        </span>
+                                        <span class="meta-item">
+                                            <i class="fas fa-id-card"></i>
+                                            DNI: 12345678
+                                        </span>
+                                        <span class="meta-item">
+                                            <i class="fas fa-envelope"></i>
+                                            juan@email.com
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="solicitud-status">
+                                <span class="status-badge status-pendiente">
+                                    <i class="fas fa-clock"></i> Pendiente
+                                </span>
+                                <span class="urgent-badge">
+                                    <i class="fas fa-exclamation-triangle"></i> Urgente
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="solicitud-data">
+                            <div class="data-item">
+                                <div class="data-label">Teléfono</div>
+                                <div class="data-value">+51 999 888 777</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Especialidad</div>
+                                <div class="data-value">Electricidad</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Experiencia</div>
+                                <div class="data-value">6-10 años</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Distrito</div>
+                                <div class="data-value">San Isidro</div>
+                            </div>
+                        </div>
+
+                        <div class="solicitud-docs">
+                            <span class="doc-badge" onclick="verDocumento('dni')">
+                                <i class="fas fa-id-card"></i> DNI
+                            </span>
+                            <span class="doc-badge" onclick="verDocumento('foto')">
+                                <i class="fas fa-user-circle"></i> Foto
+                            </span>
+                            <span class="doc-badge" onclick="verDocumento('certificados')">
+                                <i class="fas fa-certificate"></i> Certificados
+                            </span>
+                            <span class="doc-badge" onclick="verDocumento('antecedentes')">
+                                <i class="fas fa-shield-alt"></i> Antecedentes
+                            </span>
+                        </div>
+
+                        <div class="solicitud-actions">
+                            <button class="btn btn-info btn-small" onclick="verDetallesCompletos(1)">
+                                <i class="fas fa-eye"></i>
+                                Ver perfil completo
+                            </button>
+                            <button class="btn btn-success btn-small" onclick="aprobarTecnico(1)">
+                                <i class="fas fa-check"></i>
+                                Aprobar
+                            </button>
+                            <button class="btn btn-danger btn-small" onclick="rechazarTecnico(1)">
+                                <i class="fas fa-times"></i>
+                                Rechazar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Solicitud 2 -->
+                    <div class="solicitud-card">
+                        <div class="solicitud-header">
+                            <div class="solicitud-info">
+                                <div class="solicitud-avatar">MG</div>
+                                <div class="solicitud-details">
+                                    <h3>María González</h3>
+                                    <div class="solicitud-meta">
+                                        <span class="meta-item">
+                                            <i class="fas fa-calendar"></i>
+                                            Hace 5 horas
+                                        </span>
+                                        <span class="meta-item">
+                                            <i class="fas fa-id-card"></i>
+                                            DNI: 87654321
+                                        </span>
+                                        <span class="meta-item">
+                                            <i class="fas fa-envelope"></i>
+                                            maria@email.com
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="solicitud-status">
+                                <span class="status-badge status-pendiente">
+                                    <i class="fas fa-clock"></i> Pendiente
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="solicitud-data">
+                            <div class="data-item">
+                                <div class="data-label">Teléfono</div>
+                                <div class="data-value">+51 987 654 321</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Especialidad</div>
+                                <div class="data-value">Gasfitería</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Experiencia</div>
+                                <div class="data-value">3-5 años</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Distrito</div>
+                                <div class="data-value">Miraflores</div>
+                            </div>
+                        </div>
+
+                        <div class="solicitud-docs">
+                            <span class="doc-badge" onclick="verDocumento('dni')">
+                                <i class="fas fa-id-card"></i> DNI
+                            </span>
+                            <span class="doc-badge" onclick="verDocumento('foto')">
+                                <i class="fas fa-user-circle"></i> Foto
+                            </span>
+                            <span class="doc-badge" onclick="verDocumento('certificados')">
+                                <i class="fas fa-certificate"></i> Certificados
+                            </span>
+                            <span class="doc-badge" onclick="verDocumento('antecedentes')">
+                                <i class="fas fa-shield-alt"></i> Antecedentes
+                            </span>
+                        </div>
+
+                        <div class="solicitud-actions">
+                            <button class="btn btn-info btn-small" onclick="verDetallesCompletos(2)">
+                                <i class="fas fa-eye"></i>
+                                Ver perfil completo
+                            </button>
+                            <button class="btn btn-success btn-small" onclick="aprobarTecnico(2)">
+                                <i class="fas fa-check"></i>
+                                Aprobar
+                            </button>
+                            <button class="btn btn-danger btn-small" onclick="rechazarTecnico(2)">
+                                <i class="fas fa-times"></i>
+                                Rechazar
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Tab: Activos -->
+            <div id="activosTab" class="tab-content">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>147 técnicos activos</h3>
+                    <p>Aquí verás la lista completa de técnicos activos en la plataforma</p>
+                </div>
+            </div>
+
+            <!-- Tab: VIP -->
+            <div id="vipTab" class="tab-content">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <h3>23 técnicos VIP</h3>
+                    <p>Técnicos con registro directo y trato especial</p>
+                </div>
+            </div>
+
+            <!-- Tab: Rechazados -->
+            <div id="rechazadosTab" class="tab-content">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <h3>Solicitudes rechazadas</h3>
+                    <p>Historial de solicitudes que no cumplieron los requisitos</p>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Modal: Registro VIP -->
+    <div class="modal" id="modalRegistroVIP">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-crown"></i>
+                    Registrar Técnico VIP
+                </h2>
+                <button class="modal-close" onclick="cerrarModal('modalRegistroVIP')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="formRegistroVIP">
+                <div class="form-group">
+                    <label>Nombre completo *</label>
+                    <input type="text" required placeholder="Nombre y apellidos">
+                </div>
+
+                <div class="form-group">
+                    <label>DNI *</label>
+                    <input type="text" required placeholder="12345678" maxlength="8">
+                </div>
+
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" required placeholder="email@ejemplo.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Teléfono *</label>
+                    <input type="tel" required placeholder="+51 999 888 777">
+                </div>
+
+                <div class="form-group">
+                    <label>Especialidad *</label>
+                    <select required>
+                        <option value="">Seleccionar</option>
+                        <option value="electricidad">Electricidad</option>
+                        <option value="gasfiteria">Gasfitería</option>
+                        <option value="aceite">Cambio de aceite</option>
+                        <option value="electrodomesticos">Electrodomésticos</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Años de experiencia *</label>
+                    <select required>
+                        <option value="">Seleccionar</option>
+                        <option value="1-2">1-2 años</option>
+                        <option value="3-5">3-5 años</option>
+                        <option value="6-10">6-10 años</option>
+                        <option value="10+">Más de 10 años</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Notas internas</label>
+                    <textarea placeholder="Razón del registro VIP, referencias, etc."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalRegistroVIP')">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i>
+                        Registrar Técnico VIP
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/utils.js"></script>
+    <script>
+        // Tabs
+        function openTab(evt, tabName) {
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+
+            const tabButtons = document.getElementsByClassName('tab-button');
+            for (let i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove('active');
+            }
+
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+
+        // Modal
+        function abrirModalRegistroVIP() {
+            document.getElementById('modalRegistroVIP').classList.add('show');
+        }
+
+        function cerrarModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        // Aprobar técnico
+        async function aprobarTecnico(id) {
+            if (!confirm('¿Aprobar esta solicitud de técnico?')) return;
+
+            mostrarLoading('Aprobando técnico...');
+
+            try {
+                // TODO: Llamada al API
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                ocultarLoading();
+                mostrarNotificacion('¡Técnico aprobado! Se le enviará un email con sus credenciales.', 'success');
+
+                // Remover card
+                event.target.closest('.solicitud-card').remove();
+
+                // Actualizar contadores
+                document.getElementById('totalPendientes').textContent = parseInt(document.getElementById('totalPendientes').textContent) - 1;
+                document.getElementById('totalActivos').textContent = parseInt(document.getElementById('totalActivos').textContent) + 1;
+
+            } catch (error) {
+                ocultarLoading();
+                console.error('Error:', error);
+                mostrarNotificacion('Error al aprobar técnico', 'error');
+            }
+        }
+
+        // Rechazar técnico
+        async function rechazarTecnico(id) {
+            const motivo = prompt('Ingresa el motivo del rechazo:');
+            if (!motivo) return;
+
+            mostrarLoading('Rechazando solicitud...');
+
+            try {
+                // TODO: Llamada al API
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                ocultarLoading();
+                mostrarNotificacion('Solicitud rechazada. Se notificará al solicitante.', 'info');
+
+                // Remover card
+                event.target.closest('.solicitud-card').remove();
+
+                // Actualizar contadores
+                document.getElementById('totalPendientes').textContent = parseInt(document.getElementById('totalPendientes').textContent) - 1;
+                document.getElementById('totalRechazados').textContent = parseInt(document.getElementById('totalRechazados').textContent) + 1;
+
+            } catch (error) {
+                ocultarLoading();
+                console.error('Error:', error);
+                mostrarNotificacion('Error al rechazar solicitud', 'error');
+            }
+        }
+
+        // Ver detalles
+        function verDetallesCompletos(id) {
+            mostrarNotificacion('Abriendo perfil completo...', 'info');
+            // TODO: Abrir modal con todos los detalles
+        }
+
+        // Ver documento
+        function verDocumento(tipo) {
+            mostrarNotificacion(`Abriendo documento: ${tipo}`, 'info');
+            // TODO: Abrir modal o nueva ventana con el documento
+        }
+
+        // Exportar
+        function exportarDatos() {
+            mostrarNotificacion('Exportando datos...', 'info');
+            // TODO: Generar Excel/PDF
+        }
+
+        // Form registro VIP
+        document.getElementById('formRegistroVIP').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            mostrarLoading('Registrando técnico VIP...');
+
+            try {
+                // TODO: Llamada al API
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                ocultarLoading();
+                cerrarModal('modalRegistroVIP');
+                mostrarNotificacion('¡Técnico VIP registrado exitosamente!', 'success');
+
+                // Actualizar contador
+                document.getElementById('totalVIP').textContent = parseInt(document.getElementById('totalVIP').textContent) + 1;
+                document.getElementById('totalActivos').textContent = parseInt(document.getElementById('totalActivos').textContent) + 1;
+
+                // Limpiar formulario
+                this.reset();
+
+            } catch (error) {
+                ocultarLoading();
+                console.error('Error:', error);
+                mostrarNotificacion('Error al registrar técnico VIP', 'error');
+            }
+        });
+
+        console.log('✅ Panel admin - Gestión de técnicos cargado');
+    </script>
+</body>
+</html>

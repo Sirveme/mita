@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1A2332">
+    <title>Registro de Técnico - MITA</title>
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #FFCD11;
+            --primary-dark: #E6B800;
+            --bg-dark: #0A0E1A;
+            --dark-blue: #1A2332;
+            --medium-blue: #2A3647;
+            --success: #10B981;
+            --danger: #EF4444;
+            --white: #FFFFFF;
+            --text-light: #E5E7EB;
+            --text-gray: #9CA3AF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0A0E1A 0%, #1A2332 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .registration-container {
+            max-width: 800px;
+            width: 100%;
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .registration-header {
+            background: rgba(255, 205, 17, 0.1);
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 2px solid rgba(255, 205, 17, 0.3);
+        }
+
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .registration-header h1 {
+            font-size: 2rem;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+        }
+
+        .registration-header p {
+            color: var(--text-gray);
+            font-size: 1rem;
+        }
+
+        /* Progress Steps */
+        .progress-container {
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: 0;
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            height: 3px;
+            background: var(--primary);
+            z-index: 1;
+            transition: width 0.3s ease;
+        }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            z-index: 2;
+            flex: 1;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--text-gray);
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active .step-circle {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--dark-blue);
+        }
+
+        .progress-step.completed .step-circle {
+            background: var(--success);
+            border-color: var(--success);
+            color: var(--white);
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            color: var(--text-gray);
+            text-align: center;
+        }
+
+        .progress-step.active .step-label,
+        .progress-step.completed .step-label {
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        /* Form Container */
+        .form-container {
+            padding: 2rem;
+        }
+
+        .form-step {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .form-step.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .step-title {
+            font-size: 1.5rem;
+            color: var(--white);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .step-title i {
+            color: var(--primary);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        label .required {
+            color: var(--danger);
+        }
+
+        input, select, textarea {
+            padding: 0.875rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--white);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: var(--text-gray);
+        }
+
+        /* File Upload */
+        .file-upload {
+            position: relative;
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .file-upload-label:hover {
+            background: rgba(255, 205, 17, 0.1);
+            border-color: var(--primary);
+        }
+
+        .file-upload-label i {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .file-preview {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .file-preview.show {
+            display: block;
+        }
+
+        .file-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 205, 17, 0.3);
+        }
+
+        .file-name {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-gray);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Checkboxes especiales */
+        .specialties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .checkbox-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .checkbox-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 205, 17, 0.5);
+        }
+
+        .checkbox-card input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin: 0;
+        }
+
+        .checkbox-card input[type="checkbox"]:checked ~ .checkbox-label {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .checkbox-card:has(input:checked) {
+            background: rgba(255, 205, 17, 0.1);
+            border-color: var(--primary);
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .checkbox-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Términos y condiciones */
+        .terms-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        .terms-box h4 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .terms-box p {
+            color: var(--text-gray);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+        }
+
+        .terms-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .terms-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Buttons */
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #E6B800 100%);
+            color: var(--dark-blue);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 205, 17, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            color: #93C5FD;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 2px solid rgba(245, 158, 11, 0.3);
+            color: #FCD34D;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            color: #6EE7B7;
+        }
+
+        /* Success Screen */
+        .success-container {
+            display: none;
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+
+        .success-container.show {
+            display: block;
+        }
+
+        .success-icon {
+            font-size: 5rem;
+            color: var(--success);
+            margin-bottom: 1.5rem;
+            animation: scaleIn 0.5s ease;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .success-container h2 {
+            font-size: 2rem;
+            color: var(--white);
+            margin-bottom: 1rem;
+        }
+
+        .success-container p {
+            color: var(--text-gray);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Footer */
+        .registration-footer {
+            padding: 1.5rem 2rem;
+            background: rgba(0, 0, 0, 0.2);
+            text-align: center;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .registration-footer p {
+            color: var(--text-gray);
+            font-size: 0.875rem;
+        }
+
+        .registration-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .registration-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .registration-container {
+                margin: 1rem;
+            }
+
+            .progress-steps {
+                gap: 0.5rem;
+            }
+
+            .step-label {
+                font-size: 0.65rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 14, 26, 0.9);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-spinner {
+            text-align: center;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--white);
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="registration-container">
+        
+        <!-- Header -->
+        <div class="registration-header">
+            <div class="logo">🔧</div>
+            <h1>Registro de Técnico</h1>
+            <p>Únete a la red de profesionales más confiable del Perú</p>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="progress-container">
+            <div class="progress-steps">
+                <div class="progress-line" id="progressLine" style="width: 0%;"></div>
+                
+                <div class="progress-step active" data-step="1">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Datos Personales</div>
+                </div>
+                
+                <div class="progress-step" data-step="2">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Profesional</div>
+                </div>
+                
+                <div class="progress-step" data-step="3">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Documentos</div>
+                </div>
+                
+                <div class="progress-step" data-step="4">
+                    <div class="step-circle">4</div>
+                    <div class="step-label">Especialidades</div>
+                </div>
+                
+                <div class="progress-step" data-step="5">
+                    <div class="step-circle">5</div>
+                    <div class="step-label">Términos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Steps -->
+        <form id="registrationForm" class="form-container">
+            
+            <!-- PASO 1: Datos Personales -->
+            <div class="form-step active" data-step="1">
+                <h2 class="step-title">
+                    <i class="fas fa-user"></i>
+                    Datos Personales
+                </h2>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Todos los campos marcados con * son obligatorios</span>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>
+                            Nombre <span class="required">*</span>
+                        </label>
+                        <input type="text" id="nombre" name="nombre" placeholder="Ej: Juan" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            Apellido <span class="required">*</span>
+                        </label>
+                        <input type="text" id="apellido" name="apellido" placeholder="Ej: Pérez" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            DNI <span class="required">*</span>
+                        </label>
+                        <input type="text" id="dni" name="dni" placeholder="12345678" maxlength="8" pattern="[0-9]{8}" required>
+                        <small style="color: var(--text-gray); font-size: 0.75rem;">
+                            <i class="fas fa-shield-alt"></i> Verificaremos tu DNI con RENIEC
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            Fecha de Nacimiento <span class="required">*</span>
+                        </label>
+                        <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            Teléfono <span class="required">*</span>
+                        </label>
+                        <input type="tel" id="telefono" name="telefono" placeholder="+51 999 888 777" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            Email <span class="required">*</span>
+                        </label>
+                        <input type="email" id="email" name="email" placeholder="tu@email.com" required>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>
+                            Dirección <span class="required">*</span>
+                        </label>
+                        <input type="text" id="direccion" name="direccion" placeholder="Av. Ejemplo 123, San Isidro" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            Distrito <span class="required">*</span>
+                        </label>
+                        <select id="distrito" name="distrito" required>
+                            <option value="">Seleccionar distrito</option>
+                            <option value="miraflores">Miraflores</option>
+                            <option value="san_isidro">San Isidro</option>
+                            <option value="san_borja">San Borja</option>
+                            <option value="surco">Surco</option>
+                            <option value="la_molina">La Molina</option>
+                            <option value="lince">Lince</option>
+                            <option value="jesus_maria">Jesús María</option>
+                            <option value="magdalena">Magdalena</option>
+                            <option value="pueblo_libre">Pueblo Libre</option>
+                            <option value="barranco">Barranco</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            Provincia <span class="required">*</span>
+                        </label>
+                        <input type="text" id="provincia" name="provincia" value="Lima" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 2: Información Profesional -->
+            <div class="form-step" data-step="2">
+                <h2 class="step-title">
+                    <i class="fas fa-briefcase"></i>
+                    Información Profesional
+                </h2>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Esta información nos ayuda a conectarte con los clientes adecuados</span>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>
+                            Años de Experiencia <span class="required">*</span>
+                        </label>
+                        <select id="experiencia" name="experiencia" required>
+                            <option value="">Seleccionar</option>
+                            <option value="1-2">1-2 años</option>
+                            <option value="3-5">3-5 años</option>
+                            <option value="6-10">6-10 años</option>
+                            <option value="10+">Más de 10 años</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            Nivel de Educación <span class="required">*</span>
+                        </label>
+                        <select id="educacion" name="educacion" required>
+                            <option value="">Seleccionar</option>
+                            <option value="secundaria">Secundaria completa</option>
+                            <option value="tecnico">Técnico</option>
+                            <option value="universitario">Universitario</option>
+                            <option value="postgrado">Postgrado</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>
+                            ¿Tienes certificaciones técnicas? <span class="required">*</span>
+                        </label>
+                        <select id="tiene_certificaciones" name="tiene_certificaciones" onchange="toggleCertificaciones()" required>
+                            <option value="">Seleccionar</option>
+                            <option value="si">Sí, tengo certificaciones</option>
+                            <option value="no">No, aún no</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width" id="certificacionesDetalle" style="display: none;">
+                        <label>
+                            Detalla tus certificaciones
+                        </label>
+                        <textarea id="certificaciones_detalle" name="certificaciones_detalle" placeholder="Ej: Certificación SENATI en Electricidad Industrial (2020)&#10;Certificación de Gasfitería SENCICO (2021)"></textarea>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>
+                            Referencias Laborales (Mínimo 2) <span class="required">*</span>
+                        </label>
+                        <textarea id="referencias" name="referencias" placeholder="Nombre: Carlos López&#10;Empresa: TechServices SAC&#10;Teléfono: +51 999 111 222&#10;&#10;Nombre: Ana García&#10;Empresa: HomeRepair Perú&#10;Teléfono: +51 999 333 444" required></textarea>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>
+                            Cuéntanos sobre ti (Bio profesional)
+                        </label>
+                        <textarea id="bio" name="bio" placeholder="Cuéntanos tu experiencia, tus fortalezas y por qué deberíamos elegirte..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 3: Documentos -->
+            <div class="form-step" data-step="3">
+                <h2 class="step-title">
+                    <i class="fas fa-file-upload"></i>
+                    Documentos Requeridos
+                </h2>
+
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Todos los documentos deben ser claros y legibles. Formatos aceptados: JPG, PNG, PDF</span>
+                </div>
+
+                <div class="form-grid">
+                    <!-- DNI Frente -->
+                    <div class="form-group">
+                        <label>
+                            Foto DNI (Frente) <span class="required">*</span>
+                        </label>
+                        <div class="file-upload">
+                            <input type="file" id="dni_frente" name="dni_frente" accept="image/*" onchange="previewFile(this, 'preview_dni_frente')" required>
+                            <label for="dni_frente" class="file-upload-label">
+                                <i class="fas fa-camera"></i>
+                                <span>Subir foto del frente</span>
+                            </label>
+                            <div class="file-preview" id="preview_dni_frente"></div>
+                        </div>
+                    </div>
+
+                    <!-- DNI Reverso -->
+                    <div class="form-group">
+                        <label>
+                            Foto DNI (Reverso) <span class="required">*</span>
+                        </label>
+                        <div class="file-upload">
+                            <input type="file" id="dni_reverso" name="dni_reverso" accept="image/*" onchange="previewFile(this, 'preview_dni_reverso')" required>
+                            <label for="dni_reverso" class="file-upload-label">
+                                <i class="fas fa-camera"></i>
+                                <span>Subir foto del reverso</span>
+                            </label>
+                            <div class="file-preview" id="preview_dni_reverso"></div>
+                        </div>
+                    </div>
+
+                    <!-- Foto de Perfil -->
+                    <div class="form-group">
+                        <label>
+                            Foto de Perfil <span class="required">*</span>
+                        </label>
+                        <div class="file-upload">
+                            <input type="file" id="foto_perfil" name="foto_perfil" accept="image/*" onchange="previewFile(this, 'preview_foto_perfil')" required>
+                            <label for="foto_perfil" class="file-upload-label">
+                                <i class="fas fa-user-circle"></i>
+                                <span>Subir foto profesional</span>
+                            </label>
+                            <div class="file-preview" id="preview_foto_perfil"></div>
+                        </div>
+                    </div>
+
+                    <!-- Certificados -->
+                    <div class="form-group">
+                        <label>
+                            Certificados Técnicos
+                        </label>
+                        <div class="file-upload">
+                            <input type="file" id="certificados" name="certificados" accept=".pdf,image/*" multiple onchange="previewMultipleFiles(this, 'preview_certificados')">
+                            <label for="certificados" class="file-upload-label">
+                                <i class="fas fa-certificate"></i>
+                                <span>Subir certificados (PDF o imágenes)</span>
+                            </label>
+                            <div class="file-preview" id="preview_certificados"></div>
+                        </div>
+                    </div>
+
+                    <!-- Antecedentes Policiales -->
+                    <div class="form-group full-width">
+                        <label>
+                            Certificado de Antecedentes Policiales <span class="required">*</span>
+                        </label>
+                        <div class="alert alert-info" style="margin-bottom: 1rem;">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Puedes obtenerlo en línea desde: <a href="https://www.policia.gob.pe/contenido/antecedentes-policiales" target="_blank" style="color: var(--primary);">www.policia.gob.pe</a></span>
+                        </div>
+                        <div class="file-upload">
+                            <input type="file" id="antecedentes" name="antecedentes" accept=".pdf,image/*" onchange="previewFile(this, 'preview_antecedentes')" required>
+                            <label for="antecedentes" class="file-upload-label">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Subir certificado de antecedentes</span>
+                            </label>
+                            <div class="file-preview" id="preview_antecedentes"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 4: Especialidades -->
+            <div class="form-step" data-step="4">
+                <h2 class="step-title">
+                    <i class="fas fa-tools"></i>
+                    Especialidades y Servicios
+                </h2>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Selecciona todos los servicios que estás capacitado para realizar</span>
+                </div>
+
+                <label style="margin-bottom: 1rem; display: block;">
+                    ¿Qué servicios ofreces? <span class="required">*</span>
+                </label>
+
+                <div class="specialties-grid">
+                    <label class="checkbox-card">
+                        <input type="checkbox" name="especialidades" value="aceite">
+                        <div class="checkbox-label">
+                            <span class="checkbox-icon">🚗</span>
+                            <span>Cambio de aceite</span>
+                        </div>
+                    </label>
+
+                    <label class="checkbox-card">
+                        <input type="checkbox" name="especialidades" value="electricidad">
+                        <div class="checkbox-label">
+                            <span class="checkbox-icon">⚡</span>
+                            <span>Electricidad</span>
+                        </div>
+                    </label>
+
+                    <label class="checkbox-card">
+                        <input type="checkbox" name="especialidades" value="gasfiteria">
+                        <div class="checkbox-label">
+                            <span class="checkbox-icon">💧</span>
+                            <span>Gasfitería</span>
+                        </div>
+                    </label>
+
+                    <label class="checkbox-card">
+                        <input type="checkbox" name="especialidades" value="electrodomesticos">
+                        <div class="checkbox-label">
+                            <span class="checkbox-icon">🔌</span>
+                            <span>Electrodomésticos</span>
+                        </div>
+                    </label>
+
+                    <label class="checkbox-card">
+                        <input type="checkbox" name="especialidades" value="pintura">
+                        <div class="checkbox-label">
+                            <span class="checkbox-icon">🎨</span>
+                            <span>Pintura</span>
+                        </div>
+                    </label>
+
+                    <label class="checkbox-card">
+                        <input type="checkbox" name="especialidades" value="carpinteria">
+                        <div class="checkbox-label">
+                            <span class="checkbox-icon">🪚</span>
+                            <span>Carpintería</span>
+                        </div>
+                    </label>
+
+                    <label class="checkbox-card">
+                        <input type="checkbox" name="especialidades" value="cerrajeria">
+                        <div class="checkbox-label">
+                            <span class="checkbox-icon">🔐</span>
+                            <span>Cerrajería</span>
+                        </div>
+                    </label>
+
+                    <label class="checkbox-card">
+                        <input type="checkbox" name="especialidades" value="jardineria">
+                        <div class="checkbox-label">
+                            <span class="checkbox-icon">🌱</span>
+                            <span>Jardinería</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="form-group" style="margin-top: 2rem;">
+                    <label>
+                        Zonas de trabajo preferidas <span class="required">*</span>
+                    </label>
+                    <textarea id="zonas_trabajo" name="zonas_trabajo" placeholder="Ej: Miraflores, San Isidro, San Borja, Surco" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        Horario disponible <span class="required">*</span>
+                    </label>
+                    <select id="horario" name="horario" required>
+                        <option value="">Seleccionar</option>
+                        <option value="manana">Solo mañanas (8am - 1pm)</option>
+                        <option value="tarde">Solo tardes (1pm - 6pm)</option>
+                        <option value="completo">Horario completo (8am - 6pm)</option>
+                        <option value="flexible">Horario flexible</option>
+                        <option value="24h">Disponible 24/7</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- PASO 5: Términos y Condiciones -->
+            <div class="form-step" data-step="5">
+                <h2 class="step-title">
+                    <i class="fas fa-file-contract"></i>
+                    Términos y Condiciones
+                </h2>
+
+                <div class="terms-box">
+                    <h4>Términos y Condiciones de MITA</h4>
+                    <p><strong>1. Aceptación de Términos:</strong> Al registrarte como técnico en MITA, aceptas cumplir con estos términos y condiciones.</p>
+                    <p><strong>2. Verificación:</strong> Todos los técnicos deben pasar por un proceso de verificación estricta que incluye validación de documentos, antecedentes policiales y entrevista.</p>
+                    <p><strong>3. Responsabilidades:</strong> Como técnico, eres responsable de realizar los servicios con profesionalismo, puntualidad y calidad.</p>
+                    <p><strong>4. Comisiones:</strong> MITA cobrará una comisión del 15% sobre cada servicio completado.</p>
+                    <p><strong>5. Calificaciones:</strong> Tu perfil estará sujeto a calificaciones de clientes. Un promedio menor a 3.5 estrellas puede resultar en suspensión.</p>
+                    <p><strong>6. Comportamiento:</strong> Cualquier conducta inapropiada, acoso o fraude resultará en la suspensión permanente de tu cuenta.</p>
+                    <p><strong>7. Datos Personales:</strong> Tus datos serán protegidos según nuestra Política de Privacidad y solo se compartirán con clientes durante servicios activos.</p>
+                    <p><strong>8. Modificaciones:</strong> MITA se reserva el derecho de modificar estos términos en cualquier momento.</p>
+                </div>
+
+                <div class="terms-checkbox">
+                    <input type="checkbox" id="acepto_terminos" name="acepto_terminos" required>
+                    <label for="acepto_terminos">
+                        He leído y acepto los <strong style="color: var(--primary);">Términos y Condiciones</strong>
+                    </label>
+                </div>
+
+                <div class="terms-checkbox">
+                    <input type="checkbox" id="acepto_verificacion" name="acepto_verificacion" required>
+                    <label for="acepto_verificacion">
+                        Acepto el proceso de <strong style="color: var(--primary);">verificación estricta</strong> y entiendo que puede tomar 3-5 días hábiles
+                    </label>
+                </div>
+
+                <div class="terms-checkbox">
+                    <input type="checkbox" id="acepto_privacidad" name="acepto_privacidad" required>
+                    <label for="acepto_privacidad">
+                        Acepto la <strong style="color: var(--primary);">Política de Privacidad</strong>
+                    </label>
+                </div>
+
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span><strong>¡Último paso!</strong> Al enviar tu solicitud, nuestro equipo comenzará la revisión de tu perfil.</span>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="btnPrevious" onclick="previousStep()" style="display: none;">
+                    <i class="fas fa-arrow-left"></i>
+                    Anterior
+                </button>
+                <button type="button" class="btn btn-primary" id="btnNext" onclick="nextStep()">
+                    Siguiente
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+                <button type="submit" class="btn btn-primary" id="btnSubmit" style="display: none;">
+                    <i class="fas fa-check"></i>
+                    Enviar Solicitud
+                </button>
+            </div>
+
+        </form>
+
+        <!-- Success Screen -->
+        <div class="success-container" id="successScreen">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>¡Solicitud Enviada!</h2>
+            <p>Gracias por registrarte en MITA. Hemos recibido tu solicitud y comenzaremos el proceso de verificación.</p>
+            <p style="color: var(--primary); font-weight: 600;">
+                Te contactaremos en las próximas 24-48 horas
+            </p>
+            <div style="margin-top: 2rem;">
+                <a href="/tecnico/login" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Ir al Login
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="registration-footer">
+            <p>¿Ya tienes una cuenta? <a href="/tecnico/login">Inicia sesión aquí</a></p>
+            <p style="margin-top: 0.5rem;">¿Necesitas ayuda? <a href="mailto:soporte@serviplus.pe">soporte@serviplus.pe</a></p>
+        </div>
+
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <div class="loading-text">Procesando tu solicitud...</div>
+        </div>
+    </div>
+
+    <script src="/static/js/utils.js"></script>
+    <script>
+        let currentStep = 1;
+        const totalSteps = 5;
+
+        // Navegación entre pasos
+        function nextStep() {
+            if (validateCurrentStep()) {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    updateStepDisplay();
+                }
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepDisplay();
+            }
+        }
+
+        function updateStepDisplay() {
+            // Actualizar pasos
+            document.querySelectorAll('.form-step').forEach(step => {
+                step.classList.remove('active');
+            });
+            document.querySelector(`.form-step[data-step="${currentStep}"]`).classList.add('active');
+
+            // Actualizar progress
+            document.querySelectorAll('.progress-step').forEach((step, index) => {
+                const stepNum = index + 1;
+                if (stepNum < currentStep) {
+                    step.classList.add('completed');
+                    step.classList.remove('active');
+                } else if (stepNum === currentStep) {
+                    step.classList.add('active');
+                    step.classList.remove('completed');
+                } else {
+                    step.classList.remove('active', 'completed');
+                }
+            });
+
+            // Actualizar barra de progreso
+            const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
+            document.getElementById('progressLine').style.width = progress + '%';
+
+            // Actualizar botones
+            document.getElementById('btnPrevious').style.display = currentStep === 1 ? 'none' : 'flex';
+            document.getElementById('btnNext').style.display = currentStep === totalSteps ? 'none' : 'flex';
+            document.getElementById('btnSubmit').style.display = currentStep === totalSteps ? 'flex' : 'none';
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function validateCurrentStep() {
+            const currentStepElement = document.querySelector(`.form-step[data-step="${currentStep}"]`);
+            const inputs = currentStepElement.querySelectorAll('input[required], select[required], textarea[required]');
+            
+            let isValid = true;
+            inputs.forEach(input => {
+                if (!input.checkValidity()) {
+                    input.reportValidity();
+                    isValid = false;
+                    return false;
+                }
+
+                // Validaciones especiales
+                if (input.id === 'dni' && input.value.length !== 8) {
+                    alert('El DNI debe tener 8 dígitos');
+                    input.focus();
+                    isValid = false;
+                    return false;
+                }
+            });
+
+            // Validar especialidades en paso 4
+            if (currentStep === 4) {
+                const especialidades = document.querySelectorAll('input[name="especialidades"]:checked');
+                if (especialidades.length === 0) {
+                    alert('Debes seleccionar al menos una especialidad');
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        }
+
+        // Preview de archivos
+        function previewFile(input, previewId) {
+            const preview = document.getElementById(previewId);
+            const file = input.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <div class="file-name">
+                            <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                            ${file.name}
+                        </div>
+                    `;
+                    preview.classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function previewMultipleFiles(input, previewId) {
+            const preview = document.getElementById(previewId);
+            const files = input.files;
+            
+            if (files.length > 0) {
+                preview.innerHTML = '<div class="file-name">';
+                Array.from(files).forEach(file => {
+                    preview.innerHTML += `
+                        <div style="margin: 0.5rem 0;">
+                            <i class="fas fa-file" style="color: var(--primary);"></i>
+                            ${file.name}
+                        </div>
+                    `;
+                });
+                preview.innerHTML += '</div>';
+                preview.classList.add('show');
+            }
+        }
+
+        function toggleCertificaciones() {
+            const select = document.getElementById('tiene_certificaciones');
+            const detalle = document.getElementById('certificacionesDetalle');
+            detalle.style.display = select.value === 'si' ? 'block' : 'none';
+        }
+
+        // Submit del formulario
+        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!validateCurrentStep()) return;
+
+            // Mostrar loading
+            document.getElementById('loadingOverlay').classList.add('show');
+
+            // Simular envío (reemplazar con llamada real al API)
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            // TODO: Aquí iría la llamada real al API
+            /*
+            const formData = new FormData(this);
+            const response = await fetch('/api/tecnicos/registro', {
+                method: 'POST',
+                body: formData
+            });
+            */
+
+            // Ocultar loading
+            document.getElementById('loadingOverlay').classList.remove('show');
+
+            // Mostrar pantalla de éxito
+            document.querySelector('.form-container').style.display = 'none';
+            document.querySelector('.progress-container').style.display = 'none';
+            document.getElementById('successScreen').classList.add('show');
+        });
+
+        console.log('✅ Registro de técnico cargado');
+    </script>
+</body>
+</html>

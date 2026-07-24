@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Términos y Condiciones - Análisis y Guía</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 16px 16px 0 0;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #FFCD11;
+            margin-bottom: 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #f9fafb;
+        }
+
+        .tab.active {
+            color: #0f1419;
+            border-bottom-color: #FFCD11;
+            background: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 2rem;
+            border-radius: 0 0 16px 16px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 2.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #0f1419;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #FFCD11;
+        }
+
+        .original {
+            background: #f3f4f6;
+            border-left: 4px solid #6b7280;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+        }
+
+        .analysis {
+            background: #fff9e6;
+            border-left: 4px solid #FFCD11;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+        }
+
+        .analysis h4 {
+            color: #d97706;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .suggestion {
+            background: #ecfdf5;
+            border-left: 4px solid #10b981;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+        }
+
+        .suggestion h4 {
+            color: #059669;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .warning {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+        }
+
+        .warning h4 {
+            color: #dc2626;
+            margin-bottom: 0.75rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-good {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-critical {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border: 1px solid #e5e7eb;
+        }
+
+        .comparison-table th {
+            background: #0f1419;
+            color: #FFCD11;
+            font-weight: 600;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        ul {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .cta-box {
+            background: linear-gradient(135deg, #FFCD11 0%, #f5b800 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .cta-box h3 {
+            color: #0f1419;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: #0f1419;
+            color: #FFCD11;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 0.5rem;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .comparison-table {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Análisis: Términos y Condiciones</h1>
+            <p>Provinnor.pe vs MITA - Guía para definir tus propios T&C</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab(0)">Análisis Provinnor</div>
+            <div class="tab" onclick="switchTab(1)">Comparativa</div>
+            <div class="tab" onclick="switchTab(2)">Propuesta MITA</div>
+        </div>
+
+        <!-- TAB 1: ANÁLISIS PROVINNOR -->
+        <div class="tab-content active">
+            <h2 style="margin-bottom: 2rem;">Análisis Detallado: Términos de Provinnor.pe</h2>
+
+            <!-- Sección 1 -->
+            <div class="section">
+                <div class="section-title">1. Pagos y Facturación</div>
+                
+                <div class="original">
+                    <strong>Original:</strong>
+                    <p>"Todos los productos muestran sus precios con el impuesto incluído. (IGV 18%) Se ofrecen descuentos en algunos métodos de pago, excluyendo del total, los gastos de envío. Ofrecemos como métodos de pago; boletas y facturas."</p>
+                </div>
+
+                <div class="analysis">
+                    <h4>💡 Análisis</h4>
+                    <p><span class="badge badge-good">BUENA PRÁCTICA</span> - Precios con IGV incluido evita confusión</p>
+                    <ul>
+                        <li><strong>Claro:</strong> Indica que precios ya incluyen impuestos</li>
+                        <li><strong>Transparente:</strong> Gastos de envío se cobran aparte</li>
+                        <li><strong>Confuso:</strong> Dice "boletas y facturas" como métodos de pago (son comprobantes, no formas de pago)</li>
+                    </ul>
+                </div>
+
+                <div class="suggestion">
+                    <h4>✅ Sugerencia para MITA</h4>
+                    <p><strong>Mejorar redacción:</strong></p>
+                    <ul>
+                        <li>Especificar métodos reales: Tarjeta, Yape, Plin, Efectivo</li>
+                        <li>Indicar qué genera qué comprobante (DNI→Boleta, RUC→Factura)</li>
+                        <li>Aclarar si hay descuentos por método de pago</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Sección 2 -->
+            <div class="section">
+                <div class="section-title">2. Condiciones de Envío y Entrega</div>
+                
+                <div class="original">
+                    <strong>Original:</strong>
+                    <p>"El tiempo de entrega garantizado supone un máximo de 72 horas y un mínimo de 12 horas en caso fuese posible, siempre y cuando exista una previa coordinación con el cliente."</p>
+                </div>
+
+                <div class="analysis">
+                    <h4>💡 Análisis</h4>
+                    <p><span class="badge badge-good">FLEXIBLE</span> - Rango amplio (12-72h)</p>
+                    <ul>
+                        <li><strong>Ventaja:</strong> Se dan margen para cumplir</li>
+                        <li><strong>Desventaja:</strong> Cliente no sabe cuándo recibirá exactamente</li>
+                        <li><strong>Solución:</strong> Requiere "previa coordinación" para concretar</li>
+                    </ul>
+                </div>
+
+                <div class="suggestion">
+                    <h4>✅ Sugerencia para MITA</h4>
+                    <p><strong>Para servicios a domicilio:</strong></p>
+                    <ul>
+                        <li><strong>Servicio inmediato:</strong> Técnico asignado en 30-60 min</li>
+                        <li><strong>Servicio programado:</strong> Cliente elige día y ventana horaria (ej: 9am-11am)</li>
+                        <li>Notificar cuando técnico está en camino (tiempo estimado)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Sección 3 -->
+            <div class="section">
+                <div class="section-title">3. Delivery Express / Pedidos Urgentes</div>
+                
+                <div class="original">
+                    <strong>Original:</strong>
+                    <p>"Se solicitarán fotografías o se programará una videollamada, donde el cliente debe estar acompañado del titular, en caso no fuese la misma persona, siendo este último quien deberá mostrar su DNI a la cámara y asegurar estar de acuerdo con la operación."</p>
+                </div>
+
+                <div class="warning">
+                    <h4>⚠️ ALERTA - Proceso invasivo</h4>
+                    <p><span class="badge badge-critical">CRÍTICO</span> - Puede generar fricción</p>
+                    <ul>
+                        <li><strong>Problema:</strong> Pedir DNI por videollamada puede espantar clientes</li>
+                        <li><strong>Entendible:</strong> Protección contra fraude en pedidos urgentes</li>
+                        <li><strong>Alternativa:</strong> Usar pasarelas de pago seguras (Culqi 3D Secure)</li>
+                    </ul>
+                </div>
+
+                <div class="suggestion">
+                    <h4>✅ Sugerencia para MITA</h4>
+                    <p><strong>Prevención de fraude más amigable:</strong></p>
+                    <ul>
+                        <li>Usar autenticación 3D Secure de Culqi (el banco valida)</li>
+                        <li>Validar teléfono con SMS/WhatsApp</li>
+                        <li>Solo para montos altos (+S/.500) pedir validación adicional</li>
+                        <li>Histórico de servicios: Clientes frecuentes sin validación extra</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Sección 4 -->
+            <div class="section">
+                <div class="section-title">4. Política de Reembolsos</div>
+                
+                <div class="original">
+                    <strong>Original:</strong>
+                    <p>"Para compras realizadas con Tarjeta de Credito o Débito el reembolso se verá reflejado en el estado de cuenta o últimos movimientos en un plazo de 24 a 72 horas"</p>
+                </div>
+
+                <div class="analysis">
+                    <h4>💡 Análisis</h4>
+                    <p><span class="badge badge-good">CORRECTO</span> - Plazo realista</p>
+                    <ul>
+                        <li>24-72 horas es estándar para tarjetas</li>
+                        <li>Especifica que depende del banco</li>
+                        <li>Ofrece alternativa presencial si falla</li>
+                    </ul>
+                </div>
+
+                <div class="suggestion">
+                    <h4>✅ Sugerencia para MITA</h4>
+                    <p><strong>Política de cancelación clara:</strong></p>
+                    <ul>
+                        <li><strong>Antes de asignar técnico:</strong> Reembolso 100% inmediato</li>
+                        <li><strong>Técnico asignado (>30 min antes):</strong> Reembolso 100%</li>
+                        <li><strong>Técnico en camino (<30 min):</strong> Penalidad S/.20</li>
+                        <li><strong>Técnico en ubicación:</strong> Sin reembolso (cobro mínimo S/.50)</li>
+                        <li><strong>Cliente no show:</strong> Cobro completo</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TAB 2: COMPARATIVA -->
+        <div class="tab-content">
+            <h2 style="margin-bottom: 2rem;">Comparativa: Provinnor vs MITA</h2>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Aspecto</th>
+                        <th>Provinnor (Productos)</th>
+                        <th>MITA (Servicios)</th>
+                        <th>Diferencia Clave</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Modelo de Negocio</strong></td>
+                        <td>E-commerce de insumos automotrices</td>
+                        <td>Marketplace de servicios técnicos</td>
+                        <td>Productos vs Servicios</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Entrega</strong></td>
+                        <td>Envío de productos (12-72h)</td>
+                        <td>Técnico va a domicilio (30-60min o programado)</td>
+                        <td>Inmediatez es crítica</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Inventario</strong></td>
+                        <td>Depende de stock en almacén</td>
+                        <td>Técnico lleva insumos necesarios</td>
+                        <td>Logística distribuida</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cancelación</strong></td>
+                        <td>24h antes del envío</td>
+                        <td>Variable según estado (antes/después asignación)</td>
+                        <td>Más complejo por humanos involucrados</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Garantía</strong></td>
+                        <td>Garantía del fabricante</td>
+                        <td>Garantía del servicio + insumos usados</td>
+                        <td>MITA responsable de calidad</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Verificación Cliente</strong></td>
+                        <td>Solo para pedidos urgentes o alto valor</td>
+                        <td>Recomendado: Siempre (telefóno/ubicación)</td>
+                        <td>Seguridad del técnico</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Facturación</strong></td>
+                        <td>Inmediata al confirmar pedido</td>
+                        <td>Al completar servicio</td>
+                        <td>Post-servicio por validación de trabajo</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="warning">
+                <h4>⚠️ Aspectos Críticos para MITA</h4>
+                <p>Diferencias fundamentales que DEBES considerar:</p>
+                <ul>
+                    <li><strong>Responsabilidad:</strong> Eres responsable del trabajo del técnico</li>
+                    <li><strong>Seguro:</strong> Necesitas póliza de responsabilidad civil</li>
+                    <li><strong>No-show doble:</strong> Cliente no está O técnico no llega</li>
+                    <li><strong>Calidad variable:</strong> Depende del técnico asignado</li>
+                    <li><strong>Tiempo real:</strong> Cliente espera actualizaciones constantes</li>
+                </ul>
+            </div>
+
+        </div>
+
+        <!-- TAB 3: PROPUESTA MITA -->
+        <div class="tab-content">
+            <h2 style="margin-bottom: 2rem;">Propuesta de Términos y Condiciones - MITA</h2>
+
+            <div class="section">
+                <div class="section-title">1. Servicios y Precios</div>
+                <div class="suggestion">
+                    <p><strong>Redacción sugerida:</strong></p>
+                    <p>"Todos los precios mostrados en la plataforma incluyen el Impuesto General a las Ventas (IGV 18%). Los servicios se cotizan con base en:</p>
+                    <ul>
+                        <li>Tipo de servicio solicitado</li>
+                        <li>Insumos necesarios (aceite, filtros, repuestos)</li>
+                        <li>Zona de cobertura (puede haber recargo en zonas alejadas)</li>
+                        <li>Horario (servicios nocturnos o domingos pueden tener recargo)</li>
+                    </ul>
+                    <p>El precio final se confirma antes de iniciar el servicio. Si durante el diagnóstico se detectan trabajos adicionales necesarios, el técnico informará y solicitará tu aprobación antes de proceder."</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">2. Métodos de Pago</div>
+                <div class="suggestion">
+                    <p><strong>Redacción sugerida:</strong></p>
+                    <p>"Aceptamos los siguientes métodos de pago:</p>
+                    <ul>
+                        <li><strong>Tarjeta de crédito/débito:</strong> Visa, Mastercard, American Express (procesado por Culqi)</li>
+                        <li><strong>Yape/Plin:</strong> Escanea código QR para pagar</li>
+                        <li><strong>Efectivo:</strong> Paga directamente al técnico al finalizar (sujeto a disponibilidad)</li>
+                    </ul>
+                    <p><strong>Comprobantes de pago:</strong></p>
+                    <ul>
+                        <li>Boleta electrónica para personas con DNI</li>
+                        <li>Factura electrónica para empresas con RUC</li>
+                        <li>Todos los comprobantes se envían por email según normativa SUNAT</li>
+                    </ul>
+                    <p><strong>Momento del pago:</strong> El pago se procesa al confirmar tu solicitud. Si el servicio se cancela antes de la asignación del técnico, se reembolsa el 100%."</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">3. Política de Cancelación y Reembolsos</div>
+                <div class="suggestion">
+                    <p><strong>Redacción sugerida:</strong></p>
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Momento de Cancelación</th>
+                                <th>Reembolso</th>
+                                <th>Plazo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Antes de asignar técnico</td>
+                                <td>100%</td>
+                                <td>Inmediato</td>
+                            </tr>
+                            <tr>
+                                <td>Técnico asignado (>1 hora antes)</td>
+                                <td>100%</td>
+                                <td>24-48 horas</td>
+                            </tr>
+                            <tr>
+                                <td>Técnico asignado (<1 hora antes)</td>
+                                <td>80% (penalidad S/.20-50)</td>
+                                <td>24-48 horas</td>
+                            </tr>
+                            <tr>
+                                <td>Técnico en camino</td>
+                                <td>50%</td>
+                                <td>24-48 horas</td>
+                            </tr>
+                            <tr>
+                                <td>Técnico en ubicación</td>
+                                <td>No hay reembolso</td>
+                                <td>-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p><strong>Cancelación por parte del técnico:</strong> Si el técnico asignado no puede asistir, se te asignará otro inmediatamente o recibirás reembolso del 100% más un cupón de descuento del 20% para tu próximo servicio."</p>
+                    <p><strong>Cliente no presente (No-show):</strong> Si el técnico llega a tu ubicación y no estás presente ni respondes, se cobrará el servicio completo sin reembolso."</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">4. Tiempo de Atención</div>
+                <div class="suggestion">
+                    <p><strong>Redacción sugerida:</strong></p>
+                    <p>"Ofrecemos dos modalidades de servicio:</p>
+                    <p><strong>A) Servicio Inmediato (Express):</strong></p>
+                    <ul>
+                        <li>Técnico asignado en un máximo de 30 minutos</li>
+                        <li>Llegada estimada: 30-60 minutos desde la asignación</li>
+                        <li>Disponible: Lunes a viernes 8am-6pm</li>
+                        <li>Sujeto a disponibilidad de técnicos en tu zona</li>
+                    </ul>
+                    <p><strong>B) Servicio Programado:</strong></p>
+                    <ul>
+                        <li>Elige día y ventana horaria (ej: Martes 10am-12pm)</li>
+                        <li>Confirmación inmediata de disponibilidad</li>
+                        <li>Recordatorio 2 horas antes del servicio</li>
+                        <li>Disponible todos los días, incluyendo fines de semana</li>
+                    </ul>
+                    <p><strong>Notificaciones en tiempo real:</strong> Recibirás notificaciones por WhatsApp cuando:</p>
+                    <ul>
+                        <li>Se confirme tu solicitud</li>
+                        <li>Se asigne tu técnico (nombre, foto, calificación)</li>
+                        <li>El técnico esté en camino (tiempo estimado)</li>
+                        <li>El técnico haya llegado</li>
+                        <li>El servicio esté completo</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">5. Garantía del Servicio</div>
+                <div class="suggestion">
+                    <p><strong>Redacción sugerida:</strong></p>
+                    <p>"Todos nuestros servicios están garantizados:</p>
+                    <p><strong>Garantía de mano de obra:</strong></p>
+                    <ul>
+                        <li>30 días para cambio de aceite</li>
+                        <li>90 días para servicios eléctricos y mecánicos</li>
+                        <li>180 días para reparaciones mayores</li>
+                    </ul>
+                    <p><strong>Garantía de insumos:</strong></p>
+                    <ul>
+                        <li>Los insumos utilizados (aceite, filtros, repuestos) cuentan con garantía del fabricante</li>
+                        <li>En caso de falla por defecto de fábrica, reemplazamos sin costo adicional</li>
+                    </ul>
+                    <p><strong>Qué cubre la garantía:</strong></p>
+                    <ul>
+                        <li>Fallas relacionadas directamente con el servicio realizado</li>
+                        <li>Defectos de instalación o aplicación</li>
+                        <li>Insumos defectuosos (verificado por el técnico)</li>
+                    </ul>
+                    <p><strong>Qué NO cubre la garantía:</strong></p>
+                    <ul>
+                        <li>Daños por mal uso del vehículo</li>
+                        <li>Fallas de componentes no trabajados en el servicio</li>
+                        <li>Desgaste normal por uso</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">6. Responsabilidades y Limitaciones</div>
+                <div class="suggestion">
+                    <p><strong>Redacción sugerida:</strong></p>
+                    <p><strong>Responsabilidad de MITA:</strong></p>
+                    <ul>
+                        <li>Asignar técnicos verificados y capacitados</li>
+                        <li>Garantizar la calidad del servicio</li>
+                        <li>Responder por daños causados durante el servicio</li>
+                        <li>Procesar reembolsos según política establecida</li>
+                    </ul>
+                    <p><strong>Responsabilidad del Cliente:</strong></p>
+                    <ul>
+                        <li>Proporcionar información correcta del vehículo y ubicación</li>
+                        <li>Estar presente en el horario acordado</li>
+                        <li>Permitir al técnico trabajar en condiciones seguras</li>
+                        <li>Notificar cualquier problema inmediatamente</li>
+                    </ul>
+                    <p><strong>Limitaciones:</strong></p>
+                    <ul>
+                        <li>No nos responsabilizamos por fallas pre-existentes no detectables sin desmontaje</li>
+                        <li>Servicios sujetos a disponibilidad de técnicos en tu zona</li>
+                        <li>Horarios de atención pueden variar en feriados</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">7. Protección de Datos Personales</div>
+                <div class="suggestion">
+                    <p><strong>Redacción sugerida:</strong></p>
+                    <p>"Cumplimos con la Ley N° 29733 - Ley de Protección de Datos Personales del Perú:</p>
+                    <ul>
+                        <li><strong>Datos que recopilamos:</strong> Nombre, DNI/RUC, teléfono, email, dirección, datos del vehículo</li>
+                        <li><strong>Uso de datos:</strong> Procesar servicios, emitir comprobantes, comunicación de estado del servicio</li>
+                        <li><strong>Compartir datos:</strong> Solo con técnicos asignados (nombre, ubicación, vehículo)</li>
+                        <li><strong>Seguridad:</strong> Datos encriptados y almacenados en servidores seguros</li>
+                        <li><strong>Tus derechos:</strong> Acceso, rectificación, cancelación y oposición (ARCO)</li>
+                    </ul>
+                    <p>Para ejercer tus derechos, contáctanos a: privacidad@serviplus.pe"</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- CTA -->
+        <div class="cta-box">
+            <h3>📝 Próximos Pasos</h3>
+            <p style="color: #333; margin-bottom: 1.5rem;">Usa este análisis como base para redactar tus Términos y Condiciones</p>
+            <a href="mailto:restucciaduilio@gmail.com" class="btn">Enviar Borrador para Revisión</a>
+            <a href="#" class="btn" onclick="window.print(); return false;">Imprimir Documento</a>
+        </div>
+
+    </div>
+
+    <script>
+        function switchTab(index) {
+            // Ocultar todos los contenidos
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+
+            // Desactivar todas las pestañas
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Activar la pestaña y contenido seleccionados
+            tabs[index].classList.add('active');
+            contents[index].classList.add('active');
+        }
+    </script>
+</body>
+</html>

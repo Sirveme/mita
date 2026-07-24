@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MITA - Buscando mecánico</title>
+    <link rel="stylesheet" href="buscando_tecnico.css">
+</head>
+<body>
+    <main class="status-container">
+        
+        <!-- Estado 1: Buscando -->
+        <section class="status-screen" id="buscando">
+            <div class="animation-container">
+                <div class="pulse-circle"></div>
+                <img src="img/icon_searching.svg" alt="Buscando" class="searching-icon">
+            </div>
+            
+            <h1>Buscando mecánico disponible</h1>
+            <p class="status-text">Estamos notificando a los profesionales cercanos...</p>
+            
+            <div class="timer">
+                <img src="img/icon_clock.svg" alt="Tiempo">
+                <span id="tiempo">00:45</span>
+            </div>
+
+            <button class="btn-secondary" onclick="cancelarBusqueda()">Cancelar solicitud</button>
+        </section>
+
+        <!-- Estado 2: Técnico encontrado -->
+        <section class="status-screen hidden" id="encontrado">
+            <div class="success-icon">
+                <img src="img/icon_check_circle.svg" alt="Confirmado">
+            </div>
+            
+            <h1>¡Mecánico asignado!</h1>
+            
+            <div class="tecnico-card">
+                <img src="img/avatars/tecnico_01.jpg" alt="Juan Pérez" class="tecnico-avatar">
+                <div class="tecnico-info">
+                    <h2>Juan Pérez Ramírez</h2>
+                    <div class="tecnico-rating">
+                        <img src="img/icon_star.svg" alt="Calificación">
+                        <span>4.8</span>
+                        <span class="reviews">(127 servicios)</span>
+                    </div>
+                    <div class="tecnico-badges">
+                        <span class="badge">Mecánico certificado</span>
+                        <span class="badge">5 años experiencia</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="service-details">
+                <div class="detail-item">
+                    <img src="img/icon_calendar.svg" alt="Fecha">
+                    <div>
+                        <p class="detail-label">Fecha y hora</p>
+                        <p class="detail-value">Sábado 15 Nov, 10:00 AM</p>
+                    </div>
+                </div>
+                
+                <div class="detail-item">
+                    <img src="img/icon_location.svg" alt="Ubicación">
+                    <div>
+                        <p class="detail-label">Dirección</p>
+                        <p class="detail-value">Jr. Los Cedros 123, San Isidro</p>
+                    </div>
+                </div>
+
+                <div class="detail-item">
+                    <img src="img/icon_package.svg" alt="Productos">
+                    <div>
+                        <p class="detail-label">Productos</p>
+                        <p class="detail-value">Llegarán 1 hora antes del servicio</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-outline" onclick="contactarTecnico()">
+                    <img src="img/icon_whatsapp.svg" alt="WhatsApp"> Contactar
+                </button>
+                <button class="btn-primary" onclick="irAInicio()">
+                    Entendido
+                </button>
+            </div>
+
+            <a href="#" class="link-cancelar">Necesito cancelar el servicio</a>
+        </section>
+
+        <!-- Estado 3: Sin técnicos disponibles -->
+        <section class="status-screen hidden" id="sinTecnicos">
+            <div class="warning-icon">
+                <img src="img/icon_warning.svg" alt="Advertencia">
+            </div>
+            
+            <h1>No hay técnicos disponibles</h1>
+            <p class="status-text">En este momento no hay mecánicos disponibles para tu horario solicitado.</p>
+            
+            <div class="suggestions">
+                <h3>¿Qué puedes hacer?</h3>
+                <div class="suggestion-item">
+                    <img src="img/icon_calendar.svg" alt="Agendar">
+                    <div>
+                        <h4>Agendar para otro día</h4>
+                        <p>Te mostramos horarios con disponibilidad</p>
+                    </div>
+                </div>
+                <div class="suggestion-item">
+                    <img src="img/icon_bell.svg" alt="Notificar">
+                    <div>
+                        <h4>Avisarme cuando haya disponibilidad</h4>
+                        <p>Te notificaremos por WhatsApp</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-primary" onclick="verDisponibilidad()">
+                    Ver horarios disponibles
+                </button>
+                <button class="btn-secondary" onclick="volverInicio()">
+                    Volver al inicio
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="buscando_tecnico.js"></script>
+</body>
+</html>

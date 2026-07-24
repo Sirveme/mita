@@ -1,0 +1,301 @@
+{% extends "base_pwa.html" %}
+
+{% block title %}Gestión de Insumos - Admin MITA{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/static/css/gestion_insumos.css">
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="header">
+    <div class="header-container">
+        <div class="header-title">
+            <button class="btn-back" onclick="window.history.back()">
+                <i class="fas fa-arrow-left"></i>
+                Volver
+            </button>
+            <h1><i class="fas fa-boxes"></i> Gestión de Insumos</h1>
+        </div>
+    </div>
+</header>
+
+<!-- Container -->
+<div class="container">
+    
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Total Insumos</div>
+                </div>
+                <div class="stat-icon yellow">
+                    <i class="fas fa-boxes"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-value" id="statActivos">0</div>
+                    <div class="stat-label">Activos</div>
+                </div>
+                <div class="stat-icon green">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-value" id="statStockBajo">0</div>
+                    <div class="stat-label">Stock Bajo</div>
+                </div>
+                <div class="stat-icon red">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-value" id="statValorTotal">S/ 0</div>
+                    <div class="stat-label">Valor Inventario</div>
+                </div>
+                <div class="stat-icon blue">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Buscar por nombre o código..." onkeyup="buscarInsumos()">
+        </div>
+        
+        <div class="filter-group">
+            <select id="filterCategoria" onchange="aplicarFiltros()">
+                <option value="">Todas las categorías</option>
+            </select>
+            
+            <select id="filterMarca" onchange="aplicarFiltros()">
+                <option value="">Todas las marcas</option>
+            </select>
+            
+            <select id="filterEstado" onchange="aplicarFiltros()">
+                <option value="">Todos los estados</option>
+                <option value="true">Activos</option>
+                <option value="false">Inactivos</option>
+            </select>
+            
+            <select id="filterStock" onchange="aplicarFiltros()">
+                <option value="">Todo el stock</option>
+                <option value="true">Stock bajo</option>
+            </select>
+        </div>
+        
+        <button class="btn-primary" onclick="mostrarModal()">
+            <i class="fas fa-plus"></i>
+            Nuevo Insumo
+        </button>
+    </div>
+    
+    <!-- Table -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Marca</th>
+                    <th>Stock</th>
+                    <th>Precio</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="8" class="loading">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <!-- Pagination -->
+        <div class="pagination" id="pagination"></div>
+    </div>
+</div>
+
+<!-- Modal Crear/Editar -->
+<div class="modal-overlay" id="modalInsumo">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Nuevo Insumo</h2>
+            <button class="btn-close" onclick="cerrarModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div id="errorContainer"></div>
+        
+        <form id="formInsumo" onsubmit="guardarInsumo(event)">
+            <div class="form-grid">
+                <!-- Fila 1 -->
+                <div class="form-group">
+                    <label>Código Interno</label>
+                    <input type="text" id="codigo_interno" placeholder="Ej: ACEIT-001">
+                </div>
+                
+                <div class="form-group">
+                    <label>Código de Barras</label>
+                    <input type="text" id="codigo_barras" placeholder="EAN-13">
+                </div>
+                
+                <!-- Fila 2 -->
+                <div class="form-group full-width">
+                    <label>Nombre *</label>
+                    <input type="text" id="nombre" required placeholder="Ej: Aceite Mobil 1 5W-30">
+                </div>
+                
+                <!-- Fila 3 -->
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="categoria_id"></select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Marca</label>
+                    <select id="marca_id"></select>
+                </div>
+                
+                <!-- Fila 4 -->
+                <div class="form-group">
+                    <label>Presentación</label>
+                    <input type="text" id="presentacion" placeholder="Ej: 4 litros">
+                </div>
+                
+                <div class="form-group">
+                    <label>Unidad de Medida *</label>
+                    <select id="unidad_medida" required>
+                        <option value="unidad">Unidad</option>
+                        <option value="litro">Litro</option>
+                        <option value="galon">Galón</option>
+                        <option value="caja">Caja</option>
+                        <option value="set">Set</option>
+                        <option value="kg">Kilogramo</option>
+                    </select>
+                </div>
+
+                <!-- AGREGAR AQUÍ: -->
+                <div class="form-group">
+                    <label>Tipo Recomendación</label>
+                    <select id="tipo_recomendacion">
+                        <option value="">No clasificado</option>
+                        <option value="oem">OEM - Fabricante</option>
+                        <option value="premium">Premium</option>
+                        <option value="estandar">Estándar</option>
+                        <option value="economico">Económico</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>URL Imagen</label>
+                    <input type="url" id="imagen_url" placeholder="https://ejemplo.com/imagen.jpg">
+                </div>
+                
+                <!-- Fila 5: Stock -->
+                <div class="form-group">
+                    <label>Stock Actual</label>
+                    <input type="number" id="stock_actual" step="0.01" value="0" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label>Stock Mínimo</label>
+                    <input type="number" id="stock_minimo" step="0.01" value="5" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label>Stock Máximo</label>
+                    <input type="number" id="stock_maximo" step="0.01" value="100" min="0">
+                </div>
+                
+                <!-- Fila 6: Precios -->
+                <div class="form-group">
+                    <label>Precio Compra</label>
+                    <input type="number" id="precio_compra" step="0.01" min="0" placeholder="0.00">
+                </div>
+                
+                <div class="form-group">
+                    <label>Precio Venta</label>
+                    <input type="number" id="precio_venta" step="0.01" min="0" placeholder="0.00">
+                </div>
+                
+                <div class="form-group">
+                    <label>Precio Público</label>
+                    <input type="number" id="precio_publico" step="0.01" min="0" placeholder="0.00">
+                </div>
+                
+                <!-- Fila 7 -->
+                <div class="form-group">
+                    <label>Proveedor Principal</label>
+                    <input type="text" id="proveedor_principal" placeholder="Nombre del proveedor">
+                </div>
+                
+                <div class="form-group">
+                    <label>Fecha Vencimiento</label>
+                    <input type="date" id="fecha_vencimiento">
+                </div>
+                
+                <!-- Descripción -->
+                <div class="form-group full-width">
+                    <label>Descripción</label>
+                    <textarea id="descripcion" placeholder="Descripción detallada del producto"></textarea>
+                </div>
+                
+                <!-- Checkboxes -->
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="requiere_refrigeracion">
+                        Requiere Refrigeración
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="activo" checked>
+                        Activo
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="cerrarModal()">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-save"></i>
+                    Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+    {% block extra_js %}
+    <script src="/static/js/gestion_insumos.js"></script>
+    {% endblock %}
+
+{% endblock %}

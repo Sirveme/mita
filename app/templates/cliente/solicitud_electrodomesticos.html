@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1A2332">
+    <title>Reparación de Electrodomésticos - MITA</title>
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="/static/css/solicitud_servicio_dark.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    
+    <!-- Header Simple -->
+    <header class="header-simple">
+        <div class="header-container-simple">
+            <button class="btn-back" onclick="window.history.back()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="header-title">
+                <h1>Reparación de electrodomésticos</h1>
+                <p class="header-subtitle">Diagnóstico y reparación</p>
+            </div>
+            <div class="header-placeholder"></div>
+        </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-steps">
+            <div class="step active" data-step="1">
+                <div class="step-circle">1</div>
+                <span>Aparato</span>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-circle">2</div>
+                <span>Problema</span>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-circle">3</div>
+                <span>Ubicación</span>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-circle">4</div>
+                <span>Confirmar</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario Multi-Paso -->
+    <div class="form-container">
+        <form id="solicitudForm">
+            
+            <!-- PASO 1: Tipo de Electrodoméstico -->
+            <div class="form-step active" data-step="1">
+                <div class="step-header">
+                    <i class="fas fa-microchip step-icon"></i>
+                    <h2>¿Qué electrodoméstico necesitas reparar?</h2>
+                    <p>Selecciona el tipo de aparato</p>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-tv"></i>
+                        Tipo de electrodoméstico
+                    </label>
+                    <div class="radio-group" style="grid-template-columns: repeat(2, 1fr);">
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_electrodomestico" value="refrigeradora" data-precio="100">
+                            <div class="radio-content">
+                                <i class="fas fa-snowflake" style="color: #3B82F6;"></i>
+                                <span>Refrigeradora</span>
+                                <small>Desde S/100</small>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_electrodomestico" value="lavadora" data-precio="90">
+                            <div class="radio-content">
+                                <i class="fas fa-tshirt" style="color: #8B5CF6;"></i>
+                                <span>Lavadora</span>
+                                <small>Desde S/90</small>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_electrodomestico" value="cocina" data-precio="80">
+                            <div class="radio-content">
+                                <i class="fas fa-fire" style="color: #EF4444;"></i>
+                                <span>Cocina</span>
+                                <small>Desde S/80</small>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_electrodomestico" value="microondas" data-precio="70">
+                            <div class="radio-content">
+                                <i class="fas fa-burn" style="color: #F59E0B;"></i>
+                                <span>Microondas</span>
+                                <small>Desde S/70</small>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_electrodomestico" value="horno" data-precio="90">
+                            <div class="radio-content">
+                                <i class="fas fa-temperature-high" style="color: #EF4444;"></i>
+                                <span>Horno</span>
+                                <small>Desde S/90</small>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_electrodomestico" value="licuadora" data-precio="50">
+                            <div class="radio-content">
+                                <i class="fas fa-blender" style="color: #10B981;"></i>
+                                <span>Licuadora</span>
+                                <small>Desde S/50</small>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_electrodomestico" value="aspiradora" data-precio="60">
+                            <div class="radio-content">
+                                <i class="fas fa-broom" style="color: #6366F1;"></i>
+                                <span>Aspiradora</span>
+                                <small>Desde S/60</small>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_electrodomestico" value="ventilador" data-precio="50">
+                            <div class="radio-content">
+                                <i class="fas fa-fan" style="color: #06B6D4;"></i>
+                                <span>Ventilador</span>
+                                <small>Desde S/50</small>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_electrodomestico" value="aire_acondicionado" data-precio="120">
+                            <div class="radio-content">
+                                <i class="fas fa-wind" style="color: #0EA5E9;"></i>
+                                <span>Aire Acondicionado</span>
+                                <small>Desde S/120</small>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_electrodomestico" value="plancha" data-precio="40">
+                            <div class="radio-content">
+                                <i class="fas fa-iron" style="color: #78716C;"></i>
+                                <span>Plancha</span>
+                                <small>Desde S/40</small>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_electrodomestico" value="secadora" data-precio="100">
+                            <div class="radio-content">
+                                <i class="fas fa-wind" style="color: #EC4899;"></i>
+                                <span>Secadora</span>
+                                <small>Desde S/100</small>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_electrodomestico" value="otro" data-precio="70">
+                            <div class="radio-content">
+                                <i class="fas fa-question-circle" style="color: var(--text-gray);"></i>
+                                <span>Otro</span>
+                                <small>Desde S/70</small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-tag"></i>
+                        Marca del electrodoméstico
+                    </label>
+                    <input type="text" name="marca_electrodomestico" placeholder="Ej: LG, Samsung, Mabe, Whirlpool" required>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-barcode"></i>
+                        Modelo (opcional)
+                    </label>
+                    <input type="text" name="modelo_electrodomestico" placeholder="Ej: WM-1234">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-calendar"></i>
+                        ¿Cuánto tiempo tiene el aparato?
+                    </label>
+                    <select name="antiguedad" required>
+                        <option value="">Selecciona</option>
+                        <option value="menos_1">Menos de 1 año</option>
+                        <option value="1-3">1 a 3 años</option>
+                        <option value="3-5">3 a 5 años</option>
+                        <option value="5-10">5 a 10 años</option>
+                        <option value="mas_10">Más de 10 años</option>
+                    </select>
+                </div>
+
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i>
+                    <p>El diagnóstico inicial está incluido. El técnico evaluará el problema y te dará un presupuesto antes de comenzar la reparación.</p>
+                </div>
+            </div>
+
+            <!-- PASO 2: Detalles del Problema -->
+            <div class="form-step" data-step="2">
+                <div class="step-header">
+                    <i class="fas fa-tools step-icon"></i>
+                    <h2>Describe el problema</h2>
+                    <p>Cuéntanos qué está fallando</p>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Tipo de problema
+                    </label>
+                    <div class="radio-group" style="grid-template-columns: 1fr;">
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_problema" value="no_enciende">
+                            <div class="radio-content">
+                                <i class="fas fa-power-off"></i>
+                                <span>No enciende / No funciona</span>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_problema" value="ruido">
+                            <div class="radio-content">
+                                <i class="fas fa-volume-up"></i>
+                                <span>Hace ruidos extraños</span>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_problema" value="fuga">
+                            <div class="radio-content">
+                                <i class="fas fa-tint"></i>
+                                <span>Tiene fugas / Gotea</span>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_problema" value="temperatura">
+                            <div class="radio-content">
+                                <i class="fas fa-thermometer-half"></i>
+                                <span>Problema de temperatura</span>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_problema" value="vibracion">
+                            <div class="radio-content">
+                                <i class="fas fa-wave-square"></i>
+                                <span>Vibra mucho / Inestable</span>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_problema" value="display">
+                            <div class="radio-content">
+                                <i class="fas fa-desktop"></i>
+                                <span>Display / Panel no funciona</span>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_problema" value="otro">
+                            <div class="radio-content">
+                                <i class="fas fa-question-circle"></i>
+                                <span>Otro problema</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-comment-alt"></i>
+                        Describe el problema con más detalle
+                    </label>
+                    <textarea name="descripcion_problema" rows="4" placeholder="Ej: La refrigeradora no enfría bien, la luz funciona pero el motor no arranca..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-clock"></i>
+                        ¿Cuándo empezó el problema?
+                    </label>
+                    <select name="tiempo_problema" required>
+                        <option value="">Selecciona</option>
+                        <option value="hoy">Hoy</option>
+                        <option value="dias">Hace unos días</option>
+                        <option value="semanas">Hace semanas</option>
+                        <option value="meses">Hace meses</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-shield-alt"></i>
+                        ¿Tiene garantía vigente?
+                    </label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="tiene_garantia" value="si">
+                            <div class="radio-content">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Sí</span>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tiene_garantia" value="no">
+                            <div class="radio-content">
+                                <i class="fas fa-times-circle"></i>
+                                <span>No</span>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tiene_garantia" value="no_se">
+                            <div class="radio-content">
+                                <i class="fas fa-question"></i>
+                                <span>No sé</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-camera"></i>
+                        Fotos del electrodoméstico (opcional)
+                    </label>
+                    <input type="file" name="fotos_problema" accept="image/*" multiple style="padding: 0.75rem;">
+                    <small style="color: var(--text-gray); margin-top: 0.5rem; display: block;">
+                        Incluye fotos del aparato y del problema si es visible
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-calendar-alt"></i>
+                        Fecha preferida
+                    </label>
+                    <input type="date" name="fecha_servicio" id="fechaServicio" required min="">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-clock"></i>
+                        Hora preferida
+                    </label>
+                    <select name="hora_servicio" required>
+                        <option value="">Selecciona la hora</option>
+                        <option value="08:00">8:00 AM</option>
+                        <option value="09:00">9:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="13:00">1:00 PM</option>
+                        <option value="14:00">2:00 PM</option>
+                        <option value="15:00">3:00 PM</option>
+                        <option value="16:00">4:00 PM</option>
+                        <option value="17:00">5:00 PM</option>
+                        <option value="18:00">6:00 PM</option>
+                    </select>
+                </div>
+
+                <div class="price-summary">
+                    <div class="price-row">
+                        <span>Visita y diagnóstico</span>
+                        <strong>S/60</strong>
+                    </div>
+                    <div class="price-row" id="precioServicio" style="display: none;">
+                        <span>Reparación estimada</span>
+                        <strong id="precioServicioValor">S/0</strong>
+                    </div>
+                    <div class="price-total">
+                        <span>Total estimado</span>
+                        <strong id="totalEstimado">S/60</strong>
+                    </div>
+                    <p class="price-note" style="margin-top: 1rem; font-size: 0.875rem;">
+                        <i class="fas fa-info-circle"></i>
+                        El costo final dependerá del diagnóstico y repuestos necesarios
+                    </p>
+                </div>
+            </div>
+
+            <!-- PASO 3: Ubicación -->
+            <div class="form-step" data-step="3">
+                <div class="step-header">
+                    <i class="fas fa-map-marker-alt step-icon"></i>
+                    <h2>Ubicación del electrodoméstico</h2>
+                    <p>¿Dónde está el aparato?</p>
+                </div>
+
+                <button type="button" class="btn-ubicacion" onclick="obtenerUbicacionActual()">
+                    <i class="fas fa-crosshairs"></i>
+                    Usar mi ubicación actual
+                </button>
+
+                <div class="divider">
+                    <span>o ingresa manualmente</span>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-map-marked-alt"></i>
+                        Distrito
+                    </label>
+                    <select name="distrito" required>
+                        <option value="">Selecciona tu distrito</option>
+                        <option value="san-isidro">San Isidro</option>
+                        <option value="miraflores">Miraflores</option>
+                        <option value="surco">Santiago de Surco</option>
+                        <option value="san-borja">San Borja</option>
+                        <option value="la-molina">La Molina</option>
+                        <option value="jesus-maria">Jesús María</option>
+                        <option value="lince">Lince</option>
+                        <option value="magdalena">Magdalena del Mar</option>
+                        <option value="pueblo-libre">Pueblo Libre</option>
+                        <option value="san-miguel">San Miguel</option>
+                        <option value="barranco">Barranco</option>
+                        <option value="chorrillos">Chorrillos</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-road"></i>
+                        Dirección completa
+                    </label>
+                    <input type="text" name="direccion" id="direccion" placeholder="Av. Ejemplo 123" required>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-building"></i>
+                        Referencia (opcional)
+                    </label>
+                    <input type="text" name="referencia" placeholder="Cerca al parque, edificio azul">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-home"></i>
+                            Dpto/Casa
+                        </label>
+                        <input type="text" name="numero_casa" placeholder="101">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-building"></i>
+                            Piso
+                        </label>
+                        <input type="text" name="piso" placeholder="3">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-home"></i>
+                        ¿Dónde está ubicado el electrodoméstico?
+                    </label>
+                    <select name="ubicacion_aparato" required>
+                        <option value="">Selecciona</option>
+                        <option value="cocina">Cocina</option>
+                        <option value="lavanderia">Lavandería</option>
+                        <option value="sala">Sala</option>
+                        <option value="dormitorio">Dormitorio</option>
+                        <option value="terraza">Terraza</option>
+                        <option value="patio">Patio</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i>
+                    <p>El técnico necesitará acceso al electrodoméstico y a un tomacorriente cercano para las pruebas.</p>
+                </div>
+            </div>
+
+            <!-- PASO 4: Confirmación -->
+            <div class="form-step" data-step="4">
+                <div class="step-header">
+                    <i class="fas fa-check-circle step-icon" style="color: var(--success);"></i>
+                    <h2>Confirmación</h2>
+                    <p>Revisa los datos antes de confirmar</p>
+                </div>
+
+                <div class="resumen-card">
+                    <h3><i class="fas fa-tv"></i> Electrodoméstico</h3>
+                    <div class="resumen-item">
+                        <span>Tipo:</span>
+                        <strong id="resumenTipoAparato">-</strong>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Marca:</span>
+                        <strong id="resumenMarca">-</strong>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Antigüedad:</span>
+                        <strong id="resumenAntiguedad">-</strong>
+                    </div>
+                </div>
+
+                <div class="resumen-card">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Problema</h3>
+                    <div class="resumen-item">
+                        <span>Tipo:</span>
+                        <strong id="resumenTipoProblema">-</strong>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Descripción:</span>
+                        <strong id="resumenDescripcion">-</strong>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Fecha y hora:</span>
+                        <strong id="resumenFechaHora">-</strong>
+                    </div>
+                </div>
+
+                <div class="resumen-card">
+                    <h3><i class="fas fa-map-marker-alt"></i> Ubicación</h3>
+                    <div class="resumen-item">
+                        <span>Dirección:</span>
+                        <strong id="resumenDireccion">-</strong>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Distrito:</span>
+                        <strong id="resumenDistrito">-</strong>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Ubicación del aparato:</span>
+                        <strong id="resumenUbicacionAparato">-</strong>
+                    </div>
+                </div>
+
+                <div class="resumen-card price-card">
+                    <h3><i class="fas fa-money-bill-wave"></i> Total estimado</h3>
+                    <div class="price-final">
+                        <span>Total:</span>
+                        <strong id="resumenTotal">S/0</strong>
+                    </div>
+                    <p class="price-note">
+                        <i class="fas fa-info-circle"></i>
+                        Incluye visita y diagnóstico. El presupuesto final se confirmará después de la evaluación técnica.
+                    </p>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-container">
+                        <input type="checkbox" name="acepto_terminos" required>
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">
+                            Acepto los <a href="/terminos" target="_blank">términos y condiciones</a>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Botones de Navegación -->
+            <div class="form-navigation">
+                <button type="button" class="btn-secondary" id="btnAnterior" onclick="anteriorPaso()" style="display: none;">
+                    <i class="fas fa-arrow-left"></i>
+                    Anterior
+                </button>
+                <button type="button" class="btn-primary" id="btnSiguiente" onclick="siguientePaso()">
+                    Siguiente
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+                <button type="submit" class="btn-primary btn-confirm" id="btnConfirmar" style="display: none;">
+                    <i class="fas fa-check"></i>
+                    Confirmar servicio
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal de éxito -->
+    <div class="modal-overlay" id="modalExito">
+        <div class="modal-content">
+            <div class="modal-icon success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>¡Servicio solicitado!</h2>
+            <p>Hemos recibido tu solicitud de reparación. Un técnico especializado en electrodomésticos se pondrá en contacto contigo.</p>
+            <div class="modal-info">
+                <p><strong>Código de servicio:</strong> <span id="codigoServicio">#ELEC-12345</span></p>
+                <p>Recibirás una notificación cuando el técnico confirme la visita.</p>
+            </div>
+            <button class="btn-primary" onclick="irASeguimiento()">
+                <i class="fas fa-eye"></i>
+                Ver seguimiento
+            </button>
+        </div>
+    </div>
+
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/solicitud_electrodomesticos.js"></script>
+</body>
+</html>

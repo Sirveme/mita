@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FF6B35">
+    <title>Mi Perfil - MITA</title>
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --tecnico-primary: #FF6B35;
+            --tecnico-secondary: #F97316;
+            --tecnico-light: rgba(255, 107, 53, 0.1);
+            --bg-dark: #0A0E1A;
+            --dark-blue: #1A2332;
+            --medium-blue: #2A3647;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --white: #FFFFFF;
+            --text-light: #E5E7EB;
+            --text-gray: #9CA3AF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            padding-bottom: 80px;
+        }
+
+        .header-tecnico {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-bottom: 2px solid var(--tecnico-primary);
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .header-title i {
+            color: var(--tecnico-primary);
+            font-size: 1.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-icon:hover {
+            background: var(--tecnico-light);
+            border-color: var(--tecnico-primary);
+            transform: scale(1.1);
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 80px auto 0;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Profile Header */
+        .profile-header {
+            background: linear-gradient(135deg, var(--tecnico-primary) 0%, var(--tecnico-secondary) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -30%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .profile-content {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-avatar-container {
+            position: relative;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 5px solid var(--white);
+            object-fit: cover;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--tecnico-primary);
+        }
+
+        .avatar-edit {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: var(--white);
+            color: var(--tecnico-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 3px solid var(--tecnico-primary);
+            transition: all 0.3s ease;
+        }
+
+        .avatar-edit:hover {
+            transform: scale(1.1);
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-meta {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+        }
+
+        .meta-item i {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .profile-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stars {
+            display: flex;
+            gap: 0.25rem;
+            color: #FFD700;
+            font-size: 1.125rem;
+        }
+
+        .rating-count {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.875rem;
+        }
+
+        .verification-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .verification-badge i {
+            color: #FFD700;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card-small {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 2px solid rgba(255, 107, 53, 0.2);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card-small:hover {
+            transform: translateY(-5px);
+            border-color: var(--tecnico-primary);
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+        }
+
+        .stat-icon-small {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value-small {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label-small {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        /* Tabs */
+        .tabs-container {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 2px solid rgba(255, 107, 53, 0.2);
+            overflow: hidden;
+        }
+
+        .tabs-nav {
+            display: flex;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 1.25rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-gray);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 107, 53, 0.1);
+            color: var(--white);
+        }
+
+        .tab-button.active {
+            color: var(--tecnico-primary);
+            border-bottom-color: var(--tecnico-primary);
+            background: rgba(255, 107, 53, 0.1);
+        }
+
+        .tab-content {
+            padding: 2rem;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .info-group {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-label i {
+            color: var(--tecnico-primary);
+        }
+
+        .info-value {
+            font-size: 1rem;
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        /* Especialidades */
+        .specialties-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .specialty-tag {
+            background: var(--tecnico-light);
+            border: 2px solid var(--tecnico-primary);
+            color: var(--tecnico-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .specialty-tag i {
+            font-size: 1.25rem;
+        }
+
+        /* Documentos */
+        .documents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .document-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .document-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--tecnico-primary);
+        }
+
+        .document-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .document-icon {
+            font-size: 2rem;
+            color: var(--tecnico-primary);
+        }
+
+        .document-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-verificado {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6EE7B7;
+        }
+
+        .status-pendiente {
+            background: rgba(245, 158, 11, 0.2);
+            color: #FCD34D;
+        }
+
+        .document-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .document-date {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        /* Reseñas */
+        .reviews-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .review-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .review-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .reviewer-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--tecnico-primary);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+
+        .reviewer-info {
+            flex: 1;
+        }
+
+        .reviewer-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .review-date {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        .review-stars {
+            display: flex;
+            gap: 0.25rem;
+            color: #FFD700;
+            font-size: 1rem;
+        }
+
+        .review-text {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .review-service {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(255, 107, 53, 0.1);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        /* Configuración */
+        .settings-section {
+            margin-bottom: 2rem;
+        }
+
+        .settings-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .settings-title i {
+            color: var(--tecnico-primary);
+        }
+
+        .settings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .setting-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .setting-info h4 {
+            font-size: 1rem;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .setting-info p {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--tecnico-primary);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: var(--white);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(30px);
+        }
+
+        /* Botones */
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--tecnico-primary) 0%, var(--tecnico-secondary) 100%);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #FCA5A5;
+            border: 2px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav-tecnico {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 35, 50, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            border-top: 2px solid var(--tecnico-primary);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+            padding: 0.5rem;
+            min-width: 60px;
+        }
+
+        .nav-item i {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-item.active {
+            color: var(--tecnico-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1.5rem 1rem;
+            }
+
+            .profile-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .profile-name {
+                font-size: 1.5rem;
+            }
+
+            .profile-meta {
+                justify-content: center;
+            }
+
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs-nav {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header-tecnico">
+        <div class="header-container">
+            <div class="header-title">
+                <i class="fas fa-user-circle"></i>
+                <span>Mi Perfil</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn-icon" onclick="editarPerfil()">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon" onclick="compartirPerfil()">
+                    <i class="fas fa-share-alt"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-content">
+                <div class="profile-avatar-container">
+                    <div class="profile-avatar">JD</div>
+                    <button class="avatar-edit" onclick="cambiarFoto()">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                <div class="profile-info">
+                    <h1 class="profile-name">Juan Díaz Pérez</h1>
+                    <div class="profile-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-briefcase"></i>
+                            <span>Electricista Certificado</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Lima, Perú</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>Miembro desde 2023</span>
+                        </div>
+                    </div>
+                    <div class="profile-rating">
+                        <div class="stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <strong style="color: var(--white); margin-right: 0.5rem;">4.8</strong>
+                        <span class="rating-count">(127 reseñas)</span>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <span class="verification-badge">
+                            <i class="fas fa-shield-alt"></i>
+                            Verificación Nivel 3 - Estricta
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card-small">
+                <div class="stat-icon-small" style="color: var(--success);">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-value-small">127</div>
+                <div class="stat-label-small">Servicios completados</div>
+            </div>
+
+            <div class="stat-card-small">
+                <div class="stat-icon-small" style="color: var(--tecnico-primary);">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-value-small">4.8</div>
+                <div class="stat-label-small">Calificación promedio</div>
+            </div>
+
+            <div class="stat-card-small">
+                <div class="stat-icon-small" style="color: var(--warning);">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-value-small">98%</div>
+                <div class="stat-label-small">Tasa de puntualidad</div>
+            </div>
+
+            <div class="stat-card-small">
+                <div class="stat-icon-small" style="color: #3B82F6;">
+                    <i class="fas fa-redo"></i>
+                </div>
+                <div class="stat-value-small">92%</div>
+                <div class="stat-label-small">Clientes recurrentes</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <div class="tabs-nav">
+                <button class="tab-button active" onclick="openTab(event, 'infoTab')">
+                    <i class="fas fa-info-circle"></i> Información
+                </button>
+                <button class="tab-button" onclick="openTab(event, 'especialidadesTab')">
+                    <i class="fas fa-tools"></i> Especialidades
+                </button>
+                <button class="tab-button" onclick="openTab(event, 'documentosTab')">
+                    <i class="fas fa-file-alt"></i> Documentos
+                </button>
+                <button class="tab-button" onclick="openTab(event, 'resenasTab')">
+                    <i class="fas fa-star"></i> Reseñas
+                </button>
+                <button class="tab-button" onclick="openTab(event, 'configuracionTab')">
+                    <i class="fas fa-cog"></i> Configuración
+                </button>
+            </div>
+
+            <!-- Tab: Información -->
+            <div id="infoTab" class="tab-content active">
+                <div class="info-grid">
+                    <div class="info-group">
+                        <div class="info-label">
+                            <i class="fas fa-id-card"></i>
+                            DNI
+                        </div>
+                        <div class="info-value">12345678</div>
+                    </div>
+
+                    <div class="info-group">
+                        <div class="info-label">
+                            <i class="fas fa-phone"></i>
+                            Teléfono
+                        </div>
+                        <div class="info-value">+51 999 888 777</div>
+                    </div>
+
+                    <div class="info-group">
+                        <div class="info-label">
+                            <i class="fas fa-envelope"></i>
+                            Email
+                        </div>
+                        <div class="info-value">juan.diaz@email.com</div>
+                    </div>
+
+                    <div class="info-group">
+                        <div class="info-label">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Dirección
+                        </div>
+                        <div class="info-value">Av. Ejemplo 123, San Isidro</div>
+                    </div>
+
+                    <div class="info-group">
+                        <div class="info-label">
+                            <i class="fas fa-birthday-cake"></i>
+                            Fecha de nacimiento
+                        </div>
+                        <div class="info-value">15 de mayo, 1990</div>
+                    </div>
+
+                    <div class="info-group">
+                        <div class="info-label">
+                            <i class="fas fa-graduation-cap"></i>
+                            Educación
+                        </div>
+                        <div class="info-value">Técnico - SENATI</div>
+                    </div>
+
+                    <div class="info-group">
+                        <div class="info-label">
+                            <i class="fas fa-briefcase"></i>
+                            Años de experiencia
+                        </div>
+                        <div class="info-value">6-10 años</div>
+                    </div>
+
+                    <div class="info-group">
+                        <div class="info-label">
+                            <i class="fas fa-clock"></i>
+                            Horario disponible
+                        </div>
+                        <div class="info-value">Horario completo (8am - 6pm)</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <div class="info-label" style="margin-bottom: 1rem;">
+                        <i class="fas fa-comment"></i>
+                        Bio profesional
+                    </div>
+                    <p style="color: var(--text-light); line-height: 1.8;">
+                        Electricista certificado con más de 8 años de experiencia en instalaciones residenciales y comerciales. 
+                        Especializado en sistemas eléctricos modernos, automatización del hogar y energía solar. 
+                        Comprometido con la calidad y la seguridad en cada proyecto.
+                    </p>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="editarInformacion()">
+                        <i class="fas fa-edit"></i>
+                        Editar información
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab: Especialidades -->
+            <div id="especialidadesTab" class="tab-content">
+                <h3 style="color: var(--white); margin-bottom: 1.5rem;">Servicios que ofrezco</h3>
+                <div class="specialties-list">
+                    <div class="specialty-tag">
+                        <i class="fas fa-bolt"></i>
+                        Electricidad
+                    </div>
+                    <div class="specialty-tag">
+                        <i class="fas fa-solar-panel"></i>
+                        Energía Solar
+                    </div>
+                    <div class="specialty-tag">
+                        <i class="fas fa-home"></i>
+                        Domótica
+                    </div>
+                    <div class="specialty-tag">
+                        <i class="fas fa-lightbulb"></i>
+                        Iluminación LED
+                    </div>
+                </div>
+
+                <div style="margin-top: 3rem;">
+                    <h3 style="color: var(--white); margin-bottom: 1.5rem;">Zonas de trabajo</h3>
+                    <div class="info-grid">
+                        <div class="info-group">
+                            <div class="info-label">
+                                <i class="fas fa-map"></i>
+                                Distritos
+                            </div>
+                            <div class="info-value">Miraflores, San Isidro, San Borja, Surco, La Molina</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 3rem;">
+                    <h3 style="color: var(--white); margin-bottom: 1.5rem;">Certificaciones</h3>
+                    <div class="info-grid">
+                        <div class="info-group">
+                            <div class="info-label">
+                                <i class="fas fa-certificate"></i>
+                                Certificado 1
+                            </div>
+                            <div class="info-value">Electricidad Industrial - SENATI (2020)</div>
+                        </div>
+                        <div class="info-group">
+                            <div class="info-label">
+                                <i class="fas fa-certificate"></i>
+                                Certificado 2
+                            </div>
+                            <div class="info-value">Sistemas Fotovoltaicos - SENCICO (2021)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="editarEspecialidades()">
+                        <i class="fas fa-edit"></i>
+                        Editar especialidades
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab: Documentos -->
+            <div id="documentosTab" class="tab-content">
+                <div class="documents-grid">
+                    <div class="document-card">
+                        <div class="document-header">
+                            <div class="document-icon">
+                                <i class="fas fa-id-card"></i>
+                            </div>
+                            <span class="document-status status-verificado">
+                                <i class="fas fa-check-circle"></i> Verificado
+                            </span>
+                        </div>
+                        <div class="document-name">DNI</div>
+                        <div class="document-date">Verificado el 15 Ene 2023</div>
+                    </div>
+
+                    <div class="document-card">
+                        <div class="document-header">
+                            <div class="document-icon">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <span class="document-status status-verificado">
+                                <i class="fas fa-check-circle"></i> Verificado
+                            </span>
+                        </div>
+                        <div class="document-name">Foto de Perfil</div>
+                        <div class="document-date">Verificado el 15 Ene 2023</div>
+                    </div>
+
+                    <div class="document-card">
+                        <div class="document-header">
+                            <div class="document-icon">
+                                <i class="fas fa-certificate"></i>
+                            </div>
+                            <span class="document-status status-verificado">
+                                <i class="fas fa-check-circle"></i> Verificado
+                            </span>
+                        </div>
+                        <div class="document-name">Certificados Técnicos</div>
+                        <div class="document-date">Verificado el 18 Ene 2023</div>
+                    </div>
+
+                    <div class="document-card">
+                        <div class="document-header">
+                            <div class="document-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <span class="document-status status-verificado">
+                                <i class="fas fa-check-circle"></i> Verificado
+                            </span>
+                        </div>
+                        <div class="document-name">Antecedentes Policiales</div>
+                        <div class="document-date">Verificado el 20 Ene 2023</div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="subirDocumento()">
+                        <i class="fas fa-upload"></i>
+                        Subir nuevo documento
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab: Reseñas -->
+            <div id="resenasTab" class="tab-content">
+                <div class="reviews-list">
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div class="reviewer-avatar">ML</div>
+                            <div class="reviewer-info">
+                                <div class="reviewer-name">María López</div>
+                                <div class="review-date">15 de noviembre, 2024</div>
+                            </div>
+                            <div class="review-stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <p class="review-text">
+                            Excelente servicio! Juan es muy profesional, puntual y resolvió el problema eléctrico 
+                            en mi casa de manera eficiente. Totalmente recomendado.
+                        </p>
+                        <div class="review-service">
+                            <i class="fas fa-bolt"></i> Servicio: Reparación eléctrica
+                        </div>
+                    </div>
+
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div class="reviewer-avatar">CR</div>
+                            <div class="reviewer-info">
+                                <div class="reviewer-name">Carlos Ruiz</div>
+                                <div class="review-date">10 de noviembre, 2024</div>
+                            </div>
+                            <div class="review-stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                        </div>
+                        <p class="review-text">
+                            Buen trabajo, llegó a tiempo y resolvió el problema. El único detalle es que 
+                            tardó un poco más de lo esperado, pero el resultado fue bueno.
+                        </p>
+                        <div class="review-service">
+                            <i class="fas fa-lightbulb"></i> Servicio: Instalación de iluminación
+                        </div>
+                    </div>
+
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div class="reviewer-avatar">AF</div>
+                            <div class="reviewer-info">
+                                <div class="reviewer-name">Ana Fernández</div>
+                                <div class="review-date">05 de noviembre, 2024</div>
+                            </div>
+                            <div class="review-stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <p class="review-text">
+                            Muy satisfecha con el servicio. Juan explicó todo el proceso y dejó todo 
+                            limpio y ordenado. Sin duda lo volveré a contratar.
+                        </p>
+                        <div class="review-service">
+                            <i class="fas fa-home"></i> Servicio: Instalación domótica
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Configuración -->
+            <div id="configuracionTab" class="tab-content">
+                <div class="settings-section">
+                    <h3 class="settings-title">
+                        <i class="fas fa-bell"></i>
+                        Notificaciones
+                    </h3>
+                    <div class="settings-list">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Notificaciones push</h4>
+                                <p>Recibe alertas de nuevos servicios disponibles</p>
+                            </div>
+                            <div class="toggle-switch active" onclick="toggleSetting(this)">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Notificaciones por email</h4>
+                                <p>Recibe resúmenes diarios en tu correo</p>
+                            </div>
+                            <div class="toggle-switch active" onclick="toggleSetting(this)">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Notificaciones SMS</h4>
+                                <p>Recibe SMS para servicios urgentes</p>
+                            </div>
+                            <div class="toggle-switch" onclick="toggleSetting(this)">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="settings-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Privacidad y Seguridad
+                    </h3>
+                    <div class="settings-list">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Perfil público</h4>
+                                <p>Permite que los clientes vean tu perfil completo</p>
+                            </div>
+                            <div class="toggle-switch active" onclick="toggleSetting(this)">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Mostrar teléfono</h4>
+                                <p>Muestra tu número a clientes con servicio activo</p>
+                            </div>
+                            <div class="toggle-switch active" onclick="toggleSetting(this)">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Compartir ubicación</h4>
+                                <p>Permite tracking en tiempo real durante servicios</p>
+                            </div>
+                            <div class="toggle-switch active" onclick="toggleSetting(this)">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="cambiarContrasena()">
+                        <i class="fas fa-key"></i>
+                        Cambiar contraseña
+                    </button>
+                    <button class="btn btn-secondary" onclick="descargarDatos()">
+                        <i class="fas fa-download"></i>
+                        Descargar mis datos
+                    </button>
+                    <button class="btn btn-danger" onclick="cerrarSesion()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Cerrar sesión
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav-tecnico">
+        <a href="/tecnico/panel" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Inicio</span>
+        </a>
+        <a href="/tecnico/solicitudes" class="nav-item">
+            <i class="fas fa-list"></i>
+            <span>Solicitudes</span>
+        </a>
+        <a href="/tecnico/historial" class="nav-item">
+            <i class="fas fa-history"></i>
+            <span>Historial</span>
+        </a>
+        <a href="/tecnico/ganancias" class="nav-item">
+            <i class="fas fa-wallet"></i>
+            <span>Ganancias</span>
+        </a>
+        <a href="/tecnico/perfil" class="nav-item active">
+            <i class="fas fa-user"></i>
+            <span>Perfil</span>
+        </a>
+    </nav>
+
+    <script src="/static/js/utils.js"></script>
+    <script>
+        // Tabs
+        function openTab(evt, tabName) {
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+
+            const tabButtons = document.getElementsByClassName('tab-button');
+            for (let i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove('active');
+            }
+
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+
+        // Toggle Settings
+        function toggleSetting(element) {
+            element.classList.toggle('active');
+            const isActive = element.classList.contains('active');
+            mostrarNotificacion(
+                isActive ? 'Configuración activada' : 'Configuración desactivada',
+                'info'
+            );
+        }
+
+        // Actions
+        function editarPerfil() {
+            mostrarNotificacion('Abriendo editor de perfil...', 'info');
+        }
+
+        function compartirPerfil() {
+            mostrarNotificacion('Compartir perfil...', 'info');
+        }
+
+        function cambiarFoto() {
+            mostrarNotificacion('Cambiar foto de perfil...', 'info');
+        }
+
+        function editarInformacion() {
+            mostrarNotificacion('Editar información...', 'info');
+        }
+
+        function editarEspecialidades() {
+            mostrarNotificacion('Editar especialidades...', 'info');
+        }
+
+        function subirDocumento() {
+            mostrarNotificacion('Subir documento...', 'info');
+        }
+
+        function cambiarContrasena() {
+            mostrarNotificacion('Cambiar contraseña...', 'info');
+        }
+
+        function descargarDatos() {
+            mostrarNotificacion('Descargando tus datos...', 'info');
+        }
+
+        function cerrarSesion() {
+            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                window.location.href = '/tecnico/login';
+            }
+        }
+
+        console.log('✅ Perfil técnico cargado');
+    </script>
+</body>
+</html>

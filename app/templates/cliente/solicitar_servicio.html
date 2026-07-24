@@ -1,0 +1,658 @@
+{% extends "base_pwa.html" %}
+
+{% block title %}Solicitar Servicio - MITA{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="/static/css/solicitar_servicio.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="solicitud-container">
+    
+    <!-- Header con navegación -->
+    <header class="solicitud-header">
+        <button class="btn-back" onclick="volverAtras()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 id="headerTitulo">Solicitar Servicio</h1>
+        <div class="header-spacer"></div>
+    </header>
+
+    <!-- Indicador de pasos -->
+    <div class="steps-indicator">
+        <div class="step-dot active" data-step="1">
+            <span>1</span>
+            <small>Servicio</small>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-dot" data-step="2">
+            <span>2</span>
+            <small>Detalles</small>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-dot" data-step="3">
+            <span>3</span>
+            <small>Ubicación</small>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-dot" data-step="4">
+            <span>4</span>
+            <small>Confirmar</small>
+        </div>
+    </div>
+
+    <!-- Formulario de pasos -->
+    <form id="solicitudForm" novalidate>
+        
+        <!-- PASO 1: Seleccionar tipo de servicio -->
+        <div class="form-step active" data-step="1">
+            <div class="step-header">
+                <i class="fas fa-list-alt step-icon" id="categoriaIcono"></i>
+                <h2 id="categoriaNombre">¿Qué necesitas?</h2>
+                <p>Selecciona el tipo de servicio</p>
+            </div>
+
+            <div class="tipos-grid" id="tiposGrid">
+                <!-- Se cargan dinámicamente -->
+                <div class="loading-tipos">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Cargando opciones...</p>
+                </div>
+            </div>
+
+            <!-- Opción "Otro problema" -->
+            <div class="otro-problema" id="otroProblemaCont" style="display: none;">
+                <button type="button" class="btn-otro" onclick="seleccionarOtro()">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Mi problema no está en la lista</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- PASO 2: Describir el problema -->
+        <div class="form-step" data-step="2">
+            <div class="step-header">
+                <i class="fas fa-edit step-icon"></i>
+                <h2>Describe tu problema</h2>
+                <p>Cuéntanos qué está pasando</p>
+            </div>
+
+            <div class="selected-service" id="servicioSeleccionado">
+                <i class="fas fa-tools"></i>
+                <span>Servicio seleccionado</span>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-comment-alt"></i>
+                    Descripción del problema *
+                </label>
+                <textarea 
+                    name="descripcion" 
+                    id="descripcionProblema"
+                    rows="4" 
+                    required
+                    placeholder="Ej: El tomacorriente de la cocina no funciona, se escucha un ruido cuando conecto algo..."></textarea>
+                <small class="helper-text">Entre más detallado, mejor podremos ayudarte</small>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Urgencia
+                </label>
+                <div class="urgencia-options">
+                    <label class="urgencia-option">
+                        <input type="radio" name="urgencia" value="programado" checked>
+                        <div class="urgencia-card">
+                            <i class="fas fa-calendar"></i>
+                            <span>Programado</span>
+                            <small>Puedo esperar unos días</small>
+                        </div>
+                    </label>
+                    <label class="urgencia-option">
+                        <input type="radio" name="urgencia" value="normal">
+                        <div class="urgencia-card">
+                            <i class="fas fa-clock"></i>
+                            <span>Normal</span>
+                            <small>En las próximas 24h</small>
+                        </div>
+                    </label>
+                    <label class="urgencia-option">
+                        <input type="radio" name="urgencia" value="urgente">
+                        <div class="urgencia-card urgente">
+                            <i class="fas fa-bolt"></i>
+                            <span>Urgente</span>
+                            <small>Lo más pronto posible</small>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-camera"></i>
+                    Fotos del problema (opcional)
+                </label>
+                <div class="upload-area" onclick="document.getElementById('inputFotos').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Toca para subir fotos</p>
+                    <small>Máximo 3 fotos</small>
+                </div>
+                <input type="file" id="inputFotos" accept="image/*" multiple style="display: none;">
+                <div class="fotos-preview" id="fotosPreview"></div>
+            </div>
+        </div>
+
+        <!-- PASO 3: Ubicación y datos de contacto -->
+        <div class="form-step" data-step="3">
+            <div class="step-header">
+                <i class="fas fa-map-marker-alt step-icon"></i>
+                <h2>¿Dónde te visitamos?</h2>
+                <p>Ingresa la dirección del servicio</p>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-user"></i>
+                    Tu nombre *
+                </label>
+                <input type="text" name="nombre" required placeholder="Juan Pérez">
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-phone"></i>
+                    Celular *
+                </label>
+                <input type="tel" name="telefono" required placeholder="999 999 999" maxlength="9">
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-envelope"></i>
+                    Email (opcional)
+                </label>
+                <input type="email" name="email" placeholder="tu@email.com">
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-city"></i>
+                    Distrito *
+                </label>
+                <select name="distrito" required>
+                    <option value="">Seleccionar distrito</option>
+                    <!-- Distritos de Lima -->
+                    <option value="Ate">Ate</option>
+                    <option value="Barranco">Barranco</option>
+                    <option value="Breña">Breña</option>
+                    <option value="Chorrillos">Chorrillos</option>
+                    <option value="Comas">Comas</option>
+                    <option value="El Agustino">El Agustino</option>
+                    <option value="Independencia">Independencia</option>
+                    <option value="Jesús María">Jesús María</option>
+                    <option value="La Molina">La Molina</option>
+                    <option value="La Victoria">La Victoria</option>
+                    <option value="Lima (Cercado)">Lima (Cercado)</option>
+                    <option value="Lince">Lince</option>
+                    <option value="Los Olivos">Los Olivos</option>
+                    <option value="Magdalena">Magdalena</option>
+                    <option value="Miraflores">Miraflores</option>
+                    <option value="Pueblo Libre">Pueblo Libre</option>
+                    <option value="Rímac">Rímac</option>
+                    <option value="San Borja">San Borja</option>
+                    <option value="San Isidro">San Isidro</option>
+                    <option value="San Juan de Lurigancho">San Juan de Lurigancho</option>
+                    <option value="San Juan de Miraflores">San Juan de Miraflores</option>
+                    <option value="San Luis">San Luis</option>
+                    <option value="San Martín de Porres">San Martín de Porres</option>
+                    <option value="San Miguel">San Miguel</option>
+                    <option value="Santa Anita">Santa Anita</option>
+                    <option value="Santiago de Surco">Santiago de Surco</option>
+                    <option value="Surquillo">Surquillo</option>
+                    <option value="Villa El Salvador">Villa El Salvador</option>
+                    <option value="Villa María del Triunfo">Villa María del Triunfo</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-home"></i>
+                    Dirección completa *
+                </label>
+                <input type="text" name="direccion" required placeholder="Av. Ejemplo 123, Dpto 401">
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-map-signs"></i>
+                    Referencia (opcional)
+                </label>
+                <input type="text" name="referencia" placeholder="Frente al parque, edificio azul...">
+            </div>
+        </div>
+
+        <!-- PASO 4: Confirmar y agendar -->
+        <div class="form-step" data-step="4">
+            <div class="step-header">
+                <i class="fas fa-check-circle step-icon" style="color: var(--mita-success);"></i>
+                <h2>Confirma tu solicitud</h2>
+                <p>Revisa los datos antes de continuar</p>
+            </div>
+
+            <!-- Resumen del servicio -->
+            <div class="resumen-card">
+                <h3><i class="fas fa-tools"></i> Servicio</h3>
+                <div class="resumen-item">
+                    <span>Categoría:</span>
+                    <strong id="resumenCategoria">-</strong>
+                </div>
+                <div class="resumen-item">
+                    <span>Tipo:</span>
+                    <strong id="resumenTipo">-</strong>
+                </div>
+                <div class="resumen-item">
+                    <span>Descripción:</span>
+                    <strong id="resumenDescripcion">-</strong>
+                </div>
+            </div>
+
+            <div class="resumen-card">
+                <h3><i class="fas fa-map-marker-alt"></i> Ubicación</h3>
+                <div class="resumen-item">
+                    <span>Dirección:</span>
+                    <strong id="resumenDireccion">-</strong>
+                </div>
+                <div class="resumen-item">
+                    <span>Distrito:</span>
+                    <strong id="resumenDistrito">-</strong>
+                </div>
+            </div>
+
+            <div class="resumen-card">
+                <h3><i class="fas fa-user"></i> Contacto</h3>
+                <div class="resumen-item">
+                    <span>Nombre:</span>
+                    <strong id="resumenNombre">-</strong>
+                </div>
+                <div class="resumen-item">
+                    <span>Teléfono:</span>
+                    <strong id="resumenTelefono">-</strong>
+                </div>
+            </div>
+
+            <!-- Precio -->
+            <div class="resumen-card price-card">
+                <h3><i class="fas fa-tag"></i> Precio</h3>
+                <div class="price-main">
+                    <span class="price-amount">S/ 50</span>
+                    <span class="price-label">Visita + Diagnóstico</span>
+                </div>
+                <p class="price-note">
+                    <i class="fas fa-info-circle"></i>
+                    Si requiere reparación adicional, el técnico te dará un presupuesto antes de proceder.
+                </p>
+            </div>
+
+            <!-- Términos -->
+            <div class="form-group">
+                <label class="checkbox-container">
+                    <input type="checkbox" name="acepto_terminos" required>
+                    <span class="checkmark"></span>
+                    <span class="checkbox-label">
+                        Acepto los <a href="/terminos" target="_blank">términos y condiciones</a>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Botones de navegación -->
+        <div class="form-navigation">
+            <button type="button" class="btn-secondary" id="btnAnterior" onclick="anteriorPaso()" style="display: none;">
+                <i class="fas fa-arrow-left"></i>
+                Anterior
+            </button>
+            <button type="button" class="btn-primary" id="btnSiguiente" onclick="siguientePaso()" style="display: none;">
+                Siguiente
+                <i class="fas fa-arrow-right"></i>
+            </button>
+            <button type="button" class="btn-primary btn-confirm" id="btnConfirmar" onclick="irACalendario()" style="display: none;">
+                <i class="fas fa-calendar-check"></i>
+                Agendar fecha y hora
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ============================================
+// MITA - Solicitar Servicio
+// ============================================
+
+// Variables globales
+let pasoActual = 1;
+const totalPasos = 4;
+let categoriaActual = null;
+let tipoSeleccionado = null;
+let datosFormulario = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener categoría de URL o sessionStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoriaCodigo = urlParams.get('categoria') || sessionStorage.getItem('mita_categoria');
+    
+    if (categoriaCodigo) {
+        cargarTiposServicio(categoriaCodigo);
+    } else {
+        // Si no hay categoría, volver al home
+        window.location.href = '/';
+    }
+    
+    // Inicializar
+    actualizarBotones();
+    
+    // Evento para fotos
+    document.getElementById('inputFotos')?.addEventListener('change', previsualizarFotos);
+});
+
+// Cargar tipos de servicio de la categoría
+async function cargarTiposServicio(codigo) {
+    try {
+        const response = await fetch('/api/v1/servicios/categorias/' + codigo + '/tipos');
+        const data = await response.json();
+        
+        if (data.success) {
+            categoriaActual = data.categoria;
+            
+            // Actualizar header
+            document.getElementById('categoriaIcono').className = data.categoria.icono + ' step-icon';
+            document.getElementById('categoriaIcono').style.color = data.categoria.color;
+            document.getElementById('categoriaNombre').textContent = data.categoria.nombre;
+            document.getElementById('headerTitulo').textContent = data.categoria.nombre;
+            
+            // Renderizar tipos
+            renderizarTipos(data.tipos);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('tiposGrid').innerHTML = 
+            '<p class="error">Error al cargar servicios</p>';
+    }
+}
+
+// Renderizar grid de tipos de servicio
+function renderizarTipos(tipos) {
+    const grid = document.getElementById('tiposGrid');
+    
+    let html = '';
+    tipos.forEach(tipo => {
+        html += '<div class="tipo-card" onclick="seleccionarTipo(\'' + tipo.codigo + '\', \'' + tipo.nombre.replace(/'/g, "\\'") + '\')">';
+        html += '  <div class="tipo-nombre">' + tipo.nombre + '</div>';
+        if (tipo.descripcion) {
+            html += '  <div class="tipo-desc">' + tipo.descripcion + '</div>';
+        }
+        html += '  <div class="tipo-footer">';
+        html += '    <span class="tipo-duracion"><i class="fas fa-clock"></i> ~' + tipo.duracion_estimada_min + ' min</span>';
+        html += '    <i class="fas fa-chevron-right"></i>';
+        html += '  </div>';
+        html += '</div>';
+    });
+    
+    grid.innerHTML = html;
+    document.getElementById('otroProblemaCont').style.display = 'block';
+}
+
+// Seleccionar tipo de servicio
+function seleccionarTipo(codigo, nombre) {
+    tipoSeleccionado = { codigo: codigo, nombre: nombre };
+    datosFormulario.tipo_servicio_codigo = codigo;
+    datosFormulario.tipo_servicio_nombre = nombre;
+    datosFormulario.categoria_codigo = categoriaActual.codigo;
+    datosFormulario.categoria_nombre = categoriaActual.nombre;
+    
+    // Marcar visualmente
+    document.querySelectorAll('.tipo-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    
+    // Actualizar servicio seleccionado en paso 2
+    document.getElementById('servicioSeleccionado').innerHTML = 
+        '<i class="' + categoriaActual.icono + '" style="color: ' + categoriaActual.color + '"></i>' +
+        '<span>' + nombre + '</span>';
+    
+    // Avanzar al siguiente paso
+    setTimeout(function() {
+        siguientePaso();
+    }, 300);
+}
+
+// Seleccionar "Otro problema"
+function seleccionarOtro() {
+    tipoSeleccionado = { codigo: categoriaActual.codigo + '-OTRO', nombre: 'Otro problema' };
+    datosFormulario.tipo_servicio_codigo = tipoSeleccionado.codigo;
+    datosFormulario.tipo_servicio_nombre = 'Otro problema de ' + categoriaActual.nombre;
+    datosFormulario.categoria_codigo = categoriaActual.codigo;
+    datosFormulario.categoria_nombre = categoriaActual.nombre;
+    
+    document.getElementById('servicioSeleccionado').innerHTML = 
+        '<i class="' + categoriaActual.icono + '" style="color: ' + categoriaActual.color + '"></i>' +
+        '<span>Otro problema de ' + categoriaActual.nombre + '</span>';
+    
+    siguientePaso();
+}
+
+// Navegación
+function siguientePaso() {
+    if (!validarPasoActual()) return;
+    
+    guardarDatosPaso();
+    
+    if (pasoActual < totalPasos) {
+        mostrarPaso(pasoActual + 1);
+    }
+}
+
+function anteriorPaso() {
+    if (pasoActual > 1) {
+        mostrarPaso(pasoActual - 1);
+    }
+}
+
+function mostrarPaso(paso) {
+    // Ocultar todos
+    document.querySelectorAll('.form-step').forEach(s => {
+        s.classList.remove('active');
+    });
+    
+    // Mostrar actual
+    document.querySelector('.form-step[data-step="' + paso + '"]').classList.add('active');
+    
+    // Actualizar indicadores
+    document.querySelectorAll('.step-dot').forEach(dot => {
+        const dotStep = parseInt(dot.dataset.step);
+        dot.classList.remove('active', 'completed');
+        if (dotStep < paso) {
+            dot.classList.add('completed');
+        } else if (dotStep === paso) {
+            dot.classList.add('active');
+        }
+    });
+    
+    pasoActual = paso;
+    actualizarBotones();
+    
+    // Si es paso 4, actualizar resumen
+    if (paso === 4) {
+        actualizarResumen();
+    }
+    
+    // Scroll al inicio
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Validación por paso
+function validarPasoActual() {
+    switch (pasoActual) {
+        case 1:
+            if (!tipoSeleccionado) {
+                alert('Por favor selecciona un tipo de servicio');
+                return false;
+            }
+            return true;
+            
+        case 2:
+            const descripcion = document.getElementById('descripcionProblema').value.trim();
+            if (!descripcion || descripcion.length < 10) {
+                alert('Por favor describe el problema (mínimo 10 caracteres)');
+                document.getElementById('descripcionProblema').focus();
+                return false;
+            }
+            return true;
+            
+        case 3:
+            const nombre = document.querySelector('input[name="nombre"]').value.trim();
+            const telefono = document.querySelector('input[name="telefono"]').value.trim();
+            const distrito = document.querySelector('select[name="distrito"]').value;
+            const direccion = document.querySelector('input[name="direccion"]').value.trim();
+            
+            if (!nombre) {
+                alert('Por favor ingresa tu nombre');
+                return false;
+            }
+            if (!telefono || telefono.length < 9) {
+                alert('Por favor ingresa un número de celular válido');
+                return false;
+            }
+            if (!distrito) {
+                alert('Por favor selecciona un distrito');
+                return false;
+            }
+            if (!direccion) {
+                alert('Por favor ingresa la dirección');
+                return false;
+            }
+            return true;
+            
+        case 4:
+            const terminos = document.querySelector('input[name="acepto_terminos"]').checked;
+            if (!terminos) {
+                alert('Debes aceptar los términos y condiciones');
+                return false;
+            }
+            return true;
+    }
+    return true;
+}
+
+// Guardar datos del paso actual
+function guardarDatosPaso() {
+    switch (pasoActual) {
+        case 2:
+            datosFormulario.descripcion = document.getElementById('descripcionProblema').value.trim();
+            datosFormulario.urgencia = document.querySelector('input[name="urgencia"]:checked')?.value || 'normal';
+            break;
+            
+        case 3:
+            datosFormulario.nombre = document.querySelector('input[name="nombre"]').value.trim();
+            datosFormulario.telefono = document.querySelector('input[name="telefono"]').value.trim();
+            datosFormulario.email = document.querySelector('input[name="email"]').value.trim();
+            datosFormulario.distrito = document.querySelector('select[name="distrito"]').value;
+            datosFormulario.direccion = document.querySelector('input[name="direccion"]').value.trim();
+            datosFormulario.referencia = document.querySelector('input[name="referencia"]').value.trim();
+            break;
+    }
+    
+    console.log('💾 Datos guardados:', datosFormulario);
+}
+
+// Actualizar resumen en paso 4
+function actualizarResumen() {
+    document.getElementById('resumenCategoria').textContent = datosFormulario.categoria_nombre || '-';
+    document.getElementById('resumenTipo').textContent = datosFormulario.tipo_servicio_nombre || '-';
+    document.getElementById('resumenDescripcion').textContent = 
+        (datosFormulario.descripcion || '-').substring(0, 100) + 
+        (datosFormulario.descripcion?.length > 100 ? '...' : '');
+    
+    document.getElementById('resumenDireccion').textContent = datosFormulario.direccion || '-';
+    document.getElementById('resumenDistrito').textContent = datosFormulario.distrito || '-';
+    
+    document.getElementById('resumenNombre').textContent = datosFormulario.nombre || '-';
+    document.getElementById('resumenTelefono').textContent = datosFormulario.telefono || '-';
+}
+
+// Actualizar botones según paso
+function actualizarBotones() {
+    const btnAnterior = document.getElementById('btnAnterior');
+    const btnSiguiente = document.getElementById('btnSiguiente');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    
+    // Ocultar todos
+    btnAnterior.style.display = 'none';
+    btnSiguiente.style.display = 'none';
+    btnConfirmar.style.display = 'none';
+    
+    if (pasoActual === 1) {
+        // Paso 1: solo mostrar siguiente después de seleccionar (se oculta porque se auto-avanza)
+    } else if (pasoActual < totalPasos) {
+        btnAnterior.style.display = 'flex';
+        btnSiguiente.style.display = 'flex';
+    } else {
+        btnAnterior.style.display = 'flex';
+        btnConfirmar.style.display = 'flex';
+    }
+}
+
+// Ir al calendario
+function irACalendario() {
+    if (!validarPasoActual()) return;
+    
+    guardarDatosPaso();
+    
+    // Guardar en sessionStorage para el calendario
+    sessionStorage.setItem('mita_solicitud', JSON.stringify(datosFormulario));
+    
+    // Ir al calendario
+    window.location.href = '/cliente/calendario-horarios';
+}
+
+// Volver atrás
+function volverAtras() {
+    if (pasoActual > 1) {
+        anteriorPaso();
+    } else {
+        window.location.href = '/';
+    }
+}
+
+// Previsualizar fotos
+function previsualizarFotos(e) {
+    const files = e.target.files;
+    const preview = document.getElementById('fotosPreview');
+    preview.innerHTML = '';
+    
+    if (files.length > 3) {
+        alert('Máximo 3 fotos');
+        e.target.value = '';
+        return;
+    }
+    
+    for (let i = 0; i < files.length; i++) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const div = document.createElement('div');
+            div.className = 'foto-thumb';
+            div.innerHTML = '<img src="' + event.target.result + '"><button type="button" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>';
+            preview.appendChild(div);
+        };
+        reader.readAsDataURL(files[i]);
+    }
+}
+</script>
+{% endblock %}

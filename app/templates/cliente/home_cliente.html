@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1A2332">
+    <title>MITA - Tu servicio, donde lo necesites</title>
+    
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="/static/css/global.css">
+    
+    <!-- CSS Modular por secciones -->
+    <link rel="stylesheet" href="/static/css/home_cliente_header.css">
+    <link rel="stylesheet" href="/static/css/home_cliente_hero.css">
+    <link rel="stylesheet" href="/static/css/home_cliente_services.css">
+    <link rel="stylesheet" href="/static/css/home_cliente_categorias.css">
+    <link rel="stylesheet" href="/static/css/home_cliente_testimonials.css">
+    <link rel="stylesheet" href="/static/css/home_cliente_technicians.css">
+    <link rel="stylesheet" href="/static/css/home_cliente_policies.css">
+    <link rel="stylesheet" href="/static/css/home_cliente_stats.css">
+    <link rel="stylesheet" href="/static/css/home_cliente_navigation.css">
+    <link rel="stylesheet" href="/static/css/home_cliente_themes.css">
+    
+    <link rel="manifest" href="/static/manifest.json">
+    <!-- Font Awesome - OBLIGATORIO -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+
+  /* ============================================
+   MODAL PRÓXIMAMENTE
+  ============================================ */
+
+.modal-proximamente {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.modal-proximamente.show {
+    display: flex;
+}
+
+.modal-proximamente-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 14, 26, 0.9);
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-proximamente-content {
+    position: relative;
+    background: linear-gradient(135deg, #1A2332 0%, #243447 100%);
+    border-radius: 24px;
+    padding: 2.5rem;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    border: 2px solid rgba(255, 205, 17, 0.3);
+    box-shadow: 
+        0 25px 60px rgba(0, 0, 0, 0.5),
+        0 0 40px rgba(255, 205, 17, 0.1);
+    animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-proximamente-icon {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 1.5rem;
+    background: linear-gradient(135deg, rgba(255, 205, 17, 0.2) 0%, rgba(255, 107, 53, 0.2) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: #FFCD11;
+    border: 3px solid rgba(255, 205, 17, 0.3);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.modal-proximamente-content h3 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #FFFFFF;
+    margin-bottom: 0.75rem;
+}
+
+.modal-proximamente-content p {
+    font-size: 1rem;
+    color: #9CA3AF;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.modal-proximamente-features {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    color: #E5E7EB;
+    font-size: 0.9rem;
+}
+
+.feature-item i {
+    color: #10B981;
+    font-size: 1rem;
+}
+
+.btn-modal-proximamente {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #FFCD11 0%, #FF6B35 100%);
+    color: #0A0E1A;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(255, 205, 17, 0.3);
+}
+
+.btn-modal-proximamente:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(255, 205, 17, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .modal-proximamente-content {
+        padding: 2rem 1.5rem;
+    }
+    
+    .modal-proximamente-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 2rem;
+    }
+    
+    .modal-proximamente-content h3 {
+        font-size: 1.5rem;
+    }
+}
+</style>
+</head>
+<body>
+    <!-- Header Top Fijo -->
+    <header class="header-top">
+        <div class="header-content">
+            <div class="logo-container">
+                <div class="logo-icon">🔧</div>
+                <span class="logo-text">MITA</span>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-icon" onclick="abrirNotificaciones()">
+                    <span class="icon">🔔</span>
+                    <span class="badge">3</span>
+                </button>
+                <div class="user-avatar" onclick="abrirPerfil()">
+                    <span>JD</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="main-content">
+        
+        <!-- Video Hero Section -->
+        <!-- Hero Section con Gradiente Animado -->
+        <section class="hero-animated">
+            <div class="hero-background">
+                <!-- Gradiente animado de fondo -->
+                <div class="gradient-layer layer-1"></div>
+                <div class="gradient-layer layer-2"></div>
+                <div class="gradient-layer layer-3"></div>
+                
+                <!-- Partículas flotantes -->
+                <div class="particles">
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                </div>
+            </div>
+            
+            <!-- Contenido del Hero -->
+            <div class="hero-content">
+                <!-- Animación de iconos -->
+                <div class="icon-animation">
+                    <div class="icon-circle active" data-step="1">
+                        <span class="icon">📱</span>
+                    </div>
+                    <div class="icon-line"></div>
+                    <div class="icon-circle" data-step="2">
+                        <span class="icon">🔍</span>
+                    </div>
+                    <div class="icon-line"></div>
+                    <div class="icon-circle" data-step="3">
+                        <span class="icon">🚀</span>
+                    </div>
+                </div>
+                
+                <!-- Texto explicativo -->
+                <div class="hero-text">
+                    <div class="hero-badge pulse">¡Nuevo en Lima!</div>
+                    <h1 class="hero-title fade-in">
+                        Servicios técnicos<br>
+                        <span class="text-gradient">a un tap de distancia</span>
+                    </h1>
+                    <p class="hero-subtitle fade-in-delay">
+                        Conectamos profesionales verificados<br>con quienes necesitan sus servicios
+                    </p>
+                </div>
+                
+                <!-- Proceso en 3 pasos -->
+                <div class="process-steps">
+                    <div class="step" id="step1">
+                        <div class="step-number">1</div>
+                        <h3>Solicita</h3>
+                        <p>Elige el servicio que necesitas</p>
+                    </div>
+                    
+                    <div class="step" id="step2">
+                        <div class="step-number">2</div>
+                        <h3>Conecta</h3>
+                        <p>Te asignamos el profesional</p>
+                    </div>
+                    
+                    <div class="step" id="step3">
+                        <div class="step-number">3</div>
+                        <h3>Resuelve</h3>
+                        <p>Servicio en tu puerta</p>
+                    </div>
+                </div>
+                
+                <!-- Features destacadas -->
+                <div class="hero-features">
+                    <div class="hero-feature slide-in">
+                        <span class="feature-icon">✓</span>
+                        <span>Profesionales verificados</span>
+                    </div>
+                    <div class="hero-feature slide-in delay-1">
+                        <span class="feature-icon">✓</span>
+                        <span>Pago 100% seguro</span>
+                    </div>
+                    <div class="hero-feature slide-in delay-2">
+                        <span class="feature-icon">✓</span>
+                        <span>Garantía incluida</span>
+                    </div>
+                </div>
+                
+                <!-- CTA Principal -->
+                <button class="btn-hero" onclick="scrollToServices()">
+                    Explorar servicios
+                    <span class="btn-arrow">→</span>
+                </button>
+            </div>
+            
+            <!-- Scroll indicator -->
+        <!--
+            <div class="scroll-indicator" onclick="scrollToServices()">
+                <p class="scroll-text">Revisa nuestros servicios</p>
+                <div class="arrow-bounce">↓</div>
+            </div>
+        -->
+        </section>
+
+        <!-- Slider de Servicios -->
+        <section class="services-section">
+            <div class="section-header">
+                <h2>Nuestros servicios</h2>
+                <p class="section-subtitle">Profesionales verificados a tu alcance</p>
+            </div>
+
+            <div class="services-slider">
+                <!-- MITA: el slider se rellena dinámicamente desde /api/v1/servicios/categorias
+                     (ver home_cliente_categorias.js). Las tarjetas de abajo son un FALLBACK
+                     server-rendered por si la API/JS no responde. -->
+                <div class="slider-container" id="sliderServicios">
+
+                    <!-- Card 1: Cambio de Aceite -->
+                    <div class="service-card-modern" onclick="irAServicio('aceite')">
+                        <!-- Imagen de fondo -->
+                        <div class="card-image" style="background-image: url('/static/img/services/aceite-bg.jpg');"></div>
+                        <!-- Overlay oscuro (FUERA de card-image) -->
+                        <div class="card-overlay"></div>
+                        <!-- Badge (FUERA de card-content) -->
+                        <span class="discount-badge">Desde S/50</span>
+                        <!-- Contenido -->
+                        <div class="card-content">
+                            <h3 class="card-title">Cambio de aceite</h3>
+                            <p class="card-description">Servicio móvil • Incluye filtro</p>
+                            <div class="card-features">
+                                <span class="feature-tag">🚗 En tu domicilio</span>
+                                <span class="feature-tag">⏱️ 30-45 min</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Electricidad -->
+                    <div class="service-card-modern" onclick="irAServicio('electricidad')">
+                        <div class="card-image" style="background-image: url('/static/img/services/electricidad-bg.jpg');"></div>
+                        <div class="card-overlay"></div>
+                        <span class="discount-badge">Desde S/80</span>
+                        <div class="card-content">
+                            <h3 class="card-title">Electricidad</h3>
+                            <p class="card-description">Instalaciones y reparaciones</p>
+                            <div class="card-features">
+                                <span class="feature-tag">⚡ Diagnóstico incluido</span>
+                                <span class="feature-tag">✅ Certificado</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Gasfitería -->
+                    <div class="service-card-modern" onclick="irAServicio('gasfiteria')">
+                        <div class="card-image" style="background-image: url('/static/img/services/gasfiteria-bg.jpg');"></div>
+                        <div class="card-overlay"></div>
+                        <span class="discount-badge">Desde S/70</span>
+                        <div class="card-content">
+                            <h3 class="card-title">Gasfitería</h3>
+                            <p class="card-description">Reparaciones e instalaciones</p>
+                            <div class="card-features">
+                                <span class="feature-tag">💧 Urgencias 24/7</span>
+                                <span class="feature-tag">🔧 Garantizado</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Electrodomésticos -->
+                    <div class="service-card-modern" onclick="irAServicio('electrodomesticos')">
+                        <div class="card-image" style="background-image: url('/static/img/services/electro-bg.jpg');"></div>
+                        <div class="card-overlay"></div>
+                        <span class="discount-badge">Desde S/90</span>
+                        <div class="card-content">
+                            <h3 class="card-title">Electrodomésticos</h3>
+                            <p class="card-description">Reparación especializada</p>
+                            <div class="card-features">
+                                <span class="feature-tag">📺 Todo artefacto</span>
+                                <span class="feature-tag">🛡️ Garantía 30 días</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                
+                <!-- Indicadores de slider (descomentado) -->
+                <div class="slider-dots" id="sliderDots"></div>
+            </div>
+        </section>
+
+        <!-- Testimonios -->
+        <!-- ============================================
+            SECCIÓN TESTIMONIOS CON VIDEOS
+            ============================================ -->
+        <!-- ============================================
+            SECCIÓN TESTIMONIOS CON VIDEOS - VERSIÓN CORREGIDA
+            ============================================ -->
+        <section class="testimonials-section" id="testimonios">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-badge">
+                        <i class="fas fa-star"></i> Testimonios verificados
+                    </span>
+                    <h2>Lo que dicen nuestros clientes</h2>
+                    <p class="section-subtitle">Miles de hogares satisfechos en todo Lima</p>
+                    
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <span class="stat-number">2,500+</span>
+                            <span class="stat-label">Servicios completados</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-number">4.9</span>
+                            <span class="stat-label">Calificación promedio</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-number">98%</span>
+                            <span class="stat-label">Recomendación</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonials-grid">
+                    
+                    <!-- Testimonio 1: Cambio de Aceite -->
+                    <div class="testimonial-card">
+                        <div class="video-container" onclick="reproducirTestimonio(1)">
+                            <div class="video-thumbnail">
+                                <!-- Placeholder mientras no tengas imagen -->
+                                <div class="thumbnail-placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="video-overlay">
+                                    <div class="play-button">
+                                        <i class="fas fa-play"></i>
+                                    </div>
+                                    <span class="video-duration">0:15</span>
+                                </div>
+                            </div>
+                            <div class="video-badge">
+                                <i class="fas fa-video"></i> Video testimonio
+                            </div>
+                        </div>
+                        
+                        <div class="testimonial-content">
+                            <div class="quote-icon">
+                                <i class="fas fa-quote-left"></i>
+                            </div>
+                            <p class="testimonial-text">
+                                "Excelente servicio. El mecánico llegó puntual y cambió el aceite en mi casa. Muy profesional. Ya no pierdo tiempo yendo al taller."
+                            </p>
+                        </div>
+                        
+                        <div class="testimonial-footer">
+                            <div class="user-info">
+                                <div class="avatar-placeholder">CM</div>
+                                <div class="user-details">
+                                    <h4 class="user-name">Carlos Mendoza</h4>
+                                    <span class="service-tag">
+                                        <i class="fas fa-oil-can"></i> Cambio de aceite
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="rating-container">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <span class="rating-text">5.0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Testimonio 2: Electricidad (Featured) -->
+                    <div class="testimonial-card featured">
+                        <div class="featured-badge">
+                            <i class="fas fa-crown"></i> Más valorado
+                        </div>
+                        
+                        <div class="video-container" onclick="reproducirTestimonio(2)">
+                            <div class="video-thumbnail">
+                                <div class="thumbnail-placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="video-overlay">
+                                    <div class="play-button">
+                                        <i class="fas fa-play"></i>
+                                    </div>
+                                    <span class="video-duration">0:18</span>
+                                </div>
+                            </div>
+                            <div class="video-badge">
+                                <i class="fas fa-video"></i> Video testimonio
+                            </div>
+                        </div>
+                        
+                        <div class="testimonial-content">
+                            <div class="quote-icon">
+                                <i class="fas fa-quote-left"></i>
+                            </div>
+                            <p class="testimonial-text">
+                                "Resolvieron mi problema eléctrico en menos de 20 minutos. Súper recomendado, volveré a usar el servicio. El técnico fue muy rápido y me explicó todo."
+                            </p>
+                        </div>
+                        
+                        <div class="testimonial-footer">
+                            <div class="user-info">
+                                <div class="avatar-placeholder" style="background: linear-gradient(135deg, #FF6B35, #F97316);">ML</div>
+                                <div class="user-details">
+                                    <h4 class="user-name">Mario López</h4>
+                                    <span class="service-tag">
+                                        <i class="fas fa-bolt"></i> Electricidad
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="rating-container">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <span class="rating-text">5.0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Testimonio 3: Gasfitería -->
+                    <div class="testimonial-card">
+                        <div class="video-container" onclick="reproducirTestimonio(3)">
+                            <div class="video-thumbnail">
+                                <div class="thumbnail-placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="video-overlay">
+                                    <div class="play-button">
+                                        <i class="fas fa-play"></i>
+                                    </div>
+                                    <span class="video-duration">0:16</span>
+                                </div>
+                            </div>
+                            <div class="video-badge">
+                                <i class="fas fa-video"></i> Video testimonio
+                            </div>
+                        </div>
+                        
+                        <div class="testimonial-content">
+                            <div class="quote-icon">
+                                <i class="fas fa-quote-left"></i>
+                            </div>
+                            <!--<p class="testimonial-text">
+                                "Tenía una fuga de agua que casi me causa una inundación. El gasfitero llegó el mismo día. Arregló todo rapidito y el precio fue justo. Muy agradecido."
+                            </p>-->
+                            <p class="testimonial-text">
+                                "La refrigeradora de mi mamá dejó de funcionar y pensé que tendría que llevarla a un taller. Gracias a MITA, un técnico llegó rápido y la reparó en el acto. ¡Excelente servicio!"
+                            </p>
+                        </div>
+                        
+                        <div class="testimonial-footer">
+                            <div class="user-info">
+                                <div class="avatar-placeholder" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8);">RG</div>
+                                <div class="user-details">
+                                    <h4 class="user-name">Laura García</h4>
+                                    <span class="service-tag">
+                                        <i class="fas fa-faucet"></i> Electrodomésticos
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="rating-container">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <span class="rating-text">5.0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="testimonials-cta">
+                    <p>¿Listo para unirte a nuestros clientes satisfechos?</p>
+                    <a href="#solicitar" class="btn-cta-testimonials">
+                        <i class="fas fa-rocket"></i>
+                        Solicitar servicio ahora
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Modal para Video -->
+        <div class="video-modal" id="videoModal">
+            <div class="modal-backdrop" onclick="cerrarModalVideo()"></div>
+            <div class="modal-content">
+                <button class="modal-close" onclick="cerrarModalVideo()">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="video-wrapper">
+                    <video id="testimonioVideo" controls>
+                        <source src="" type="video/mp4">
+                    </video>
+                </div>
+                <div class="modal-user-info" id="modalUserInfo"></div>
+            </div>
+        </div>
+
+        <!-- Nuestros Técnicos -->
+        <section class="technicians-section">
+            <div class="section-header">
+                <h2>Técnicos certificados</h2>
+                <p class="section-subtitle">Profesionales con experiencia comprobada</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">✅</div>
+                    <h3>Verificados</h3>
+                    <p>Antecedentes penales y certificados validados</p>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">🎓</div>
+                    <h3>Capacitados</h3>
+                    <p>Formación técnica continua y actualizada</p>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">⭐</div>
+                    <h3>Calificados</h3>
+                    <p>Evaluados por cada servicio realizado</p>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">🛡️</div>
+                    <h3>Asegurados</h3>
+                    <p>Cobertura de seguro en cada trabajo</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Garantías y Políticas -->
+        <section class="policies-section">
+            <div class="section-header">
+                <h2>Garantía de servicio</h2>
+                <p class="section-subtitle">Tu tranquilidad es nuestra prioridad</p>
+            </div>
+            
+            <div class="policies-container">
+                <div class="policy-card" onclick="abrirPolitica('garantias')">
+                    <span class="policy-icon">🛡️</span>
+                    <div class="policy-content">
+                        <h3>Garantía de 30 días</h3>
+                        <p>En todos nuestros servicios</p>
+                        <span class="link-arrow">Ver detalles →</span>
+                    </div>
+                </div>
+
+                <div class="policy-card" onclick="abrirPolitica('devoluciones')">
+                    <span class="policy-icon">↩️</span>
+                    <div class="policy-content">
+                        <h3>Política de devoluciones</h3>
+                        <p>Reembolso si no quedas satisfecho</p>
+                        <span class="link-arrow">Conoce más →</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats -->
+        <section class="stats-section">
+            <div class="stats-container">
+                <div class="stat-item">
+                    <div class="stat-number" data-target="2500" data-suffix=" +">0</div>
+                    <div class="stat-label">Servicios realizados</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-number" data-target="150" data-suffix=" +">0</div>
+                    <div class="stat-label">Técnicos activos</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-number" data-target="98" data-suffix=" %">0</div>
+                    <div class="stat-label">% Satisfacción</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation Fijo -->
+    <nav class="bottom-nav">
+        <a href="/cliente/home" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Inicio</span>
+        </a>
+        <a href="javascript:void(0)" class="nav-item active" onclick="mostrarProximamente('servicios')">
+            <span class="nav-icon">🛠️</span>
+            <span class="nav-label">Servicios</span>
+        </a>
+        <a href="javascript:void(0)" class="nav-item active" onclick="mostrarProximamente('historial')">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Historial</span>
+        </a>
+        <a href="javascript:void(0)" class="nav-item active" onclick="mostrarProximamente('perfil')">
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">Perfil</span>
+        </a>
+    </nav>
+
+    <!-- Modal Próximamente -->
+    <div class="modal-proximamente" id="modalProximamente">
+        <div class="modal-proximamente-backdrop" onclick="cerrarModalProximamente()"></div>
+        <div class="modal-proximamente-content">
+            <div class="modal-proximamente-icon">
+                <i class="fas fa-hard-hat"></i>
+            </div>
+            <h3>¡Próximamente!</h3>
+            <p id="modalProximamenteTexto">Esta sección estará disponible muy pronto.</p>
+            <div class="modal-proximamente-features">
+                <div class="feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Estamos trabajando en ello</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-bell"></i>
+                    <span>Te notificaremos cuando esté listo</span>
+                </div>
+            </div>
+            <button class="btn-modal-proximamente" onclick="cerrarModalProximamente()">
+                <i class="fas fa-thumbs-up"></i>
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <!-- JS Modular -->
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/home_cliente_hero.js"></script>
+    <script src="/static/js/home_cliente_services.js"></script>
+    <script src="/static/js/home_cliente_categorias.js"></script>
+    <script src="/static/js/home_cliente_testimonials.js"></script>
+    <script src="/static/js/home_cliente_stats.js"></script>
+    <script src="/static/js/theme_switcher.js"></script>
+
+<script>
+    // ============================================
+// MODAL PRÓXIMAMENTE
+// ============================================
+
+const seccionesProximamente = {
+    'servicios': {
+        titulo: '¡Próximamente!',
+        mensaje: 'La sección de <strong>Servicios</strong> estará disponible muy pronto. Podrás solicitar todo tipo de servicios técnicos.',
+        icono: 'fa-briefcase'
+    },
+    'historial': {
+        titulo: '¡Próximamente!',
+        mensaje: 'La sección de <strong>Historial</strong> te permitirá ver todos tus servicios anteriores y repetir solicitudes.',
+        icono: 'fa-history'
+    },
+    'perfil': {
+        titulo: '¡Próximamente!',
+        mensaje: 'En tu <strong>Perfil</strong> podrás gestionar tus datos, direcciones guardadas y métodos de pago.',
+        icono: 'fa-user-circle'
+    }
+};
+
+function mostrarProximamente(seccion) {
+    const modal = document.getElementById('modalProximamente');
+    const texto = document.getElementById('modalProximamenteTexto');
+    const icono = document.querySelector('.modal-proximamente-icon i');
+    
+    const config = seccionesProximamente[seccion] || {
+        titulo: '¡Próximamente!',
+        mensaje: 'Esta sección estará disponible muy pronto.',
+        icono: 'fa-hard-hat'
+    };
+    
+    // Actualizar contenido
+    texto.innerHTML = config.mensaje;
+    icono.className = `fas ${config.icono}`;
+    
+    // Mostrar modal
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function cerrarModalProximamente() {
+    const modal = document.getElementById('modalProximamente');
+    modal.classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+// Cerrar con Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        cerrarModalProximamente();
+    }
+});
+
+console.log('✅ Modal Próximamente cargado');
+
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MITA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo h1 {
+            color: #FFCD11;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .logo p {
+            color: #6b7280;
+            font-size: 0.95rem;
+            margin-top: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #FFCD11;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #FFCD11 0%, #f5b800 100%);
+            color: #0f1419;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 24px 0;
+            color: #9ca3af;
+            font-size: 0.875rem;
+        }
+
+        .demo-accounts {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 24px;
+        }
+
+        .demo-accounts h3 {
+            font-size: 0.875rem;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
+        .demo-account {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s;
+        }
+
+        .demo-account:hover {
+            border-color: #FFCD11;
+            box-shadow: 0 2px 8px rgba(255, 205, 17, 0.2);
+        }
+
+        .demo-account strong {
+            color: #0f1419;
+        }
+
+        .demo-account small {
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>MITA</h1>
+            <p>Inicia sesión</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <input 
+                    type="tel" 
+                    id="telefono" 
+                    name="telefono" 
+                    placeholder="987654321"
+                    pattern="[0-9]{9}"
+                    title="9 dígitos"
+                    required
+                    autocomplete="tel">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="••••••••"
+                    required
+                    autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn-login" id="loginBtn">
+                Iniciar sesión
+            </button>
+        </form>
+
+        <div class="divider">cuentas de prueba</div>
+
+        <div class="demo-accounts">
+            <h3>👥 Testing:</h3>
+            
+            <div class="demo-account" onclick="fillLogin('987654321', 'demo123')">
+                <strong>👤 Cliente</strong><br>
+                <small>987654321 / demo123</small>
+            </div>
+
+            <div class="demo-account" onclick="fillLogin('987654322', 'demo123')">
+                <strong>🔧 Técnico</strong><br>
+                <small>987654322 / demo123</small>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/core/auth-manager.js"></script>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const errorMessage = document.getElementById('errorMessage');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const telefono = document.getElementById('telefono').value;
+            const password = document.getElementById('password').value;
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Iniciando...';
+            errorMessage.style.display = 'none';
+
+            try {
+                const result = await authManager.login(telefono, password);
+
+                if (result.success) {
+                    const rol = result.usuario.rol;
+                    
+                    if (rol === 'cliente') {
+                        window.location.href = '/cliente/solicitud-aceite';
+                    } else if (rol === 'tecnico') {
+                        window.location.href = '/tecnico/panel';
+                    } else {
+                        window.location.href = '/';
+                    }
+                } else {
+                    errorMessage.textContent = result.error;
+                    errorMessage.style.display = 'block';
+                    
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Iniciar sesión';
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Error de conexión';
+                errorMessage.style.display = 'block';
+                
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Iniciar sesión';
+            }
+        });
+
+        function fillLogin(telefono, password) {
+            document.getElementById('telefono').value = telefono;
+            document.getElementById('password').value = password;
+        }
+    </script>
+</body>
+</html>

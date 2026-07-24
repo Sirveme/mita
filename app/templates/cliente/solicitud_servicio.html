@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1A2332">
+    <title>Solicitar Servicio - MITA</title>
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="/static/css/solicitud_servicio.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    
+    <!-- Header Simple -->
+    <header class="header-simple">
+        <div class="header-container-simple">
+            <button class="btn-back" onclick="window.history.back()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="header-title">
+                <h1 id="serviceName">Cambio de aceite</h1>
+                <p class="header-subtitle">Completa los datos</p>
+            </div>
+            <div class="header-placeholder"></div>
+        </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-steps">
+            <div class="step active" data-step="1">
+                <div class="step-circle">1</div>
+                <span>Servicio</span>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-circle">2</div>
+                <span>Vehículo</span>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-circle">3</div>
+                <span>Ubicación</span>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-circle">4</div>
+                <span>Confirmación</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario Multi-Paso -->
+    <div class="form-container">
+        <form id="solicitudForm">
+            
+            <!-- PASO 1: Detalles del Servicio -->
+            <div class="form-step active" data-step="1">
+                <div class="step-header">
+                    <i class="fas fa-oil-can step-icon"></i>
+                    <h2>Detalles del servicio</h2>
+                    <p>Selecciona las opciones para tu cambio de aceite</p>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-oil-can"></i>
+                        Tipo de aceite
+                    </label>
+                    <select name="tipo_aceite" id="tipoAceite" required>
+                        <option value="">Selecciona el tipo de aceite</option>
+                        <option value="mineral" data-precio="120">Mineral - S/120</option>
+                        <option value="semis">Semi-sintético - S/180</option>
+                        <option value="sintetico" data-precio="280">Sintético - S/280</option>
+                        <option value="premium" data-precio="350">Premium/Full Sintético - S/350</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-filter"></i>
+                        ¿Incluir cambio de filtro?
+                    </label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="incluir_filtro" value="si" checked>
+                            <div class="radio-content">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Sí, incluir filtro</span>
+                                <small>+S/30</small>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="incluir_filtro" value="no">
+                            <div class="radio-content">
+                                <i class="fas fa-times-circle"></i>
+                                <span>No incluir</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-calendar-alt"></i>
+                        Fecha preferida
+                    </label>
+                    <input type="date" name="fecha_servicio" id="fechaServicio" required min="">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-clock"></i>
+                        Hora preferida
+                    </label>
+                    <select name="hora_servicio" required>
+                        <option value="">Selecciona la hora</option>
+                        <option value="08:00">8:00 AM</option>
+                        <option value="09:00">9:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="13:00">1:00 PM</option>
+                        <option value="14:00">2:00 PM</option>
+                        <option value="15:00">3:00 PM</option>
+                        <option value="16:00">4:00 PM</option>
+                        <option value="17:00">5:00 PM</option>
+                        <option value="18:00">6:00 PM</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-comment-alt"></i>
+                        Notas adicionales (opcional)
+                    </label>
+                    <textarea name="notas" rows="3" placeholder="Ej: Revisar nivel de refrigerante"></textarea>
+                </div>
+
+                <div class="price-summary">
+                    <div class="price-row">
+                        <span>Servicio a domicilio</span>
+                        <strong>S/50</strong>
+                    </div>
+                    <div class="price-row" id="precioAceite" style="display: none;">
+                        <span>Aceite seleccionado</span>
+                        <strong id="precioAceiteValor">S/0</strong>
+                    </div>
+                    <div class="price-row" id="precioFiltro">
+                        <span>Filtro de aceite</span>
+                        <strong>S/30</strong>
+                    </div>
+                    <div class="price-total">
+                        <span>Total estimado</span>
+                        <strong id="totalEstimado">S/80</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 2: Datos del Vehículo -->
+            <div class="form-step" data-step="2">
+                <div class="step-header">
+                    <i class="fas fa-car step-icon"></i>
+                    <h2>Datos del vehículo</h2>
+                    <p>Información de tu vehículo</p>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-car"></i>
+                        Marca
+                    </label>
+                    <select name="marca_vehiculo" id="marcaVehiculo" required>
+                        <option value="">Selecciona la marca</option>
+                        <option value="toyota">Toyota</option>
+                        <option value="nissan">Nissan</option>
+                        <option value="hyundai">Hyundai</option>
+                        <option value="kia">Kia</option>
+                        <option value="chevrolet">Chevrolet</option>
+                        <option value="honda">Honda</option>
+                        <option value="mazda">Mazda</option>
+                        <option value="volkswagen">Volkswagen</option>
+                        <option value="ford">Ford</option>
+                        <option value="suzuki">Suzuki</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-car-side"></i>
+                        Modelo
+                    </label>
+                    <input type="text" name="modelo_vehiculo" placeholder="Ej: Corolla, Civic, etc." required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-calendar"></i>
+                            Año
+                        </label>
+                        <input type="number" name="anio_vehiculo" placeholder="2020" min="1990" max="2025" required>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-palette"></i>
+                            Color
+                        </label>
+                        <input type="text" name="color_vehiculo" placeholder="Negro" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-id-card"></i>
+                        Placa
+                    </label>
+                    <input type="text" name="placa_vehiculo" placeholder="ABC-123" pattern="[A-Z0-9-]{6,8}" required style="text-transform: uppercase;">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-tachometer-alt"></i>
+                        Kilometraje actual (aproximado)
+                    </label>
+                    <input type="number" name="kilometraje" placeholder="50000" step="1000" required>
+                </div>
+
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i>
+                    <p>Esta información nos ayuda a preparar los repuestos y herramientas adecuadas.</p>
+                </div>
+            </div>
+
+            <!-- PASO 3: Ubicación -->
+            <div class="form-step" data-step="3">
+                <div class="step-header">
+                    <i class="fas fa-map-marker-alt step-icon"></i>
+                    <h2>Ubicación del servicio</h2>
+                    <p>¿Dónde realizaremos el servicio?</p>
+                </div>
+
+                <button type="button" class="btn-ubicacion" onclick="obtenerUbicacionActual()">
+                    <i class="fas fa-crosshairs"></i>
+                    Usar mi ubicación actual
+                </button>
+
+                <div class="divider">
+                    <span>o ingresa manualmente</span>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-map-marked-alt"></i>
+                        Distrito
+                    </label>
+                    <select name="distrito" required>
+                        <option value="">Selecciona tu distrito</option>
+                        <option value="san-isidro">San Isidro</option>
+                        <option value="miraflores">Miraflores</option>
+                        <option value="surco">Santiago de Surco</option>
+                        <option value="san-borja">San Borja</option>
+                        <option value="la-molina">La Molina</option>
+                        <option value="jesus-maria">Jesús María</option>
+                        <option value="lince">Lince</option>
+                        <option value="magdalena">Magdalena del Mar</option>
+                        <option value="pueblo-libre">Pueblo Libre</option>
+                        <option value="san-miguel">San Miguel</option>
+                        <option value="barranco">Barranco</option>
+                        <option value="chorrillos">Chorrillos</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-road"></i>
+                        Dirección completa
+                    </label>
+                    <input type="text" name="direccion" id="direccion" placeholder="Av. Ejemplo 123" required>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-building"></i>
+                        Referencia (opcional)
+                    </label>
+                    <input type="text" name="referencia" placeholder="Cerca al parque, edificio blanco">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-home"></i>
+                            Dpto/Casa
+                        </label>
+                        <input type="text" name="numero_casa" placeholder="101">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-building"></i>
+                            Piso
+                        </label>
+                        <input type="text" name="piso" placeholder="3">
+                    </div>
+                </div>
+
+                <div class="map-preview" id="mapPreview">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <p>Vista previa del mapa aparecerá aquí</p>
+                </div>
+            </div>
+
+            <!-- PASO 4: Confirmación -->
+            <div class="form-step" data-step="4">
+                <div class="step-header">
+                    <i class="fas fa-check-circle step-icon" style="color: var(--success);"></i>
+                    <h2>Confirmación</h2>
+                    <p>Revisa los datos antes de confirmar</p>
+                </div>
+
+                <div class="resumen-card">
+                    <h3><i class="fas fa-oil-can"></i> Servicio</h3>
+                    <div class="resumen-item">
+                        <span>Tipo de aceite:</span>
+                        <strong id="resumenAceite">-</strong>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Filtro incluido:</span>
+                        <strong id="resumenFiltro">-</strong>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Fecha y hora:</span>
+                        <strong id="resumenFechaHora">-</strong>
+                    </div>
+                </div>
+
+                <div class="resumen-card">
+                    <h3><i class="fas fa-car"></i> Vehículo</h3>
+                    <div class="resumen-item">
+                        <span>Vehículo:</span>
+                        <strong id="resumenVehiculo">-</strong>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Placa:</span>
+                        <strong id="resumenPlaca">-</strong>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Kilometraje:</span>
+                        <strong id="resumenKilometraje">-</strong>
+                    </div>
+                </div>
+
+                <div class="resumen-card">
+                    <h3><i class="fas fa-map-marker-alt"></i> Ubicación</h3>
+                    <div class="resumen-item">
+                        <span>Dirección:</span>
+                        <strong id="resumenDireccion">-</strong>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Distrito:</span>
+                        <strong id="resumenDistrito">-</strong>
+                    </div>
+                </div>
+
+                <div class="resumen-card price-card">
+                    <h3><i class="fas fa-money-bill-wave"></i> Total a pagar</h3>
+                    <div class="price-final">
+                        <span>Total:</span>
+                        <strong id="resumenTotal">S/0</strong>
+                    </div>
+                    <p class="price-note">
+                        <i class="fas fa-info-circle"></i>
+                        El pago se realiza al finalizar el servicio
+                    </p>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-container">
+                        <input type="checkbox" name="acepto_terminos" required>
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">
+                            Acepto los <a href="/terminos" target="_blank">términos y condiciones</a>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Botones de Navegación -->
+            <div class="form-navigation">
+                <button type="button" class="btn-secondary" id="btnAnterior" onclick="anteriorPaso()" style="display: none;">
+                    <i class="fas fa-arrow-left"></i>
+                    Anterior
+                </button>
+                <button type="button" class="btn-primary" id="btnSiguiente" onclick="siguientePaso()">
+                    Siguiente
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+                <button type="submit" class="btn-primary btn-confirm" id="btnConfirmar" style="display: none;">
+                    <i class="fas fa-check"></i>
+                    Confirmar servicio
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal de éxito -->
+    <div class="modal-overlay" id="modalExito">
+        <div class="modal-content">
+            <div class="modal-icon success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>¡Servicio solicitado!</h2>
+            <p>Hemos recibido tu solicitud. Estamos buscando un técnico disponible cerca de ti.</p>
+            <div class="modal-info">
+                <p><strong>Código de servicio:</strong> <span id="codigoServicio">#12345</span></p>
+                <p>Recibirás una notificación cuando encontremos un técnico.</p>
+            </div>
+            <button class="btn-primary" onclick="irASeguimiento()">
+                <i class="fas fa-eye"></i>
+                Ver seguimiento
+            </button>
+        </div>
+    </div>
+
+    <script src="/static/js/solicitud_servicio.js"></script>
+</body>
+</html>

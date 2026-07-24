@@ -1,0 +1,640 @@
+{% extends "base_pwa.html" %}
+
+{% block title %}Técnico Asignado - MITA{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/global.css">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
+    color: white;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* Success Animation */
+.success-animation {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeInUp 0.6s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.success-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 1.5rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    animation: scaleIn 0.5s ease;
+}
+
+@keyframes scaleIn {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.success-title {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #10b981;
+}
+
+.success-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.125rem;
+}
+
+/* Técnico Card */
+.tecnico-card {
+    background: rgba(26, 35, 50, 0.6);
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    animation: fadeIn 0.8s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.tecnico-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tecnico-avatar-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFCD11 0%, #FFE066 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #0f1419;
+    flex-shrink: 0;
+    box-shadow: 0 10px 40px rgba(255, 205, 17, 0.3);
+}
+
+.tecnico-info {
+    flex: 1;
+}
+
+.tecnico-name {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.tecnico-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.stars {
+    color: #FFCD11;
+    font-size: 1.25rem;
+}
+
+.rating-number {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.tecnico-verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #FFCD11;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Vehículo Info */
+.vehiculo-info {
+    padding-top: 1.5rem;
+}
+
+.vehiculo-info h3 {
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.vehiculo-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.detail-item {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 12px;
+}
+
+.detail-label {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 0.25rem;
+}
+
+.detail-value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: white;
+}
+
+/* ETA Card */
+.eta-card {
+    background: rgba(255, 205, 17, 0.1);
+    border: 2px solid #FFCD11;
+    border-radius: 20px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.eta-card h3 {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.75rem;
+}
+
+.eta-time {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #FFCD11;
+    margin-bottom: 0.5rem;
+}
+
+.eta-subtitle {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+}
+
+/* Servicio Info */
+.servicio-card {
+    background: rgba(26, 35, 50, 0.6);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.servicio-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+}
+
+.info-value {
+    color: white;
+    font-weight: 600;
+}
+
+/* Acciones */
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.btn-action {
+    padding: 1.25rem;
+    border-radius: 16px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.btn-action i {
+    font-size: 1.75rem;
+}
+
+.btn-primary {
+    background: #FFCD11;
+    color: #0f1419;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(255, 205, 17, 0.3);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-full {
+    width: 100%;
+    padding: 1.25rem;
+    border-radius: 16px;
+    border: none;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 2px solid rgba(239, 68, 68, 0.3);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-full:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+@media (max-width: 640px) {
+    .tecnico-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stats-grid,
+    .vehiculo-details {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    
+    <!-- Success Animation -->
+    <div class="success-animation">
+        <div class="success-icon">✓</div>
+        <h1 class="success-title">¡Técnico Asignado!</h1>
+        <p class="success-subtitle">Tu servicio está confirmado</p>
+    </div>
+    
+    <!-- Técnico Card -->
+    <div class="tecnico-card">
+        <div class="tecnico-header">
+            <div class="tecnico-avatar-large" id="tecnicoAvatar">CR</div>
+            <div class="tecnico-info">
+                <h2 class="tecnico-name" id="tecnicoNombre">Carlos Rodríguez</h2>
+                <div class="tecnico-rating">
+                    <span class="stars" id="tecnicoStars">⭐⭐⭐⭐⭐</span>
+                    <span class="rating-number" id="tecnicoRating">4.8</span>
+                </div>
+                <div class="tecnico-verified">
+                    <i class="fas fa-check-circle"></i>
+                    Técnico Verificado
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-value" id="tecnicoServicios">127</span>
+                <span class="stat-label">Servicios</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="tecnicoExperiencia">5</span>
+                <span class="stat-label">Años experiencia</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="tecnicoEspecialidad">Aceite</span>
+                <span class="stat-label">Especialidad</span>
+            </div>
+        </div>
+        
+        <div class="vehiculo-info">
+            <h3><i class="fas fa-car"></i> Vehículo del Técnico</h3>
+            <div class="vehiculo-details">
+                <div class="detail-item">
+                    <div class="detail-label">Marca</div>
+                    <div class="detail-value" id="tecnicoMarca">Toyota</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Modelo</div>
+                    <div class="detail-value" id="tecnicoModelo">Corolla</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Placa</div>
+                    <div class="detail-value" id="tecnicoPlaca">ABC-123</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Color</div>
+                    <div class="detail-value" id="tecnicoColor">Blanco</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ETA -->
+    <div class="eta-card" id="etaCard">
+        <h3>⏱️ Tiempo estimado de llegada</h3>
+        <div class="eta-time" id="etaTime">15 min</div>
+        <p class="eta-subtitle">El técnico te notificará cuando esté en camino</p>
+    </div>
+    
+    <!-- Servicio Info -->
+    <div class="servicio-card">
+        <h3>📋 Detalles del Servicio</h3>
+        
+        <div class="info-item">
+            <span class="info-label">Servicio</span>
+            <span class="info-value" id="servicioTipo">Cambio de aceite</span>
+        </div>
+        
+        <div class="info-item">
+            <span class="info-label">Fecha</span>
+            <span class="info-value" id="servicioFecha">Hoy, 15:00</span>
+        </div>
+        
+        <div class="info-item">
+            <span class="info-label">Ubicación</span>
+            <span class="info-value" id="servicioUbicacion">Av. Ejemplo 123</span>
+        </div>
+        
+        <div class="info-item">
+            <span class="info-label">Total</span>
+            <span class="info-value" id="servicioTotal">S/ 180.00</span>
+        </div>
+    </div>
+    
+    <!-- Acciones -->
+    <div class="actions-grid">
+        <button class="btn-action btn-primary" onclick="abrirChat()">
+            <i class="fas fa-comments"></i>
+            Chat
+        </button>
+        
+        <button class="btn-action btn-primary" onclick="llamarTecnico()">
+            <i class="fas fa-phone"></i>
+            Llamar
+        </button>
+        
+        <button class="btn-action btn-secondary" onclick="verMapa()">
+            <i class="fas fa-map-marker-alt"></i>
+            Ver Mapa
+        </button>
+        
+        <button class="btn-action btn-secondary" onclick="verSeguimiento()">
+            <i class="fas fa-eye"></i>
+            Seguimiento
+        </button>
+    </div>
+    
+    <button class="btn-full" onclick="cancelarServicio()">
+        <i class="fas fa-times"></i>
+        Cancelar Servicio
+    </button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+<script>
+// ============================================
+// VARIABLES GLOBALES
+// ============================================
+
+let solicitudId = null;
+let tecnicoId = null;
+
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener ID de URL o localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    solicitudId = urlParams.get('id') || localStorage.getItem('solicitud_actual_id');
+    
+    if (solicitudId) {
+        cargarDatos();
+        // Actualizar cada 30 segundos
+        setInterval(cargarDatos, 30000);
+    }
+});
+
+// ============================================
+// CARGAR DATOS
+// ============================================
+
+async function cargarDatos() {
+    try {
+        const response = await fetch(`/api/v1/solicitudes/${solicitudId}`);
+        
+        if (!response.ok) {
+            throw new Error('Error al cargar datos');
+        }
+        
+        const solicitud = await response.json();
+        
+        // Actualizar datos del técnico
+        if (solicitud.tecnico_asignado) {
+            actualizarTecnico(solicitud.tecnico_asignado);
+        }
+        
+        // Actualizar datos del servicio
+        actualizarServicio(solicitud);
+        
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// ============================================
+// ACTUALIZAR TÉCNICO
+// ============================================
+
+function actualizarTecnico(tecnico) {
+    tecnicoId = tecnico.id;
+    
+    // Avatar
+    const iniciales = tecnico.nombre.split(' ').map(n => n[0]).join('');
+    document.getElementById('tecnicoAvatar').textContent = iniciales;
+    
+    // Nombre
+    document.getElementById('tecnicoNombre').textContent = tecnico.nombre;
+    
+    // Rating
+    const rating = tecnico.rating || 5.0;
+    const stars = '⭐'.repeat(Math.round(rating));
+    document.getElementById('tecnicoStars').textContent = stars;
+    document.getElementById('tecnicoRating').textContent = rating.toFixed(1);
+    
+    // Stats
+    document.getElementById('tecnicoServicios').textContent = tecnico.total_servicios || '0';
+    document.getElementById('tecnicoExperiencia').textContent = tecnico.anos_experiencia || '0';
+    document.getElementById('tecnicoEspecialidad').textContent = tecnico.especialidad || '-';
+    
+    // Vehículo
+    document.getElementById('tecnicoMarca').textContent = tecnico.marca_vehiculo || '-';
+    document.getElementById('tecnicoModelo').textContent = tecnico.modelo_vehiculo || '-';
+    document.getElementById('tecnicoPlaca').textContent = tecnico.placa_vehiculo || '-';
+    document.getElementById('tecnicoColor').textContent = tecnico.color_vehiculo || '-';
+}
+
+// ============================================
+// ACTUALIZAR SERVICIO
+// ============================================
+
+function actualizarServicio(solicitud) {
+    document.getElementById('servicioTipo').textContent = solicitud.tipo_servicio_texto || 'Servicio';
+    document.getElementById('servicioFecha').textContent = formatearFecha(solicitud.fecha_servicio);
+    document.getElementById('servicioUbicacion').textContent = solicitud.direccion_servicio;
+    document.getElementById('servicioTotal').textContent = `S/ ${solicitud.precio?.toFixed(2) || '0.00'}`;
+}
+
+// ============================================
+// ACCIONES
+// ============================================
+
+function abrirChat() {
+    if (window.chatWidget) {
+        window.chatWidget.toggle();
+    } else {
+        // Redirigir a página de chat
+        window.location.href = `/chat/${solicitudId}`;
+    }
+}
+
+function llamarTecnico() {
+    // Aquí implementarías la llamada real
+    alert('Función de llamada en desarrollo');
+}
+
+function verMapa() {
+    window.location.href = `/cliente/seguimiento?id=${solicitudId}`;
+}
+
+function verSeguimiento() {
+    window.location.href = `/cliente/seguimiento?id=${solicitudId}`;
+}
+
+function cancelarServicio() {
+    if (confirm('¿Estás seguro de cancelar el servicio?\n\nSe aplicarán términos de cancelación según el estado actual.')) {
+        // TODO: Implementar cancelación
+        fetch(`/api/v1/solicitudes/${solicitudId}/cancelar`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Servicio cancelado');
+            window.location.href = '/';
+        })
+        .catch(error => {
+            alert('Error al cancelar');
+        });
+    }
+}
+
+// ============================================
+// UTILIDADES
+// ============================================
+
+function formatearFecha(fecha) {
+    if (!fecha) return '-';
+    
+    const date = new Date(fecha);
+    const hoy = new Date();
+    
+    if (date.toDateString() === hoy.toDateString()) {
+        return `Hoy, ${date.toLocaleTimeString('es-PE', {hour: '2-digit', minute: '2-digit'})}`;
+    }
+    
+    return date.toLocaleString('es-PE', {
+        day: 'numeric',
+        month: 'long',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+</script>
+{% endblock %}

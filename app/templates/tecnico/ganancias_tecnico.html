@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FF6B35">
+    <title>Ganancias - MITA</title>
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --tecnico-primary: #FF6B35;
+            --tecnico-secondary: #F97316;
+            --tecnico-light: rgba(255, 107, 53, 0.1);
+            --bg-dark: #0A0E1A;
+            --dark-blue: #1A2332;
+            --medium-blue: #2A3647;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --white: #FFFFFF;
+            --text-light: #E5E7EB;
+            --text-gray: #9CA3AF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            padding-bottom: 80px;
+        }
+
+        .header-tecnico {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-bottom: 2px solid var(--tecnico-primary);
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .header-title i {
+            color: var(--tecnico-primary);
+            font-size: 1.5rem;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 80px auto 0;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Balance Principal */
+        .balance-card {
+            background: linear-gradient(135deg, var(--tecnico-primary) 0%, var(--tecnico-secondary) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(255, 107, 53, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .balance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .balance-title {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .balance-period {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .balance-amount {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .balance-subtitle {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .balance-change {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .balance-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .balance-btn {
+            background: var(--white);
+            color: var(--tecnico-primary);
+            padding: 1rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .balance-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .balance-btn.secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 2px solid rgba(255, 107, 53, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--tecnico-primary);
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-trend {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-weight: 600;
+        }
+
+        .stat-trend.up {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6EE7B7;
+        }
+
+        .stat-trend.down {
+            background: rgba(239, 68, 68, 0.2);
+            color: #FCA5A5;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid rgba(255, 107, 53, 0.2);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .chart-tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.25rem;
+            border-radius: 10px;
+        }
+
+        .chart-tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-gray);
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .chart-tab.active {
+            background: var(--tecnico-primary);
+            color: var(--white);
+        }
+
+        .chart-placeholder {
+            height: 300px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-gray);
+            font-size: 1rem;
+        }
+
+        /* Pagos Pendientes */
+        .pending-section {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pending-alert {
+            background: rgba(245, 158, 11, 0.2);
+            border: 2px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .pending-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .pending-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: rgba(245, 158, 11, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--warning);
+        }
+
+        .pending-text h3 {
+            font-size: 1.125rem;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .pending-text p {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        .pending-amount {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--warning);
+        }
+
+        /* Historial de Retiros */
+        .withdrawals-section {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid rgba(255, 107, 53, 0.2);
+        }
+
+        .withdrawals-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .withdrawal-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .withdrawal-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .withdrawal-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .withdrawal-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .withdrawal-details h4 {
+            font-size: 1rem;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .withdrawal-details p {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        .withdrawal-amount {
+            text-align: right;
+        }
+
+        .withdrawal-amount .amount {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .withdrawal-status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .status-completado {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6EE7B7;
+        }
+
+        .status-pendiente {
+            background: rgba(245, 158, 11, 0.2);
+            color: #FCD34D;
+        }
+
+        .status-procesando {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93C5FD;
+        }
+
+        /* Métodos de Pago */
+        .payment-methods {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid rgba(255, 107, 53, 0.2);
+        }
+
+        .methods-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .method-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .method-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--tecnico-primary);
+        }
+
+        .method-card.active {
+            background: var(--tecnico-light);
+            border-color: var(--tecnico-primary);
+        }
+
+        .method-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .method-icon {
+            font-size: 2rem;
+        }
+
+        .method-check {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: transparent;
+        }
+
+        .method-card.active .method-check {
+            background: var(--tecnico-primary);
+            border-color: var(--tecnico-primary);
+            color: var(--white);
+        }
+
+        .method-name {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .method-account {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        .btn-add-method {
+            background: rgba(255, 107, 53, 0.1);
+            border: 2px dashed var(--tecnico-primary);
+            color: var(--tecnico-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .btn-add-method:hover {
+            background: rgba(255, 107, 53, 0.2);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav-tecnico {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 35, 50, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            border-top: 2px solid var(--tecnico-primary);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+            padding: 0.5rem;
+            min-width: 60px;
+        }
+
+        .nav-item i {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-item.active {
+            color: var(--tecnico-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1.5rem 1rem;
+            }
+
+            .balance-amount {
+                font-size: 2.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chart-tabs {
+                flex-wrap: wrap;
+            }
+
+            .methods-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .balance-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .pending-alert {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .withdrawal-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .withdrawal-amount {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header-tecnico">
+        <div class="header-container">
+            <div class="header-title">
+                <i class="fas fa-wallet"></i>
+                <span>Mis Ganancias</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Balance Principal -->
+        <div class="balance-card">
+            <div class="balance-header">
+                <div class="balance-title">Balance disponible</div>
+                <div class="balance-period">Este mes</div>
+            </div>
+            <div class="balance-amount">S/2,340.50</div>
+            <div class="balance-subtitle">
+                De 18 servicios completados
+                <span class="balance-change">+12% vs mes anterior</span>
+            </div>
+            <div class="balance-actions">
+                <button class="balance-btn" onclick="solicitarRetiro()">
+                    <i class="fas fa-money-bill-wave"></i>
+                    Retirar fondos
+                </button>
+                <button class="balance-btn secondary" onclick="verDetalles()">
+                    <i class="fas fa-chart-line"></i>
+                    Ver detalles
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: #10B981;">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-trend up">
+                        <i class="fas fa-arrow-up"></i> 15%
+                    </div>
+                </div>
+                <div class="stat-value">S/15,240</div>
+                <div class="stat-label">Total ganado (histórico)</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(255, 107, 53, 0.2); color: var(--tecnico-primary);">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="stat-trend up">
+                        <i class="fas fa-arrow-up"></i> 8%
+                    </div>
+                </div>
+                <div class="stat-value">S/130</div>
+                <div class="stat-label">Promedio por servicio</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(59, 130, 246, 0.2); color: #3B82F6;">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                    <div class="stat-trend up">
+                        <i class="fas fa-arrow-up"></i> 20%
+                    </div>
+                </div>
+                <div class="stat-value">S/585</div>
+                <div class="stat-label">Ganancia esta semana</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: #F59E0B;">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                </div>
+                <div class="stat-value">15%</div>
+                <div class="stat-label">Comisión MITA</div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">Ingresos por período</div>
+                <div class="chart-tabs">
+                    <button class="chart-tab active">Semana</button>
+                    <button class="chart-tab">Mes</button>
+                    <button class="chart-tab">Año</button>
+                </div>
+            </div>
+            <div class="chart-placeholder">
+                <i class="fas fa-chart-area" style="font-size: 3rem; opacity: 0.3; margin-right: 1rem;"></i>
+                <span>Gráfico de ingresos (implementar con Chart.js)</span>
+            </div>
+        </div>
+
+        <!-- Pagos Pendientes -->
+        <div class="pending-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-clock"></i>
+                    Pago pendiente
+                </div>
+            </div>
+            <div class="pending-alert">
+                <div class="pending-info">
+                    <div class="pending-icon">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div class="pending-text">
+                        <h3>Procesando pago</h3>
+                        <p>Fecha estimada de depósito: 25 de noviembre</p>
+                    </div>
+                </div>
+                <div class="pending-amount">S/780.00</div>
+            </div>
+        </div>
+
+        <!-- Métodos de Pago -->
+        <div class="payment-methods">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-credit-card"></i>
+                    Métodos de retiro
+                </div>
+            </div>
+            <div class="methods-grid">
+                <div class="method-card active">
+                    <div class="method-header">
+                        <div class="method-icon">💳</div>
+                        <div class="method-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="method-name">Cuenta BCP</div>
+                    <div class="method-account">****1234</div>
+                </div>
+
+                <div class="method-card">
+                    <div class="method-header">
+                        <div class="method-icon">📱</div>
+                        <div class="method-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="method-name">Yape</div>
+                    <div class="method-account">999 888 777</div>
+                </div>
+
+                <div class="method-card">
+                    <div class="method-header">
+                        <div class="method-icon">💰</div>
+                        <div class="method-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="method-name">Plin</div>
+                    <div class="method-account">999 888 777</div>
+                </div>
+
+                <button class="method-card btn-add-method" onclick="agregarMetodo()">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Agregar método</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Historial de Retiros -->
+        <div class="withdrawals-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-history"></i>
+                    Historial de retiros
+                </div>
+            </div>
+
+            <div class="withdrawals-list">
+                <div class="withdrawal-item">
+                    <div class="withdrawal-info">
+                        <div class="withdrawal-icon" style="background: rgba(16, 185, 129, 0.2); color: #10B981;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="withdrawal-details">
+                            <h4>Retiro a BCP</h4>
+                            <p>15 de noviembre, 2024</p>
+                        </div>
+                    </div>
+                    <div class="withdrawal-amount">
+                        <div class="amount">S/1,200.00</div>
+                        <span class="withdrawal-status status-completado">Completado</span>
+                    </div>
+                </div>
+
+                <div class="withdrawal-item">
+                    <div class="withdrawal-info">
+                        <div class="withdrawal-icon" style="background: rgba(59, 130, 246, 0.2); color: #3B82F6;">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                        <div class="withdrawal-details">
+                            <h4>Retiro a Yape</h4>
+                            <p>20 de noviembre, 2024</p>
+                        </div>
+                    </div>
+                    <div class="withdrawal-amount">
+                        <div class="amount">S/500.00</div>
+                        <span class="withdrawal-status status-procesando">Procesando</span>
+                    </div>
+                </div>
+
+                <div class="withdrawal-item">
+                    <div class="withdrawal-info">
+                        <div class="withdrawal-icon" style="background: rgba(16, 185, 129, 0.2); color: #10B981;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="withdrawal-details">
+                            <h4>Retiro a BCP</h4>
+                            <p>08 de noviembre, 2024</p>
+                        </div>
+                    </div>
+                    <div class="withdrawal-amount">
+                        <div class="amount">S/980.00</div>
+                        <span class="withdrawal-status status-completado">Completado</span>
+                    </div>
+                </div>
+
+                <div class="withdrawal-item">
+                    <div class="withdrawal-info">
+                        <div class="withdrawal-icon" style="background: rgba(16, 185, 129, 0.2); color: #10B981;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="withdrawal-details">
+                            <h4>Retiro a Plin</h4>
+                            <p>01 de noviembre, 2024</p>
+                        </div>
+                    </div>
+                    <div class="withdrawal-amount">
+                        <div class="amount">S/750.00</div>
+                        <span class="withdrawal-status status-completado">Completado</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav-tecnico">
+        <a href="/tecnico/panel" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Inicio</span>
+        </a>
+        <a href="/tecnico/solicitudes" class="nav-item">
+            <i class="fas fa-list"></i>
+            <span>Solicitudes</span>
+        </a>
+        <a href="/tecnico/historial" class="nav-item">
+            <i class="fas fa-history"></i>
+            <span>Historial</span>
+        </a>
+        <a href="/tecnico/ganancias" class="nav-item active">
+            <i class="fas fa-wallet"></i>
+            <span>Ganancias</span>
+        </a>
+        <a href="/tecnico/perfil" class="nav-item">
+            <i class="fas fa-user"></i>
+            <span>Perfil</span>
+        </a>
+    </nav>
+
+    <script src="/static/js/utils.js"></script>
+    <script>
+        function solicitarRetiro() {
+            mostrarNotificacion('Abriendo formulario de retiro...', 'info');
+            // TODO: Abrir modal de retiro
+        }
+
+        function verDetalles() {
+            mostrarNotificacion('Cargando detalles...', 'info');
+            // TODO: Mostrar desglose detallado
+        }
+
+        function agregarMetodo() {
+            mostrarNotificacion('Agregar método de pago...', 'info');
+            // TODO: Abrir formulario para agregar método
+        }
+
+        console.log('✅ Ganancias técnico cargado');
+    </script>
+</body>
+</html>

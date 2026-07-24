@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MITA - Información Requerida para Continuar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #FFCD11;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .intro {
+            padding: 2rem;
+            background: #fff9e6;
+            border-left: 4px solid #FFCD11;
+            margin: 2rem;
+        }
+
+        .intro h2 {
+            color: #0f1419;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .intro p {
+            color: #555;
+            margin-bottom: 0.75rem;
+        }
+
+        .intro strong {
+            color: #d32f2f;
+        }
+
+        .content {
+            padding: 0 2rem 2rem 2rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid #FFCD11;
+        }
+
+        .section-icon {
+            font-size: 2rem;
+        }
+
+        .section-title {
+            flex: 1;
+        }
+
+        .section-title h3 {
+            color: #0f1419;
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .section-title .why {
+            color: #666;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .priority-badge {
+            background: #d32f2f;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .priority-high {
+            background: #d32f2f;
+        }
+
+        .priority-medium {
+            background: #f57c00;
+        }
+
+        .priority-low {
+            background: #388e3c;
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .checklist-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #FFCD11;
+            border-radius: 4px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .item-content {
+            flex: 1;
+        }
+
+        .item-title {
+            font-weight: 600;
+            color: #0f1419;
+            margin-bottom: 0.25rem;
+        }
+
+        .item-description {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .impact-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .impact-box h4 {
+            color: #856404;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .impact-box p {
+            color: #856404;
+            font-size: 0.9rem;
+        }
+
+        .cta {
+            background: linear-gradient(135deg, #FFCD11 0%, #f5b800 100%);
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem;
+            border-radius: 12px;
+        }
+
+        .cta h3 {
+            color: #0f1419;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta p {
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: #0f1419;
+            color: #FFCD11;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #0f1419;
+            border: 2px solid #0f1419;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 2rem;
+            text-align: center;
+            color: #666;
+        }
+
+        .footer p {
+            margin-bottom: 0.5rem;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+
+            .cta-buttons {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📋 Información Requerida</h1>
+            <p>Para que tu proyecto MITA avance sin contratiempos</p>
+        </div>
+
+        <!-- Intro -->
+        <div class="intro">
+            <h2>🎯 ¿Por qué necesitamos esta información?</h2>
+            <p>Hemos llegado a un punto crítico en el desarrollo donde <strong>el proyecto no puede avanzar</strong> sin definiciones clave de tu parte.</p>
+            <p>Esta información no solo define cómo funcionará tu plataforma, sino que también determina:</p>
+            <ul style="margin-top: 1rem; margin-left: 2rem;">
+                <li>✅ La experiencia de tus clientes</li>
+                <li>✅ El diseño de las interfaces</li>
+                <li>✅ La estructura de la base de datos</li>
+                <li>✅ Las integraciones de pago</li>
+                <li>✅ Los flujos operativos</li>
+            </ul>
+            <p style="margin-top: 1rem;"><strong>Sin estos datos, el desarrollo está bloqueado.</strong> Te pedimos que revises esta lista con cuidado y nos proporciones la información lo antes posible.</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            
+            <!-- Sección 1: Información Crítica -->
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🚨</span>
+                    <div class="section-title">
+                        <h3>1. Información Crítica (Bloqueante)</h3>
+                        <p class="why">Sin esto, literalmente no podemos continuar</p>
+                    </div>
+                    <span class="priority-badge priority-high">Urgente</span>
+                </div>
+
+                <ul class="checklist">
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Claves de Culqi (Pasarela de Pagos)</div>
+                            <div class="item-description">
+                                Necesitamos tu Public Key y Secret Key de Culqi. Sin esto, no podemos procesar pagos con tarjeta.
+                                <br><strong>📍 Cómo obtenerlas:</strong> Regístrate en <a href="https://culqi.com" target="_blank">culqi.com</a> → Panel → Desarrollo → API Keys
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Catálogo de Servicios y Precios</div>
+                            <div class="item-description">
+                                Lista completa de servicios que ofreces con sus precios. Ejemplo: Cambio de aceite mineral S/.150, sintético S/.280, etc.
+                                <br><strong>📊 Formato:</strong> Excel/Google Sheets con columnas: Servicio | Descripción | Precio | Duración
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Marcas y Modelos de Vehículos</div>
+                            <div class="item-description">
+                                Al menos 10-15 marcas y modelos comunes que atiendes. Esto define el selector del formulario.
+                                <br><strong>📊 Ejemplo:</strong> Toyota Corolla (2015-2024), Honda Civic (2016-2024), Hyundai Accent (2010-2023)
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Logo de la Empresa</div>
+                            <div class="item-description">
+                                Logo en formato PNG con fondo transparente. Necesitamos versiones en color, blanco y negro.
+                                <br><strong>📐 Tamaños:</strong> Original (alta resolución) + versión 512x512px para web
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="impact-box">
+                    <h4>⚠️ Impacto si no se proporciona:</h4>
+                    <p>Sin esta información, el sistema no puede procesar pagos reales, los usuarios no podrán seleccionar sus vehículos correctamente, y la plataforma no tendrá tu identidad corporativa. <strong>El proyecto permanecerá en modo demo.</strong></p>
+                </div>
+            </div>
+
+            <!-- Sección 2: Configuración de Negocio -->
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">💼</span>
+                    <div class="section-title">
+                        <h3>2. Configuración del Negocio</h3>
+                        <p class="why">Define cómo operará tu plataforma</p>
+                    </div>
+                    <span class="priority-badge priority-high">Alta</span>
+                </div>
+
+                <ul class="checklist">
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Tipos de Aceite y Precios</div>
+                            <div class="item-description">
+                                Mineral, Semi-sintético, Sintético, Premium - con precios específicos de cada uno.
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Precio de Filtros</div>
+                            <div class="item-description">
+                                ¿Cuánto cobras por el filtro de aceite? ¿Está incluido o es adicional?
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Zonas de Cobertura</div>
+                            <div class="item-description">
+                                ¿Qué distritos de Lima atiendes? ¿Hay costo adicional por zona?
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Horarios de Atención</div>
+                            <div class="item-description">
+                                Horario de servicio (ej: 8am-6pm). ¿Atiendes sábados/domingos?
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Política de Cancelación</div>
+                            <div class="item-description">
+                                ¿Con cuánta anticipación se puede cancelar? ¿Hay penalidad?
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="impact-box">
+                    <h4>⚠️ Impacto si no se proporciona:</h4>
+                    <p>El sistema calculará precios incorrectos, podría agendar servicios fuera de tu horario, o en zonas que no cubres. Los clientes recibirán información equivocada.</p>
+                </div>
+            </div>
+
+            <!-- Sección 3: Técnicos y Comisiones -->
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">👨‍🔧</span>
+                    <div class="section-title">
+                        <h3>3. Técnicos y Sistema de Comisiones</h3>
+                        <p class="why">Define cómo pagarás a tu equipo</p>
+                    </div>
+                    <span class="priority-badge priority-medium">Media</span>
+                </div>
+
+                <ul class="checklist">
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Lista de Técnicos</div>
+                            <div class="item-description">
+                                Nombres, especialidades, zonas que cubren, horarios disponibles.
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Estructura de Comisiones</div>
+                            <div class="item-description">
+                                ¿Qué % o monto fijo gana cada técnico por servicio? Ejemplo: 40% del total, o S/.50 por cambio de aceite.
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Requisitos para Técnicos Nuevos</div>
+                            <div class="item-description">
+                                ¿Qué documentos necesitas? ¿Hay proceso de verificación?
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Sección 4: Identidad y Marketing -->
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🎨</span>
+                    <div class="section-title">
+                        <h3>4. Identidad Corporativa</h3>
+                        <p class="why">Para diseñar interfaces con tu marca</p>
+                    </div>
+                    <span class="priority-badge priority-medium">Media</span>
+                </div>
+
+                <ul class="checklist">
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Colores Corporativos</div>
+                            <div class="item-description">
+                                Códigos HEX de tus colores oficiales. Actualmente usamos amarillo CAT (#FFCD11).
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Slogan</div>
+                            <div class="item-description">
+                                Frase que represente tu negocio. Ej: "Servicio técnico a tu puerta"
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Fotos de Servicios</div>
+                            <div class="item-description">
+                                3-5 fotos de técnicos realizando servicios (para landing page y marketing).
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Sección 5: Legal y Operativo -->
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">📜</span>
+                    <div class="section-title">
+                        <h3>5. Información Legal y Operativa</h3>
+                        <p class="why">Requerido para producción</p>
+                    </div>
+                    <span class="priority-badge priority-low">Baja</span>
+                </div>
+
+                <ul class="checklist">
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Datos de la Empresa</div>
+                            <div class="item-description">
+                                RUC, razón social, dirección fiscal, teléfonos, email corporativo.
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Términos y Condiciones</div>
+                            <div class="item-description">
+                                Documento con términos de uso, política de privacidad, garantías.
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="checklist-item">
+                        <div class="checkbox"></div>
+                        <div class="item-content">
+                            <div class="item-title">Datos Bancarios</div>
+                            <div class="item-description">
+                                Para configurar pagos por transferencia: banco, número de cuenta, CCI.
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="impact-box">
+                    <h4>⚠️ Impacto si no se proporciona:</h4>
+                    <p>No podremos poner el sistema en producción sin esta información. Es requerida por ley y por las pasarelas de pago.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- CTA -->
+        <div class="cta">
+            <h3>🚀 ¿Listo para continuar?</h3>
+            <p>Envíanos esta información y el proyecto se desbloqueará inmediatamente</p>
+            <div class="cta-buttons">
+                <a href="mailto:tu-restucciaduilio@gmail.com?subject=Información para MITA&body=Hola,%0D%0A%0D%0AAdjunto la información solicitada para continuar con el proyecto MITA." class="btn btn-primary">
+                    📧 Enviar por Email
+                </a>
+                <a href="https://wa.me/51967317946?text=Hola,%20tengo%20la%20información%20para%20continuar%20con%20MITA" class="btn btn-secondary">
+                    💬 Enviar por WhatsApp
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>¿Tienes dudas sobre algún punto?</strong></p>
+            <p>Contáctanos y te ayudamos a completar la información.</p>
+            <p style="margin-top: 1rem; color: #999; font-size: 0.85rem;">
+                Este documento fue generado para facilitar la recopilación de información del proyecto MITA.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

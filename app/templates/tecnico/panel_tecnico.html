@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FF6B35">
+    <title>Panel Técnico - MITA</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="/static/css/colors_roles.css">
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="/static/css/panel_tecnico.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Header Técnico -->
+    <header class="header-tecnico">
+        <div class="header-container">
+            <div class="logo-section">
+                <i class="fas fa-tools"></i>
+                <span class="logo-text">Panel Técnico</span>
+            </div>
+            
+            <div class="header-actions">
+                <!-- Indicador Online/Offline -->
+                <div class="status-toggle" onclick="toggleStatus()">
+                    <div class="status-indicator online" id="statusIndicator">
+                        <span class="status-dot"></span>
+                        <span class="status-text">En línea</span>
+                    </div>
+                </div>
+                
+                <!-- Notificaciones -->
+                <button class="btn-icon" onclick="abrirNotificaciones()">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge-notification" id="notificationBadge">3</span>
+                </button>
+                
+                <!-- Perfil -->
+                <div class="user-profile" onclick="abrirMenu()">
+                    <div class="avatar">JD</div>
+                    <div class="user-info">
+                        <span class="user-name">Juan Díaz</span>
+                        <span class="user-rating">⭐ 4.8</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <main class="dashboard-main">
+        
+        <!-- Resumen del Día -->
+        <section class="stats-section">
+            <h2 class="section-title">Resumen de hoy</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2);">
+                        <i class="fas fa-check-circle" style="color: #10B981;"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="serviciosHoy">5</div>
+                        <div class="stat-label">Servicios completados</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(255, 205, 17, 0.2);">
+                        <i class="fas fa-dollar-sign" style="color: #FFCD11;"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="gananciaHoy">S/420</div>
+                        <div class="stat-label">Ganancia del día</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(59, 130, 246, 0.2);">
+                        <i class="fas fa-clock" style="color: #3B82F6;"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="tiempoHoy">6.5h</div>
+                        <div class="stat-label">Horas trabajadas</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(139, 92, 246, 0.2);">
+                        <i class="fas fa-star" style="color: #8B5CF6;"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="calificacionHoy">4.9</div>
+                        <div class="stat-label">Calificación promedio</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Servicio Activo -->
+        <section class="active-service-section" id="activeServiceSection" style="display: none;">
+            <h2 class="section-title">
+                Servicio en progreso
+                <span class="pulse-indicator"></span>
+            </h2>
+            
+            <div class="service-active-card">
+                <div class="service-header">
+                    <div class="service-type">
+                        <i class="fas fa-oil-can"></i>
+                        <span>Cambio de aceite</span>
+                    </div>
+                    <div class="service-timer">
+                        <i class="fas fa-clock"></i>
+                        <span id="activeTimer">00:45:20</span>
+                    </div>
+                </div>
+                
+                <div class="client-info">
+                    <div class="client-avatar">ML</div>
+                    <div class="client-details">
+                        <h3>María López</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> Av. Arequipa 1234, Miraflores</p>
+                        <p><i class="fas fa-phone"></i> +51 999 888 777</p>
+                    </div>
+                    <div class="client-actions">
+                        <button class="btn-icon-action" onclick="llamarCliente()">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button class="btn-icon-action" onclick="abrirChat()">
+                            <i class="fas fa-comment"></i>
+                        </button>
+                        <button class="btn-icon-action" onclick="abrirMapa()">
+                            <i class="fas fa-map"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="service-progress">
+                    <div class="progress-steps">
+                        <div class="step completed">
+                            <i class="fas fa-check"></i>
+                            <span>Aceptado</span>
+                        </div>
+                        <div class="step completed">
+                            <i class="fas fa-check"></i>
+                            <span>En camino</span>
+                        </div>
+                        <div class="step active">
+                            <i class="fas fa-tools"></i>
+                            <span>Trabajando</span>
+                        </div>
+                        <div class="step">
+                            <i class="fas fa-flag-checkered"></i>
+                            <span>Finalizar</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="service-actions">
+                    <button class="btn-secondary" onclick="pausarServicio()">
+                        <i class="fas fa-pause"></i>
+                        Pausar
+                    </button>
+                    <button class="btn-primary" onclick="finalizarServicio()">
+                        <i class="fas fa-check"></i>
+                        Finalizar servicio
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Solicitudes Disponibles -->
+        <section class="requests-section">
+            <div class="section-header-flex">
+                <h2 class="section-title">Solicitudes disponibles</h2>
+                <button class="btn-filter" onclick="abrirFiltros()">
+                    <i class="fas fa-filter"></i>
+                    Filtros
+                </button>
+            </div>
+            
+            <div class="requests-list" id="requestsList">
+                
+                <!-- Solicitud 1 -->
+                <div class="request-card urgent">
+                    <div class="urgent-badge">🔥 Urgente</div>
+                    <div class="request-header">
+                        <div class="request-type">
+                            <i class="fas fa-bolt"></i>
+                            <div>
+                                <h3>Reparación eléctrica</h3>
+                                <p class="request-time">Hace 5 minutos</p>
+                            </div>
+                        </div>
+                        <div class="request-price">S/150</div>
+                    </div>
+                    
+                    <div class="request-details">
+                        <div class="detail-item">
+                            <i class="fas fa-user"></i>
+                            <span>Carlos Ruiz</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>San Isidro • 2.3 km</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Lo antes posible</span>
+                        </div>
+                    </div>
+                    
+                    <p class="request-description">
+                        <strong>Problema:</strong> Corto circuito en el tablero principal. Se necesita revisión urgente.
+                    </p>
+                    
+                    <div class="request-actions">
+                        <button class="btn-secondary" onclick="verDetalles(1)">
+                            <i class="fas fa-eye"></i>
+                            Ver detalles
+                        </button>
+                        <button class="btn-success" onclick="aceptarServicio(1)">
+                            <i class="fas fa-check"></i>
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Solicitud 2 -->
+                <div class="request-card">
+                    <div class="request-header">
+                        <div class="request-type">
+                            <i class="fas fa-oil-can"></i>
+                            <div>
+                                <h3>Cambio de aceite</h3>
+                                <p class="request-time">Hace 15 minutos</p>
+                            </div>
+                        </div>
+                        <div class="request-price">S/120</div>
+                    </div>
+                    
+                    <div class="request-details">
+                        <div class="detail-item">
+                            <i class="fas fa-user"></i>
+                            <span>Ana Fernández</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Miraflores • 1.8 km</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Hoy 3:00 PM</span>
+                        </div>
+                    </div>
+                    
+                    <p class="request-description">
+                        <strong>Vehículo:</strong> Toyota Corolla 2020 • <strong>Aceite:</strong> Sintético
+                    </p>
+                    
+                    <div class="request-actions">
+                        <button class="btn-secondary" onclick="verDetalles(2)">
+                            <i class="fas fa-eye"></i>
+                            Ver detalles
+                        </button>
+                        <button class="btn-success" onclick="aceptarServicio(2)">
+                            <i class="fas fa-check"></i>
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Solicitud 3 -->
+                <div class="request-card">
+                    <div class="request-header">
+                        <div class="request-type">
+                            <i class="fas fa-tint"></i>
+                            <div>
+                                <h3>Reparación de gasfitería</h3>
+                                <p class="request-time">Hace 30 minutos</p>
+                            </div>
+                        </div>
+                        <div class="request-price">S/90</div>
+                    </div>
+                    
+                    <div class="request-details">
+                        <div class="detail-item">
+                            <i class="fas fa-user"></i>
+                            <span>Pedro Sánchez</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>San Borja • 3.5 km</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Hoy 4:00 PM</span>
+                        </div>
+                    </div>
+                    
+                    <p class="request-description">
+                        <strong>Problema:</strong> Fuga de agua en caño de cocina
+                    </p>
+                    
+                    <div class="request-actions">
+                        <button class="btn-secondary" onclick="verDetalles(3)">
+                            <i class="fas fa-eye"></i>
+                            Ver detalles
+                        </button>
+                        <button class="btn-success" onclick="aceptarServicio(3)">
+                            <i class="fas fa-check"></i>
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav-tecnico">
+        <a href="/tecnico/panel" class="nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Inicio</span>
+        </a>
+        <a href="/tecnico/solicitudes" class="nav-item">
+            <i class="fas fa-list"></i>
+            <span>Solicitudes</span>
+            <span class="nav-badge">3</span>
+        </a>
+        <a href="/tecnico/historial" class="nav-item">
+            <i class="fas fa-history"></i>
+            <span>Historial</span>
+        </a>
+        <a href="/tecnico/ganancias" class="nav-item">
+            <i class="fas fa-wallet"></i>
+            <span>Ganancias</span>
+        </a>
+        <a href="/tecnico/perfil" class="nav-item">
+            <i class="fas fa-user"></i>
+            <span>Perfil</span>
+        </a>
+    </nav>
+
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/panel_tecnico.js"></script>
+</body>
+</html>
