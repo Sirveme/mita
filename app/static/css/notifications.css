@@ -1,0 +1,343 @@
+/* ============================================
+   MITA - NOTIFICATION SYSTEM CSS
+   Ubicación: app/static/css/notifications.css
+   ============================================ */
+
+/* Container */
+.notification-container {
+    position: fixed;
+    z-index: 99999;
+    pointer-events: none;
+    max-width: 400px;
+}
+
+/* Posiciones */
+.notification-container.top-right {
+    top: 20px;
+    right: 20px;
+}
+
+.notification-container.top-left {
+    top: 20px;
+    left: 20px;
+}
+
+.notification-container.bottom-right {
+    bottom: 20px;
+    right: 20px;
+}
+
+.notification-container.bottom-left {
+    bottom: 20px;
+    left: 20px;
+}
+
+.notification-container.top-center {
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Notificación individual */
+.notification {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(0, 0, 0, 0.05);
+    pointer-events: auto;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateX(400px);
+    max-width: 100%;
+    min-width: 300px;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateX(0);
+    animation: slideInRight 0.3s ease-out;
+}
+
+.notification.hide {
+    opacity: 0;
+    transform: translateX(400px);
+    transition: all 0.3s ease-in;
+}
+
+/* Animaciones */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(400px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(400px);
+    }
+}
+
+/* Hover effect */
+.notification:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Tipos de notificación */
+.notification-success {
+    border-left: 4px solid #10b981;
+}
+
+.notification-info {
+    border-left: 4px solid #3b82f6;
+}
+
+.notification-warning {
+    border-left: 4px solid #f59e0b;
+}
+
+.notification-error {
+    border-left: 4px solid #ef4444;
+}
+
+.notification-loading {
+    border-left: 4px solid #FFCD11;
+}
+
+/* Icono */
+.notification-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+/* Spinner */
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #FFCD11;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Contenido */
+.notification-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.notification-content p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #1f2937;
+}
+
+.notification-content strong {
+    font-weight: 600;
+    color: #111827;
+}
+
+.notification-content small {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+/* Botón cerrar */
+.notification-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.notification-close:hover {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+/* Botón de acción */
+.notification-action {
+    background: linear-gradient(135deg, #FFCD11 0%, #f5b800 100%);
+    color: #0f1419;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 4px;
+}
+
+.notification-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(255, 205, 17, 0.4);
+}
+
+/* Notificaciones especiales */
+.chat-notification {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.tecnico-notification {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tecnico-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #FFCD11;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .notification-container {
+        max-width: calc(100% - 40px);
+        left: 20px !important;
+        right: 20px !important;
+        transform: none !important;
+    }
+    
+    .notification {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+/* Dark mode (si lo implementas) */
+@media (prefers-color-scheme: dark) {
+    .notification {
+        background: #1f2937;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .notification-content p {
+        color: #e5e7eb;
+    }
+    
+    .notification-content strong {
+        color: #f9fafb;
+    }
+    
+    .notification-close {
+        color: #9ca3af;
+    }
+    
+    .notification-close:hover {
+        background: #374151;
+        color: #d1d5db;
+    }
+}
+
+/* Badge contador (para notificaciones sin leer) */
+.notification-badge {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    z-index: 99998;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.9;
+    }
+}
+
+/* Toast compacto (alternativa) */
+.notification.compact {
+    padding: 12px;
+    min-width: 250px;
+}
+
+.notification.compact .notification-content p {
+    font-size: 0.875rem;
+}
+
+/* Progress bar (opcional - para notificaciones con temporizador) */
+.notification-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: #FFCD11;
+    border-radius: 0 0 12px 12px;
+    animation: progress 5s linear;
+}
+
+@keyframes progress {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}

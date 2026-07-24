@@ -1,0 +1,140 @@
+/* ============================================
+   ANIMATED STATS COUNTER - RESPONSIVE
+   ============================================ */
+
+.stats-section {
+    padding: 3rem 1rem;
+    background: linear-gradient(135deg, #1A2332 0%, #0A0E1A 100%);
+    border-top: 1px solid rgba(255, 205, 17, 0.2);
+    border-bottom: 1px solid rgba(255, 205, 17, 0.2);
+}
+
+.stats-container {
+    display: flex;
+    flex-direction: row !important;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ========== STAT ITEMS ========== */
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    transition: transform 0.3s ease;
+    flex: 1;
+    min-width: 150px;
+    max-width: 250px;
+}
+
+.stat-item:hover {
+    transform: translateY(-5px);
+}
+
+.stat-number {
+    font-size: 2.125rem !important;
+    font-weight: 900 !important;
+    color: var(--cat-yellow);
+    margin-bottom: 0.5rem;
+    line-height: 1;
+    text-shadow: 0 4px 20px rgba(255, 205, 17, 0.4);
+}
+
+.stat-label {
+    font-size: 0.75rem !important;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 600;
+    white-space: nowrap; /* CRÍTICO: Evita saltos de línea */
+}
+
+/* ========== RESPONSIVE - TABLET ========== */
+
+@media (max-width: 768px) {
+    .stats-container {
+        gap: 1.5rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        white-space: nowrap; /* Mantener en una línea */
+    }
+    
+    .stat-item {
+        min-width: 120px;
+    }
+}
+
+/* ========== RESPONSIVE - MÓVIL ========== */
+
+@media (max-width: 480px) {
+    .stats-section {
+        padding: 2rem 0.5rem;
+    }
+    
+    .stats-container {
+        gap: 1rem;
+        flex-direction: row; /* Mantener horizontal */
+        justify-content: space-evenly;
+    }
+    
+    .stat-item {
+        min-width: 90px;
+        max-width: 120px;
+        padding: 0.5rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+        white-space: nowrap; /* CRÍTICO: Una sola línea */
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+/* ========== MÓVIL PEQUEÑO (< 360px) ========== */
+
+@media (max-width: 360px) {
+    .stats-container {
+        gap: 0.5rem;
+    }
+    
+    .stat-item {
+        min-width: 80px;
+        max-width: 100px;
+        padding: 0.25rem;
+    }
+    
+    .stat-number {
+        font-size: 1.75rem;
+    }
+    
+    .stat-label {
+        font-size: 0.7rem;
+        white-space: nowrap;
+    }
+}
+
+/* ========== SI NECESITA MÁS ESPACIO EN MÓVIL ========== */
+
+@media (max-width: 375px) {
+    /* Opción alternativa: Abreviar texto en móvil */
+    .stat-label::after {
+        content: attr(data-short); /* Usaremos data-short si existe */
+    }
+    
+    .stat-label span {
+        display: none; /* Ocultar texto largo */
+    }
+}

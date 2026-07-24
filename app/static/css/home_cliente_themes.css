@@ -1,0 +1,443 @@
+/* ============================================
+   SISTEMA DE TEMAS - AZUL Y MARRÓN
+   ============================================ */
+
+:root {
+    /* TEMA AZUL (DEFAULT) */
+    --primary: #FFCD11;
+    --primary-dark: #E6B800;
+    --bg-dark: #0A0E1A;
+    --dark-blue: #1A2332;
+    --medium-blue: #2A3647;
+    --cat-yellow: #FFCD11;
+    --white: #FFFFFF;
+    
+    /* Gradientes Azul Noche */
+    --gradient-hero: linear-gradient(135deg, #0F1724 0%, #1A2332 50%, #0A0E1A 100%);
+    --gradient-services: linear-gradient(180deg, #0A0E1A 0%, #1A2332 100%);
+    --gradient-testimonials: linear-gradient(180deg, #1A2332 0%, #0A0E1A 100%);
+    --gradient-card: linear-gradient(135deg, #1E2838 0%, #2A3647 100%);
+    
+    /* Sombras */
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+/* TEMA MARRÓN (ALTERNATIVO) */
+[data-theme="brown"] {
+    --bg-dark: #1A1410;
+    --dark-blue: #2A221A;
+    --medium-blue: #3A2E22;
+    
+    /* Gradientes Marrón Original */
+    --gradient-hero: linear-gradient(135deg, #2A221A 0%, #4A3A28 50%, #1A1410 100%);
+    --gradient-services: linear-gradient(180deg, #1A1410 0%, #2A221A 100%);
+    --gradient-testimonials: linear-gradient(180deg, #2A221A 0%, #1A1410 100%);
+    --gradient-card: linear-gradient(135deg, #3A2E22 0%, #4A3A28 100%);
+}
+
+/* ============================================
+   FORZAR FONDOS OSCUROS EN TODO
+   ============================================ */
+
+body {
+    background: var(--bg-dark) !important;
+    color: var(--white);
+}
+
+/* Eliminar TODOS los fondos blancos/claros */
+section,
+.container,
+.section,
+main {
+    background: transparent !important;
+}
+
+/* ============================================
+   FONDOS POR SECCIÓN
+   ============================================ */
+
+/* Hero */
+.hero-section {
+    background: var(--gradient-hero) !important;
+}
+
+/* Servicios */
+.services-section {
+    background: var(--gradient-services) !important;
+    padding: 4rem 1rem;
+}
+
+/* Testimoniales */
+.testimonials-section {
+    background: var(--gradient-testimonials) !important;
+    padding: 4rem 1rem;
+}
+
+/* Técnicos certificados */
+.technicians-section {
+    background: var(--bg-dark) !important;
+    padding: 4rem 1rem;
+}
+
+/* Políticas */
+.policies-section {
+    background: var(--dark-blue) !important;
+    padding: 3rem 1rem;
+}
+
+/* Stats */
+.stats-section {
+    background: linear-gradient(135deg, var(--dark-blue) 0%, var(--bg-dark) 100%) !important;
+    padding: 3rem 1rem;
+}
+
+/* Footer si existe */
+footer {
+    background: var(--bg-dark) !important;
+}
+
+/* ============================================
+   CARDS Y ELEMENTOS
+   ============================================ */
+
+.service-card-modern,
+.testimonial-card,
+.feature-item,
+.policy-card {
+    background: var(--gradient-card) !important;
+}
+
+.bg-dark {
+    background: var(--bg-dark) !important;
+}
+
+.bg-card {
+    background: var(--gradient-card) !important;
+}
+
+/* ============================================
+   THEME SWITCHER BUTTON
+   ============================================ */
+
+.theme-switcher {
+    position: fixed;
+    top: 90px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(26, 35, 50, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 0.75rem 1rem;
+    border-radius: 50px;
+    border: 2px solid rgba(255, 205, 17, 0.3);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+.theme-switcher:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(255, 205, 17, 0.4);
+    border-color: rgba(255, 205, 17, 0.6);
+}
+
+.theme-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.theme-toggle {
+    position: relative;
+    width: 60px;
+    height: 30px;
+    background: var(--dark-blue);
+    border-radius: 15px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    border: 2px solid rgba(255, 205, 17, 0.2);
+}
+
+.theme-toggle:hover {
+    border-color: rgba(255, 205, 17, 0.5);
+}
+
+.theme-toggle-slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+}
+
+.theme-toggle-slider::before {
+    content: '🌙';
+}
+
+[data-theme="brown"] .theme-toggle-slider {
+    left: calc(100% - 25px);
+    background: linear-gradient(135deg, #A0826D 0%, #8B6F47 100%);
+    box-shadow: 0 2px 8px rgba(160, 130, 109, 0.5);
+}
+
+[data-theme="brown"] .theme-toggle-slider::before {
+    content: '☕';
+}
+
+.theme-icon {
+    font-size: 1.125rem;
+    transition: transform 0.3s ease;
+}
+
+/* ============================================
+   TEXTOS CON BUEN CONTRASTE
+   ============================================ */
+
+.section-header h2,
+.section-header p,
+.service-card-modern h3,
+.service-card-modern p,
+.feature-item h3,
+.feature-item p,
+.policy-content h3,
+.testimonial-info h4 {
+    color: var(--white) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.section-subtitle,
+.card-description,
+.feature-item p,
+.policy-content p,
+.testimonial-service {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.card-title {
+    color: var(--white) !important;
+    font-weight: 700;
+}
+
+/* Stats */
+.stat-number {
+    color: var(--primary) !important;
+}
+
+.stat-label {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 600;
+}
+
+/* Testimonials */
+.testimonial-text {
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* ============================================
+   ANIMACIONES DE TRANSICIÓN
+   ============================================ */
+
+* {
+    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .theme-switcher {
+        top: 70px;
+        right: 10px;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .theme-label {
+        display: none;
+    }
+    
+    .theme-toggle {
+        width: 50px;
+        height: 26px;
+    }
+    
+    .theme-toggle-slider {
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+    }
+}
+
+/* ============================================
+   AJUSTE ESPECÍFICO PARA SECCIÓN BLANCA
+   ============================================ */
+
+/* Si hay un wrapper o container general */
+#app,
+.app-wrapper,
+.page-wrapper,
+.main-content {
+    background: var(--bg-dark) !important;
+}
+
+/* Asegurar que no haya gaps blancos entre secciones */
+.hero-section,
+.services-section,
+.testimonials-section,
+.technicians-section,
+.policies-section,
+.stats-section {
+    margin: 0 !important;
+    padding-top: 4rem !important;
+    padding-bottom: 4rem !important;
+}
+
+/* Primera sección sin padding top */
+.hero-section {
+    padding-top: 0 !important;
+}
+
+/* ============================================
+   ADAPTACIÓN A CLASES EXISTENTES
+   ============================================ */
+
+/* Hero con clase personalizada */
+.hero-animated {
+    background: var(--gradient-hero) !important;
+}
+
+/* Asegurar que hero-animated también tenga los estilos */
+.hero-section,
+.hero-animated {
+    background: var(--gradient-hero) !important;
+    padding-top: 0 !important;
+}
+
+/* ============================================
+   CORRECCIÓN DE POLÍTICAS - CENTRADO
+   ============================================ */
+
+.policies-section {
+    background: var(--dark-blue) !important;
+    padding: 3rem 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.policies-section > * {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Corregir contenedor interno de políticas */
+.policy-card {
+    background: var(--gradient-card) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* Si hay un wrapper de políticas */
+.policies-wrapper,
+.policies-container {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto !important;
+    padding: 0 1rem;
+}
+
+/* ============================================
+   FORZAR CENTRADO EN TODAS LAS SECCIONES
+   ============================================ */
+
+section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.section-header {
+    text-align: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 2.5rem;
+}
+
+/* Grid de features centrado */
+.features-grid {
+    max-width: 1200px;
+    margin: 0 auto !important;
+    width: 100%;
+}
+
+/* ============================================
+   CORRECCIÓN ESPECÍFICA PARA POLÍTICAS
+   ============================================ */
+
+/* Asegurar que el contenedor de políticas esté centrado */
+.policies-section .policy-card:first-child,
+.policies-section .policy-card:last-child {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Centrar todo el contenido de políticas */
+.policies-section {
+    text-align: center;
+}
+
+.policy-card {
+    text-align: left;
+}
+
+/* ============================================
+   CORRECCIONES ESPECÍFICAS
+   ============================================ */
+
+/* Stats debe ser HORIZONTAL, no columna */
+.stats-section {
+    display: block !important;
+}
+
+.stats-container {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+}
+
+/* Prevenir scroll horizontal global */
+body, html {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+/* Secciones no deben causar overflow */
+section {
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+/* No aplicar flex-column a stats */
+.stats-section {
+    display: block !important;
+}
+
+/* Políticas sí pueden ser columna */
+.policies-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}

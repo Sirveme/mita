@@ -1,0 +1,754 @@
+/* ============================================
+   MITA - Solicitar Servicio Styles
+   ============================================ */
+
+:root {
+    --mita-primary: #FFCD11;
+    --mita-primary-dark: #e6b800;
+    --mita-bg: #0f1419;
+    --mita-surface: #1a2332;
+    --mita-surface-light: #243447;
+    --mita-text: #ffffff;
+    --mita-text-muted: rgba(255, 255, 255, 0.7);
+    --mita-border: rgba(255, 255, 255, 0.1);
+    --mita-success: #10B981;
+    --mita-error: #EF4444;
+    --mita-warning: #F59E0B;
+    --mita-info: #3B82F6;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.solicitud-container {
+    min-height: 100vh;
+    background: var(--mita-bg);
+    color: var(--mita-text);
+    padding-bottom: 100px; /* Espacio para botones fijos */
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+
+.solicitud-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: var(--mita-surface);
+    border-bottom: 1px solid var(--mita-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.btn-back {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    color: var(--mita-text);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.solicitud-header h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.header-spacer {
+    width: 40px;
+}
+
+/* ============================================
+   STEPS INDICATOR
+   ============================================ */
+
+.steps-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1rem;
+    gap: 0;
+}
+
+.step-dot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.step-dot span {
+    width: 32px;
+    height: 32px;
+    background: var(--mita-surface);
+    border: 2px solid var(--mita-border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--mita-text-muted);
+    transition: all 0.3s ease;
+}
+
+.step-dot small {
+    font-size: 0.7rem;
+    color: var(--mita-text-muted);
+    margin-top: 0.5rem;
+    white-space: nowrap;
+}
+
+.step-dot.active span {
+    background: var(--mita-primary);
+    border-color: var(--mita-primary);
+    color: var(--mita-bg);
+}
+
+.step-dot.active small {
+    color: var(--mita-primary);
+}
+
+.step-dot.completed span {
+    background: var(--mita-success);
+    border-color: var(--mita-success);
+    color: white;
+}
+
+.step-dot.completed span::after {
+    content: '✓';
+    font-size: 0.8rem;
+}
+
+.step-line {
+    width: 30px;
+    height: 2px;
+    background: var(--mita-border);
+    margin: 0 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* ============================================
+   FORM STEPS
+   ============================================ */
+
+.form-step {
+    display: none;
+    padding: 0 1.5rem 2rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.form-step.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.step-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.step-icon {
+    font-size: 2.5rem;
+    color: var(--mita-primary);
+    margin-bottom: 1rem;
+}
+
+.step-header h2 {
+    font-size: 1.5rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.step-header p {
+    color: var(--mita-text-muted);
+    margin: 0;
+}
+
+/* ============================================
+   TIPOS DE SERVICIO GRID
+   ============================================ */
+
+.tipos-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.loading-tipos {
+    text-align: center;
+    padding: 3rem;
+    color: var(--mita-text-muted);
+}
+
+.loading-tipos i {
+    font-size: 2rem;
+    color: var(--mita-primary);
+    margin-bottom: 1rem;
+}
+
+.tipo-card {
+    background: var(--mita-surface);
+    border: 2px solid var(--mita-border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tipo-card:hover {
+    border-color: var(--mita-primary);
+    background: rgba(255, 205, 17, 0.05);
+}
+
+.tipo-card.selected {
+    border-color: var(--mita-success);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.tipo-nombre {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.tipo-desc {
+    font-size: 0.85rem;
+    color: var(--mita-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.tipo-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--mita-border);
+}
+
+.tipo-duracion {
+    font-size: 0.8rem;
+    color: var(--mita-text-muted);
+}
+
+.tipo-duracion i {
+    margin-right: 0.25rem;
+}
+
+.tipo-footer > i {
+    color: var(--mita-primary);
+    transition: transform 0.3s ease;
+}
+
+.tipo-card:hover .tipo-footer > i {
+    transform: translateX(5px);
+}
+
+/* Otro problema */
+.otro-problema {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed var(--mita-border);
+}
+
+.btn-otro {
+    width: 100%;
+    padding: 1rem;
+    background: transparent;
+    border: 2px dashed var(--mita-border);
+    border-radius: 12px;
+    color: var(--mita-text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-otro:hover {
+    border-color: var(--mita-primary);
+    color: var(--mita-primary);
+}
+
+/* ============================================
+   FORM GROUPS
+   ============================================ */
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--mita-text);
+}
+
+.form-group label i {
+    color: var(--mita-primary);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: var(--mita-surface);
+    border: 1px solid var(--mita-border);
+    border-radius: 10px;
+    color: var(--mita-text);
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--mita-primary);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.form-group select {
+    cursor: pointer;
+}
+
+.helper-text {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--mita-text-muted);
+    margin-top: 0.5rem;
+}
+
+/* Selected service badge */
+.selected-service {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: var(--mita-surface);
+    border: 2px solid var(--mita-primary);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.selected-service i {
+    font-size: 1.5rem;
+}
+
+.selected-service span {
+    font-weight: 600;
+}
+
+/* ============================================
+   URGENCIA OPTIONS
+   ============================================ */
+
+.urgencia-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.urgencia-option {
+    cursor: pointer;
+}
+
+.urgencia-option input {
+    display: none;
+}
+
+.urgencia-card {
+    padding: 1rem 0.5rem;
+    background: var(--mita-surface);
+    border: 2px solid var(--mita-border);
+    border-radius: 12px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.urgencia-card i {
+    font-size: 1.5rem;
+    color: var(--mita-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.urgencia-card span {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.urgencia-card small {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--mita-text-muted);
+    margin-top: 0.25rem;
+}
+
+.urgencia-option input:checked + .urgencia-card {
+    border-color: var(--mita-primary);
+    background: rgba(255, 205, 17, 0.1);
+}
+
+.urgencia-option input:checked + .urgencia-card i {
+    color: var(--mita-primary);
+}
+
+.urgencia-card.urgente i {
+    color: var(--mita-error);
+}
+
+.urgencia-option input:checked + .urgencia-card.urgente {
+    border-color: var(--mita-error);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* ============================================
+   UPLOAD FOTOS
+   ============================================ */
+
+.upload-area {
+    padding: 2rem;
+    background: var(--mita-surface);
+    border: 2px dashed var(--mita-border);
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    border-color: var(--mita-primary);
+}
+
+.upload-area i {
+    font-size: 2rem;
+    color: var(--mita-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.upload-area p {
+    margin: 0;
+    color: var(--mita-text);
+}
+
+.upload-area small {
+    color: var(--mita-text-muted);
+}
+
+.fotos-preview {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.foto-thumb {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.foto-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.foto-thumb button {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    background: rgba(239, 68, 68, 0.9);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+/* ============================================
+   RESUMEN CARDS
+   ============================================ */
+
+.resumen-card {
+    background: var(--mita-surface);
+    border: 1px solid var(--mita-border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.resumen-card h3 {
+    font-size: 1rem;
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.resumen-card h3 i {
+    color: var(--mita-primary);
+}
+
+.resumen-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--mita-border);
+}
+
+.resumen-item:last-child {
+    border-bottom: none;
+}
+
+.resumen-item span {
+    color: var(--mita-text-muted);
+    font-size: 0.9rem;
+}
+
+.resumen-item strong {
+    color: var(--mita-text);
+    font-size: 0.95rem;
+    text-align: right;
+    max-width: 60%;
+}
+
+/* Price card */
+.price-card {
+    background: linear-gradient(135deg, var(--mita-surface) 0%, var(--mita-surface-light) 100%);
+    border-color: var(--mita-primary);
+}
+
+.price-main {
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.price-amount {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--mita-primary);
+}
+
+.price-label {
+    display: block;
+    color: var(--mita-text-muted);
+    margin-top: 0.25rem;
+}
+
+.price-note {
+    margin: 1rem 0 0 0;
+    padding: 0.75rem;
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 3px solid var(--mita-info);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: var(--mita-text-muted);
+}
+
+.price-note i {
+    color: var(--mita-info);
+    margin-right: 0.5rem;
+}
+
+/* ============================================
+   CHECKBOX
+   ============================================ */
+
+.checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 1rem;
+    background: var(--mita-surface);
+    border-radius: 12px;
+}
+
+.checkbox-container input {
+    display: none;
+}
+
+.checkmark {
+    width: 22px;
+    height: 22px;
+    background: var(--mita-bg);
+    border: 2px solid var(--mita-border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.checkbox-container input:checked + .checkmark {
+    background: var(--mita-primary);
+    border-color: var(--mita-primary);
+}
+
+.checkbox-container input:checked + .checkmark::after {
+    content: '✓';
+    color: var(--mita-bg);
+    font-weight: 700;
+}
+
+.checkbox-label {
+    font-size: 0.9rem;
+    color: var(--mita-text-muted);
+}
+
+.checkbox-label a {
+    color: var(--mita-primary);
+    text-decoration: none;
+}
+
+/* ============================================
+   NAVIGATION BUTTONS
+   ============================================ */
+
+.form-navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem 1.5rem;
+    background: var(--mita-surface);
+    border-top: 1px solid var(--mita-border);
+    display: flex;
+    gap: 1rem;
+    z-index: 100;
+}
+
+.btn-secondary {
+    flex: 1;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--mita-border);
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.btn-primary {
+    flex: 2;
+    padding: 1rem;
+    background: var(--mita-primary);
+    border: none;
+    border-radius: 12px;
+    color: var(--mita-bg);
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: var(--mita-primary-dark);
+    transform: translateY(-2px);
+}
+
+.btn-confirm {
+    background: var(--mita-success);
+}
+
+.btn-confirm:hover {
+    background: #0ea472;
+}
+
+/* ============================================
+   ERROR MESSAGE
+   ============================================ */
+
+.error {
+    text-align: center;
+    color: var(--mita-error);
+    padding: 2rem;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 400px) {
+    .urgencia-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .urgencia-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        text-align: left;
+    }
+    
+    .urgencia-card i {
+        margin-bottom: 0;
+    }
+}
+
+@media (min-width: 768px) {
+    .solicitud-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .tipos-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .form-navigation {
+        max-width: 600px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 16px 16px 0 0;
+    }
+}

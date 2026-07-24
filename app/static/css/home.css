@@ -1,0 +1,807 @@
+/* ============================================
+   MITA - Home Page Styles
+   ============================================ */
+
+/* Variables */
+:root {
+    --mita-primary: #FFCD11;
+    --mita-primary-dark: #e6b800;
+    --mita-bg: #0f1419;
+    --mita-surface: #1a2332;
+    --mita-surface-light: #243447;
+    --mita-text: #ffffff;
+    --mita-text-muted: rgba(255, 255, 255, 0.7);
+    --mita-border: rgba(255, 255, 255, 0.1);
+    --mita-success: #10B981;
+    --mita-error: #EF4444;
+    --mita-info: #3B82F6;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* Container */
+.home-container {
+    min-height: 100vh;
+    background: var(--mita-bg);
+    color: var(--mita-text);
+    padding-bottom: 2rem;
+}
+
+/* ============================================
+   HERO SECTION
+   ============================================ */
+
+.hero-section {
+    background: linear-gradient(135deg, var(--mita-surface) 0%, var(--mita-bg) 100%);
+    padding: 3rem 1.5rem 2rem;
+    text-align: center;
+    border-bottom: 1px solid var(--mita-border);
+}
+
+.hero-logo img {
+    max-width: 120px;
+    margin-bottom: 1rem;
+}
+
+.hero-title {
+    margin: 0;
+}
+
+.hero-highlight {
+    display: block;
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--mita-primary);
+    letter-spacing: 2px;
+    text-shadow: 0 0 30px rgba(255, 205, 17, 0.3);
+}
+
+.hero-subtitle {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--mita-text-muted);
+    margin-top: 0.5rem;
+}
+
+.hero-description {
+    margin: 1.5rem 0;
+    font-size: 1.1rem;
+    color: var(--mita-text-muted);
+    line-height: 1.6;
+}
+
+.hero-description strong {
+    color: var(--mita-primary);
+    font-size: 1.3rem;
+}
+
+.hero-badges {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+.badge-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 205, 17, 0.1);
+    border: 1px solid rgba(255, 205, 17, 0.3);
+    border-radius: 50px;
+    font-size: 0.85rem;
+    color: var(--mita-text);
+}
+
+.badge-item i {
+    color: var(--mita-primary);
+}
+
+/* ============================================
+   SECTIONS COMMON
+   ============================================ */
+
+section {
+    padding: 2rem 1.5rem;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--mita-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.section-header h2 i {
+    color: var(--mita-primary);
+}
+
+.section-header p {
+    color: var(--mita-text-muted);
+    margin-top: 0.5rem;
+}
+
+/* ============================================
+   SERVICES GRID
+   ============================================ */
+
+.services-section {
+    background: var(--mita-bg);
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+}
+
+.loading-services {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: var(--mita-text-muted);
+}
+
+.loading-services i {
+    font-size: 2rem;
+    color: var(--mita-primary);
+    margin-bottom: 1rem;
+}
+
+.service-card {
+    background: var(--mita-surface);
+    border: 1px solid var(--mita-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--mita-primary);
+    box-shadow: 0 10px 30px rgba(255, 205, 17, 0.2);
+}
+
+.service-card:active {
+    transform: scale(0.98);
+}
+
+.service-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    border: 2px solid;
+    transition: all 0.3s ease;
+}
+
+.service-card:hover .service-icon {
+    transform: scale(1.1);
+}
+
+.service-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: var(--mita-text);
+}
+
+.service-card p {
+    font-size: 0.8rem;
+    color: var(--mita-text-muted);
+    margin: 0;
+    flex: 1;
+    line-height: 1.4;
+}
+
+.service-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--mita-border);
+}
+
+.service-price {
+    color: var(--mita-primary);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.service-footer i {
+    color: var(--mita-primary);
+    transition: transform 0.3s ease;
+}
+
+.service-card:hover .service-footer i {
+    transform: translateX(5px);
+}
+
+/* ============================================
+   HOW IT WORKS
+   ============================================ */
+
+.how-it-works {
+    background: var(--mita-surface);
+    border-radius: 20px;
+    margin: 0 1rem;
+}
+
+.steps-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 1rem;
+    position: relative;
+}
+
+.step-number {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 24px;
+    background: var(--mita-primary);
+    color: var(--mita-bg);
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.step-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 205, 17, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--mita-primary);
+    margin-bottom: 1rem;
+}
+
+.step-item h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+}
+
+.step-item p {
+    font-size: 0.85rem;
+    color: var(--mita-text-muted);
+    margin: 0;
+}
+
+.step-connector {
+    display: none;
+}
+
+/* Desktop: horizontal steps */
+@media (min-width: 768px) {
+    .steps-container {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    
+    .step-item {
+        flex: 1;
+    }
+    
+    .step-connector {
+        display: flex;
+        align-items: center;
+        padding-top: 2rem;
+        color: var(--mita-primary);
+        opacity: 0.5;
+    }
+}
+
+/* ============================================
+   PRICING SECTION
+   ============================================ */
+
+.pricing-section {
+    background: var(--mita-bg);
+}
+
+.pricing-card {
+    background: linear-gradient(135deg, var(--mita-surface) 0%, var(--mita-surface-light) 100%);
+    border: 2px solid var(--mita-primary);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.pricing-main {
+    margin-bottom: 1.5rem;
+}
+
+.pricing-amount {
+    display: block;
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--mita-primary);
+}
+
+.pricing-label {
+    display: block;
+    font-size: 1.1rem;
+    color: var(--mita-text-muted);
+    margin-top: 0.5rem;
+}
+
+.pricing-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+}
+
+.pricing-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--mita-border);
+}
+
+.pricing-features li:last-child {
+    border-bottom: none;
+}
+
+.pricing-features i {
+    color: var(--mita-success);
+    margin-top: 0.2rem;
+}
+
+.pricing-note {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 3px solid var(--mita-info);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--mita-text-muted);
+    text-align: left;
+}
+
+.pricing-note i {
+    color: var(--mita-info);
+    margin-right: 0.5rem;
+}
+
+/* ============================================
+   COMING SOON SECTION
+   ============================================ */
+
+.coming-soon-section {
+    background: var(--mita-bg);
+}
+
+.coming-soon-grid {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.coming-card {
+    min-width: 140px;
+    background: var(--mita-surface);
+    border: 1px dashed var(--mita-border);
+    border-radius: 16px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    opacity: 0.7;
+}
+
+.coming-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: var(--mita-text-muted);
+    margin: 0 auto 1rem;
+}
+
+.coming-card h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: var(--mita-text-muted);
+}
+
+.badge-coming {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: rgba(255, 205, 17, 0.2);
+    color: var(--mita-primary);
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+/* ============================================
+   VEHICLE TEASER
+   ============================================ */
+
+.vehicle-teaser {
+    background: var(--mita-bg);
+    padding: 0 1.5rem 2rem;
+}
+
+.teaser-card {
+    background: linear-gradient(135deg, #1a2332 0%, #243447 100%);
+    border: 1px solid var(--mita-border);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.teaser-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 205, 17, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--mita-primary);
+    margin: 0 auto 1rem;
+}
+
+.teaser-card h3 {
+    font-size: 1.3rem;
+    margin: 0 0 1rem 0;
+}
+
+.teaser-card p {
+    color: var(--mita-text-muted);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.btn-teaser {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    background: transparent;
+    border: 2px solid var(--mita-primary);
+    color: var(--mita-primary);
+    border-radius: 50px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-teaser:hover {
+    background: var(--mita-primary);
+    color: var(--mita-bg);
+}
+
+/* ============================================
+   FOOTER INFO
+   ============================================ */
+
+.footer-info {
+    background: var(--mita-surface);
+    margin: 0 1rem;
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--mita-border);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item > i {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 205, 17, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--mita-primary);
+    flex-shrink: 0;
+}
+
+.info-item div {
+    flex: 1;
+}
+
+.info-item strong {
+    display: block;
+    font-size: 0.9rem;
+}
+
+.info-item p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--mita-text-muted);
+}
+
+.info-item small {
+    color: var(--mita-text-muted);
+    font-size: 0.75rem;
+}
+
+.btn-whatsapp {
+    width: 45px;
+    height: 45px;
+    background: #25D366;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.3rem;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+}
+
+.btn-whatsapp:hover {
+    transform: scale(1.1);
+}
+
+/* ============================================
+   MODAL
+   ============================================ */
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--mita-surface);
+    border-radius: 20px;
+    max-width: 450px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--mita-border);
+}
+
+.modal-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-header h3 i {
+    color: var(--mita-primary);
+}
+
+.modal-close {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    color: var(--mita-text);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--mita-error);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-body p {
+    color: var(--mita-text-muted);
+    margin-bottom: 1.5rem;
+}
+
+/* ============================================
+   FORMS IN MODAL
+   ============================================ */
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--mita-text);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: var(--mita-bg);
+    border: 1px solid var(--mita-border);
+    border-radius: 10px;
+    color: var(--mita-text);
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--mita-primary);
+}
+
+.form-group input::placeholder {
+    color: var(--mita-text-muted);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background: var(--mita-primary);
+    color: var(--mita-bg);
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: var(--mita-primary-dark);
+    transform: translateY(-2px);
+}
+
+.btn-full {
+    width: 100%;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 480px) {
+    .hero-highlight {
+        font-size: 2.5rem;
+    }
+    
+    .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .pricing-amount {
+        font-size: 2.5rem;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 768px) {
+    .home-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .hero-section {
+        padding: 4rem 2rem;
+    }
+    
+    .services-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.service-card {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.service-card:nth-child(1) { animation-delay: 0.1s; }
+.service-card:nth-child(2) { animation-delay: 0.2s; }
+.service-card:nth-child(3) { animation-delay: 0.3s; }
+.service-card:nth-child(4) { animation-delay: 0.4s; }
+.service-card:nth-child(5) { animation-delay: 0.5s; }
+.service-card:nth-child(6) { animation-delay: 0.6s; }
+
+/* Error message */
+.error-message {
+    color: var(--mita-error);
+    text-align: center;
+    padding: 2rem;
+}

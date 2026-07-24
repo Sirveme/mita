@@ -1,0 +1,45 @@
+/* ============================================
+   MITA - Categorías dinámicas (home)
+   Complementa home_cliente_services.css.
+   Reutiliza .service-card-modern / .card-* existentes y
+   añade solo el estado "Próximamente" y el ícono de categoría.
+   ============================================ */
+
+.service-card-modern .card-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+/* Badge "Próximamente" */
+.discount-badge.badge-proximamente {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(4px);
+}
+
+/* Tarjeta en estado "Próximamente" */
+.service-card-modern.card-proximamente {
+    opacity: 0.82;
+    filter: grayscale(0.15);
+}
+
+.service-card-modern.card-proximamente::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(0, 0, 0, 0.04),
+        rgba(0, 0, 0, 0.04) 10px,
+        rgba(0, 0, 0, 0.08) 10px,
+        rgba(0, 0, 0, 0.08) 20px
+    );
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+.service-card-modern.card-proximamente:hover {
+    transform: none;
+}

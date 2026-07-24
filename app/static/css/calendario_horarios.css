@@ -1,0 +1,444 @@
+/* ============================================
+   CALENDARIO HORARIOS - CSS OPTIMIZADO
+   Diseño compacto con grid layout
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #FFCD11;
+    --primary-dark: #e6b800;
+    --dark-bg: #0f1419;
+    --card-bg: #1a2332;
+    --border: #2d3748;
+    --text: #e5e7eb;
+    --text-muted: #9ca3af;
+    --success: #10b981;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, var(--dark-bg) 0%, #1a2332 100%);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+
+.page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    color: var(--primary);
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.page-header p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+/* ============================================
+   CALENDARIO
+   ============================================ */
+
+.calendario-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border);
+}
+
+.calendario-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.mes-actual {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.nav-mes {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-nav {
+    background: rgba(255, 205, 17, 0.1);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-nav:hover {
+    background: var(--primary);
+    color: var(--dark-bg);
+}
+
+.btn-nav:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   GRID CALENDARIO (7 COLUMNAS)
+   ============================================ */
+
+.calendario-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 1rem;
+}
+
+/* Días de la semana (L M M J V S D) */
+.dia-semana {
+    text-align: center;
+    padding: 0.75rem 0;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    background: rgba(255, 205, 17, 0.05);
+    border-radius: 8px;
+}
+
+/* Días del mes (números) */
+.dia {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.dia:hover:not(.disabled):not(.pasado) {
+    background: rgba(255, 205, 17, 0.1);
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+.dia.seleccionado {
+    background: var(--primary);
+    color: var(--dark-bg);
+    border-color: var(--primary);
+    font-weight: 700;
+}
+
+.dia.pasado {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.dia.disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+}
+
+.dia.hoy {
+    border: 2px solid var(--primary);
+    font-weight: 600;
+}
+
+/* Días vacíos (espacios antes del día 1) */
+.dia.vacio {
+    background: transparent;
+    border: none;
+    cursor: default;
+}
+
+.dia.vacio:hover {
+    transform: none;
+}
+
+/* ============================================
+   HORARIOS
+   ============================================ */
+
+.horarios-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border);
+}
+
+.horarios-header {
+    margin-bottom: 1.5rem;
+}
+
+.horarios-header h3 {
+    color: var(--primary);
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+}
+
+.fecha-seleccionada {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.horarios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.slot-hora {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.slot-hora:hover:not(.ocupado) {
+    background: rgba(255, 205, 17, 0.1);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.slot-hora.seleccionado {
+    background: var(--primary);
+    color: var(--dark-bg);
+    border-color: var(--primary);
+    font-weight: 600;
+}
+
+.slot-hora.ocupado {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.hora-texto {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.hora-disponibilidad {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.slot-hora.seleccionado .hora-disponibilidad {
+    color: var(--dark-bg);
+    opacity: 0.8;
+}
+
+/* ============================================
+   MENSAJE VACÍO
+   ============================================ */
+
+.mensaje-vacio {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-muted);
+}
+
+.mensaje-vacio i {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.mensaje-vacio p {
+    font-size: 1.1rem;
+}
+
+/* ============================================
+   BOTÓN CONTINUAR
+   ============================================ */
+
+.btn-continuar {
+    width: 100%;
+    padding: 1rem;
+    background: var(--primary);
+    color: var(--dark-bg);
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-continuar:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(255, 205, 17, 0.3);
+}
+
+.btn-continuar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ============================================
+   INFO BOX
+   ============================================ */
+
+.info-box {
+    background: rgba(255, 205, 17, 0.1);
+    border: 1px solid var(--primary);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.info-box i {
+    color: var(--primary);
+    font-size: 1.5rem;
+}
+
+.info-box p {
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    body {
+        padding: 1rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .calendario-card,
+    .horarios-card {
+        padding: 1.5rem;
+    }
+    
+    .calendario-grid {
+        gap: 4px;
+    }
+    
+    .dia {
+        font-size: 0.9rem;
+    }
+    
+    .dia-semana {
+        font-size: 0.8rem;
+        padding: 0.5rem 0;
+    }
+    
+    .horarios-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.75rem;
+    }
+    
+    .mes-actual {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendario-grid {
+        gap: 2px;
+    }
+    
+    .dia {
+        font-size: 0.85rem;
+    }
+    
+    .dia-semana {
+        font-size: 0.75rem;
+    }
+    
+    .horarios-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ============================================
+   ANIMACIONES
+   ============================================ */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.calendario-card,
+.horarios-card {
+    animation: fadeIn 0.3s ease;
+}
+
+/* ============================================
+   LOADING STATE
+   ============================================ */
+
+.loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+.loading i {
+    font-size: 2rem;
+    color: var(--primary);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

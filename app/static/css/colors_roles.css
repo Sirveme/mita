@@ -1,0 +1,582 @@
+/* ============================================
+   SISTEMA DE COLORES POR ROL - MITA
+   ============================================ */
+
+/*
+   Este archivo define la identidad visual de cada rol
+   en la plataforma MITA.
+   
+   Roles:
+   - Cliente: Amarillo/Dorado (optimismo, confianza)
+   - Técnico: Naranja (acción, trabajo, energía)
+   - Proveedor: Cyan/Turquesa (suministro, flujo)
+   - Admin: Púrpura/Violeta (autoridad, control)
+*/
+
+:root {
+    /* ===================================
+       CLIENTE - Amarillo/Dorado
+       =================================== */
+    --cliente-primary: #FFCD11;
+    --cliente-secondary: #FFA500;
+    --cliente-dark: #E6B800;
+    --cliente-light: rgba(255, 205, 17, 0.1);
+    --cliente-gradient: linear-gradient(135deg, #FFCD11 0%, #FFA500 100%);
+    --cliente-glow: 0 0 20px rgba(255, 205, 17, 0.3);
+    --cliente-shadow: 0 6px 20px rgba(255, 205, 17, 0.4);
+    
+    /* ===================================
+       TÉCNICO - Naranja/Coral
+       =================================== */
+    --tecnico-primary: #FF6B35;
+    --tecnico-secondary: #F97316;
+    --tecnico-dark: #E85D22;
+    --tecnico-light: rgba(255, 107, 53, 0.1);
+    --tecnico-gradient: linear-gradient(135deg, #FF6B35 0%, #F97316 100%);
+    --tecnico-glow: 0 0 20px rgba(255, 107, 53, 0.3);
+    --tecnico-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+    
+    /* ===================================
+       PROVEEDOR - Cyan/Turquesa
+       =================================== */
+    --proveedor-primary: #06B6D4;
+    --proveedor-secondary: #0EA5E9;
+    --proveedor-dark: #0891B2;
+    --proveedor-light: rgba(6, 182, 212, 0.1);
+    --proveedor-gradient: linear-gradient(135deg, #06B6D4 0%, #0EA5E9 100%);
+    --proveedor-glow: 0 0 20px rgba(6, 182, 212, 0.3);
+    --proveedor-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+    
+    /* ===================================
+       ADMIN - Púrpura/Violeta
+       =================================== */
+    --admin-primary: #8B5CF6;
+    --admin-secondary: #A855F7;
+    --admin-dark: #7C3AED;
+    --admin-light: rgba(139, 92, 246, 0.1);
+    --admin-gradient: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
+    --admin-glow: 0 0 20px rgba(139, 92, 246, 0.3);
+    --admin-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    
+    /* ===================================
+       COLORES BASE (COMPARTIDOS)
+       =================================== */
+    --bg-dark: #0A0E1A;
+    --dark-blue: #1A2332;
+    --medium-blue: #2A3647;
+    --light-blue: #3A4757;
+    
+    --success: #10B981;
+    --success-dark: #059669;
+    --success-light: rgba(16, 185, 129, 0.1);
+    
+    --warning: #F59E0B;
+    --warning-dark: #D97706;
+    --warning-light: rgba(245, 158, 11, 0.1);
+    
+    --danger: #EF4444;
+    --danger-dark: #DC2626;
+    --danger-light: rgba(239, 68, 68, 0.1);
+    
+    --info: #3B82F6;
+    --info-dark: #2563EB;
+    --info-light: rgba(59, 130, 246, 0.1);
+    
+    --white: #FFFFFF;
+    --text-light: #E5E7EB;
+    --text-gray: #9CA3AF;
+    --text-dark: #4B5563;
+    
+    --border-light: rgba(255, 255, 255, 0.1);
+    --border-medium: rgba(255, 255, 255, 0.2);
+    --border-dark: rgba(0, 0, 0, 0.2);
+    
+    /* ===================================
+       GRADIENTES BASE
+       =================================== */
+    --gradient-dark: linear-gradient(135deg, #1A2332 0%, #2A3647 100%);
+    --gradient-card: linear-gradient(135deg, var(--dark-blue) 0%, var(--medium-blue) 100%);
+    --gradient-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    --gradient-danger: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    --gradient-warning: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    --gradient-info: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    
+    /* ===================================
+       SOMBRAS Y EFECTOS
+       =================================== */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.5);
+    
+    --glow-primary: 0 0 20px currentColor;
+    
+    /* ===================================
+       TRANSICIONES
+       =================================== */
+    --transition-fast: 0.15s ease;
+    --transition-base: 0.3s ease;
+    --transition-slow: 0.5s ease;
+    
+    /* ===================================
+       ESPACIADOS
+       =================================== */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    
+    /* ===================================
+       RADIOS
+       =================================== */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-full: 9999px;
+    
+    /* ===================================
+       Z-INDEX
+       =================================== */
+    --z-base: 1;
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-fixed: 300;
+    --z-modal-backdrop: 400;
+    --z-modal: 500;
+    --z-popover: 600;
+    --z-tooltip: 700;
+}
+
+/* ============================================
+   CLASES UTILITARIAS POR ROL
+   ============================================ */
+
+/* CLIENTE */
+.cliente-bg-primary { background: var(--cliente-primary) !important; }
+.cliente-bg-gradient { background: var(--cliente-gradient) !important; }
+.cliente-bg-light { background: var(--cliente-light) !important; }
+.cliente-text-primary { color: var(--cliente-primary) !important; }
+.cliente-border-primary { border-color: var(--cliente-primary) !important; }
+.cliente-shadow { box-shadow: var(--cliente-shadow) !important; }
+.cliente-glow { box-shadow: var(--cliente-glow) !important; }
+
+/* TÉCNICO */
+.tecnico-bg-primary { background: var(--tecnico-primary) !important; }
+.tecnico-bg-gradient { background: var(--tecnico-gradient) !important; }
+.tecnico-bg-light { background: var(--tecnico-light) !important; }
+.tecnico-text-primary { color: var(--tecnico-primary) !important; }
+.tecnico-border-primary { border-color: var(--tecnico-primary) !important; }
+.tecnico-shadow { box-shadow: var(--tecnico-shadow) !important; }
+.tecnico-glow { box-shadow: var(--tecnico-glow) !important; }
+
+/* PROVEEDOR */
+.proveedor-bg-primary { background: var(--proveedor-primary) !important; }
+.proveedor-bg-gradient { background: var(--proveedor-gradient) !important; }
+.proveedor-bg-light { background: var(--proveedor-light) !important; }
+.proveedor-text-primary { color: var(--proveedor-primary) !important; }
+.proveedor-border-primary { border-color: var(--proveedor-primary) !important; }
+.proveedor-shadow { box-shadow: var(--proveedor-shadow) !important; }
+.proveedor-glow { box-shadow: var(--proveedor-glow) !important; }
+
+/* ADMIN */
+.admin-bg-primary { background: var(--admin-primary) !important; }
+.admin-bg-gradient { background: var(--admin-gradient) !important; }
+.admin-bg-light { background: var(--admin-light) !important; }
+.admin-text-primary { color: var(--admin-primary) !important; }
+.admin-border-primary { border-color: var(--admin-primary) !important; }
+.admin-shadow { box-shadow: var(--admin-shadow) !important; }
+.admin-glow { box-shadow: var(--admin-glow) !important; }
+
+/* ============================================
+   BOTONES POR ROL
+   ============================================ */
+
+/* Botón Cliente */
+.btn-cliente {
+    background: var(--cliente-gradient);
+    color: var(--dark-blue);
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.btn-cliente:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--cliente-shadow);
+}
+
+/* Botón Técnico */
+.btn-tecnico {
+    background: var(--tecnico-gradient);
+    color: var(--white);
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.btn-tecnico:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--tecnico-shadow);
+}
+
+/* Botón Proveedor */
+.btn-proveedor {
+    background: var(--proveedor-gradient);
+    color: var(--white);
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.btn-proveedor:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--proveedor-shadow);
+}
+
+/* Botón Admin */
+.btn-admin {
+    background: var(--admin-gradient);
+    color: var(--white);
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.btn-admin:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--admin-shadow);
+}
+
+/* ============================================
+   BADGES POR ROL
+   ============================================ */
+
+.badge-cliente {
+    background: var(--cliente-light);
+    color: var(--cliente-primary);
+    border: 2px solid var(--cliente-primary);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.badge-tecnico {
+    background: var(--tecnico-light);
+    color: var(--tecnico-primary);
+    border: 2px solid var(--tecnico-primary);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.badge-proveedor {
+    background: var(--proveedor-light);
+    color: var(--proveedor-primary);
+    border: 2px solid var(--proveedor-primary);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.badge-admin {
+    background: var(--admin-light);
+    color: var(--admin-primary);
+    border: 2px solid var(--admin-primary);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* ============================================
+   CARDS POR ROL
+   ============================================ */
+
+.card-cliente {
+    background: var(--gradient-card);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    border: 2px solid rgba(255, 205, 17, 0.2);
+    transition: var(--transition-base);
+}
+
+.card-cliente:hover {
+    border-color: var(--cliente-primary);
+    box-shadow: var(--cliente-glow);
+    transform: translateY(-5px);
+}
+
+.card-tecnico {
+    background: var(--gradient-card);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    border: 2px solid rgba(255, 107, 53, 0.2);
+    transition: var(--transition-base);
+}
+
+.card-tecnico:hover {
+    border-color: var(--tecnico-primary);
+    box-shadow: var(--tecnico-glow);
+    transform: translateY(-5px);
+}
+
+.card-proveedor {
+    background: var(--gradient-card);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    border: 2px solid rgba(6, 182, 212, 0.2);
+    transition: var(--transition-base);
+}
+
+.card-proveedor:hover {
+    border-color: var(--proveedor-primary);
+    box-shadow: var(--proveedor-glow);
+    transform: translateY(-5px);
+}
+
+.card-admin {
+    background: var(--gradient-card);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    border: 2px solid rgba(139, 92, 246, 0.2);
+    transition: var(--transition-base);
+}
+
+.card-admin:hover {
+    border-color: var(--admin-primary);
+    box-shadow: var(--admin-glow);
+    transform: translateY(-5px);
+}
+
+/* ============================================
+   HEADERS/NAVS POR ROL
+   ============================================ */
+
+.header-cliente {
+    background: var(--gradient-dark);
+    border-bottom: 2px solid var(--cliente-primary);
+}
+
+.header-tecnico {
+    background: var(--gradient-dark);
+    border-bottom: 2px solid var(--tecnico-primary);
+}
+
+.header-proveedor {
+    background: var(--gradient-dark);
+    border-bottom: 2px solid var(--proveedor-primary);
+}
+
+.header-admin {
+    background: var(--gradient-dark);
+    border-bottom: 2px solid var(--admin-primary);
+}
+
+/* ============================================
+   ESTADOS DE CARGA
+   ============================================ */
+
+.loading-cliente {
+    border: 5px solid var(--cliente-light);
+    border-top-color: var(--cliente-primary);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+.loading-tecnico {
+    border: 5px solid var(--tecnico-light);
+    border-top-color: var(--tecnico-primary);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+.loading-proveedor {
+    border: 5px solid var(--proveedor-light);
+    border-top-color: var(--proveedor-primary);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+.loading-admin {
+    border: 5px solid var(--admin-light);
+    border-top-color: var(--admin-primary);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   LINKS/NAVEGACIÓN POR ROL
+   ============================================ */
+
+.nav-link-cliente {
+    color: rgba(255, 255, 255, 0.7);
+    transition: var(--transition-base);
+}
+
+.nav-link-cliente:hover,
+.nav-link-cliente.active {
+    color: var(--cliente-primary);
+    border-left-color: var(--cliente-primary);
+}
+
+.nav-link-tecnico {
+    color: rgba(255, 255, 255, 0.7);
+    transition: var(--transition-base);
+}
+
+.nav-link-tecnico:hover,
+.nav-link-tecnico.active {
+    color: var(--tecnico-primary);
+    border-left-color: var(--tecnico-primary);
+}
+
+.nav-link-proveedor {
+    color: rgba(255, 255, 255, 0.7);
+    transition: var(--transition-base);
+}
+
+.nav-link-proveedor:hover,
+.nav-link-proveedor.active {
+    color: var(--proveedor-primary);
+    border-left-color: var(--proveedor-primary);
+}
+
+.nav-link-admin {
+    color: rgba(255, 255, 255, 0.7);
+    transition: var(--transition-base);
+}
+
+.nav-link-admin:hover,
+.nav-link-admin.active {
+    color: var(--admin-primary);
+    border-left-color: var(--admin-primary);
+}
+
+/* ============================================
+   OVERLAYS/MODALS POR ROL
+   ============================================ */
+
+.modal-overlay-cliente::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle, var(--cliente-light) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.modal-overlay-tecnico::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle, var(--tecnico-light) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.modal-overlay-proveedor::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle, var(--proveedor-light) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.modal-overlay-admin::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle, var(--admin-light) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* ============================================
+   UTILIDADES GENERALES
+   ============================================ */
+
+/* Backgrounds */
+.bg-dark { background: var(--bg-dark); }
+.bg-dark-blue { background: var(--dark-blue); }
+.bg-gradient-card { background: var(--gradient-card); }
+
+/* Text colors */
+.text-white { color: var(--white); }
+.text-light { color: var(--text-light); }
+.text-gray { color: var(--text-gray); }
+
+/* Borders */
+.border-light { border-color: var(--border-light); }
+.border-medium { border-color: var(--border-medium); }
+
+/* Shadows */
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }
+
+/* Transitions */
+.transition-fast { transition: var(--transition-fast); }
+.transition-base { transition: var(--transition-base); }
+.transition-slow { transition: var(--transition-slow); }
+
+/* Border radius */
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* ============================================
+   MODO OSCURO (Ya está por defecto)
+   ============================================ */
+
+/* Si en el futuro se quiere implementar modo claro, 
+   se puede usar media query o data-theme */
+
+/* @media (prefers-color-scheme: light) {
+    :root {
+        --bg-dark: #FFFFFF;
+        --dark-blue: #F3F4F6;
+        ...
+    }
+} */

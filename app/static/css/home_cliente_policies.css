@@ -1,0 +1,115 @@
+/* ============================================
+   POLICIES SECTION - CENTRADO
+   ============================================ */
+
+.policies-section {
+    padding: 3rem 1rem;
+    background: var(--bg-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    width: 100%;
+}
+
+/* Contenedor de políticas centrado */
+.policies-container {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ========== POLICY CARDS ========== */
+
+.policy-card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    width: 100%;
+    margin: 0 auto;
+}
+
+.policy-card:hover {
+    background: rgba(255,205,17,0.1);
+    transform: translateX(5px);
+    border-color: rgba(255, 205, 17, 0.3);
+    box-shadow: 0 4px 20px rgba(255, 205, 17, 0.2);
+}
+
+.policy-icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 8px rgba(255, 205, 17, 0.3));
+}
+
+.policy-content {
+    flex: 1;
+    text-align: left;
+}
+
+.policy-content h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--white);
+}
+
+.policy-content p {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 0.5rem;
+}
+
+.link-arrow {
+    color: var(--cat-yellow);
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.policy-card:hover .link-arrow {
+    transform: translateX(5px);
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+    .policies-section {
+        padding: 2rem 1rem;
+    }
+    
+    .policies-container {
+        padding: 0 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .policy-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .policy-content {
+        text-align: center;
+    }
+    
+    .policy-icon {
+        font-size: 3rem;
+    }
+}

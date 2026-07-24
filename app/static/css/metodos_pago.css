@@ -1,0 +1,740 @@
+/* ============================================
+   MÉTODOS DE PAGO - MITA
+   ============================================ */
+
+:root {
+    --bg-primary: #0f1419;
+    --bg-secondary: #1a1f2e;
+    --bg-card: #242939;
+    --bg-hover: #2d3348;
+    --text-primary: #ffffff;
+    --text-secondary: #b3b8c2;
+    --text-muted: #6b7280;
+    --accent-yellow: #FFCD11;
+    --accent-green: #10b981;
+    --accent-blue: #3b82f6;
+    --accent-red: #ef4444;
+    --accent-orange: #f59e0b;
+    --border-color: #374151;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+
+.header-simple {
+    background: var(--bg-secondary);
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-container {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.btn-back {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+    background: var(--bg-card);
+    transform: translateX(-3px);
+}
+
+.header-title h1 {
+    font-size: 1.3rem;
+    margin-bottom: 0.25rem;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.header-placeholder {
+    width: 40px;
+}
+
+/* ============================================
+   CONTAINER
+   ============================================ */
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* ============================================
+   RESUMEN SERVICIO
+   ============================================ */
+
+.resumen-servicio {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border-color);
+}
+
+.resumen-servicio h3 {
+    color: var(--accent-yellow);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.resumen-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.resumen-item:last-of-type {
+    border-bottom: none;
+}
+
+.resumen-item span {
+    color: var(--text-secondary);
+}
+
+.resumen-item strong {
+    color: var(--text-primary);
+}
+
+.resumen-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0 0;
+    margin-top: 1rem;
+    border-top: 2px solid var(--accent-yellow);
+    font-size: 1.2rem;
+}
+
+.resumen-total strong {
+    color: var(--accent-yellow);
+    font-size: 1.5rem;
+}
+
+/* ============================================
+   MÉTODOS DE PAGO
+   ============================================ */
+
+.metodos-container {
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.metodo-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.metodo-card:hover {
+    border-color: var(--accent-yellow);
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(255, 205, 17, 0.2);
+}
+
+.metodo-card.selected {
+    border-color: var(--accent-green);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, var(--bg-card) 100%);
+}
+
+.metodo-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.metodo-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.metodo-info {
+    flex: 1;
+}
+
+.metodo-info h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.metodo-info p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.metodo-check {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.metodo-card.selected .metodo-check {
+    background: var(--accent-green);
+    border-color: var(--accent-green);
+    color: white;
+}
+
+.metodo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--accent-green);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.metodo-badge.warning {
+    background: var(--accent-orange);
+}
+
+/* ============================================
+   FORMULARIOS DE PAGO
+   ============================================ */
+
+.pago-form {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 2rem;
+    border: 1px solid var(--border-color);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-title {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--accent-yellow);
+}
+
+.form-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+#culqi-container {
+    margin-bottom: 1.5rem;
+}
+
+/* ============================================
+   INSTRUCCIONES PAGO (YAPE/PLIN)
+   ============================================ */
+
+.instrucciones-pago {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.paso {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-hover);
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-yellow);
+}
+
+.paso-numero {
+    width: 40px;
+    height: 40px;
+    background: var(--accent-yellow);
+    color: var(--bg-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.paso-contenido {
+    flex: 1;
+}
+
+.paso-contenido h4 {
+    margin-bottom: 0.5rem;
+    color: var(--accent-yellow);
+}
+
+.paso-contenido p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.numero-destino {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    margin: 0.75rem 0;
+    border: 1px solid var(--border-color);
+}
+
+.numero-destino i {
+    font-size: 1.5rem;
+    color: var(--accent-blue);
+}
+
+.numero-destino span {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--accent-yellow);
+    flex: 1;
+}
+
+.btn-copy {
+    background: var(--accent-blue);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-copy:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+
+.nombre-destinatario {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.monto-enviar {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    margin-top: 0.75rem;
+    border: 2px solid var(--accent-green);
+}
+
+.monto-enviar span {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.monto-enviar strong {
+    font-size: 2rem;
+    color: var(--accent-green);
+}
+
+.codigo-operacion {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    margin-top: 0.75rem;
+    border: 1px dashed var(--accent-yellow);
+}
+
+.codigo-operacion code {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--accent-yellow);
+    font-family: 'Courier New', monospace;
+    flex: 1;
+}
+
+/* ============================================
+   UPLOAD AREA
+   ============================================ */
+
+.upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.75rem;
+}
+
+.upload-area:hover {
+    border-color: var(--accent-yellow);
+    background: var(--bg-hover);
+}
+
+.upload-area i {
+    font-size: 3rem;
+    color: var(--accent-blue);
+    margin-bottom: 1rem;
+}
+
+.upload-area p {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.upload-area span {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+#previewContainer {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+#imagePreview {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    border: 2px solid var(--accent-green);
+    margin-bottom: 1rem;
+}
+
+.btn-remove {
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.btn-remove:hover {
+    background: #dc2626;
+}
+
+/* ============================================
+   INFO BOXES
+   ============================================ */
+
+.info-box {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-hover);
+    border-left: 4px solid var(--accent-blue);
+    border-radius: 8px;
+    margin-top: 1.5rem;
+}
+
+.info-box i {
+    color: var(--accent-blue);
+    font-size: 1.2rem;
+    margin-top: 0.25rem;
+}
+
+.info-box p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.info-box.warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, var(--bg-hover) 100%);
+    border-left-color: var(--accent-orange);
+}
+
+.info-box.warning i {
+    color: var(--accent-orange);
+}
+
+/* ============================================
+   BOTONES
+   ============================================ */
+
+.btn-pagar {
+    width: 100%;
+    padding: 1.25rem;
+    background: var(--accent-yellow);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.btn-pagar:hover:not(:disabled) {
+    background: #fbbf24;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 205, 17, 0.4);
+}
+
+.btn-pagar:disabled {
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 1rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: var(--accent-yellow);
+    color: var(--bg-primary);
+}
+
+.btn-primary:hover {
+    background: #fbbf24;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-card);
+}
+
+/* ============================================
+   MODALES
+   ============================================ */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-content.loading {
+    max-width: 300px;
+}
+
+.modal-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+}
+
+.modal-icon.success {
+    background: var(--accent-green);
+    color: white;
+}
+
+.modal-icon.pending {
+    background: var(--accent-orange);
+    color: white;
+}
+
+.modal-content h2 {
+    margin-bottom: 1rem;
+    color: var(--accent-yellow);
+}
+
+.modal-content p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.codigo-servicio {
+    background: var(--bg-primary);
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border: 1px dashed var(--accent-yellow);
+}
+
+.codigo-servicio code {
+    font-size: 1.3rem;
+    color: var(--accent-yellow);
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+}
+
+.info-pendiente {
+    font-size: 0.9rem;
+    padding: 1rem;
+    background: var(--bg-hover);
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-orange);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.modal-actions button {
+    flex: 1;
+}
+
+/* ============================================
+   SPINNER
+   ============================================ */
+
+.spinner-large {
+    border: 4px solid var(--bg-hover);
+    border-top: 4px solid var(--accent-yellow);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem 0.5rem;
+    }
+    
+    .metodo-card {
+        padding: 1rem;
+    }
+    
+    .pago-form {
+        padding: 1.5rem;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+}

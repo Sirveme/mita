@@ -1,0 +1,511 @@
+/* Styles for the oil recommendation product selection grid */
+.productos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.producto-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.producto-card:hover {
+    border-color: #FFCD11;
+    transform: translateY(-4px);
+}
+
+.producto-card.seleccionado {
+    border-color: #10B981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.producto-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: contain;
+    margin-bottom: 0.5rem;
+}
+
+.badge-oem { background: #3B82F6; }
+.badge-premium { background: #8B5CF6; }
+.badge-estandar { background: #10B981; }
+.badge-economico { background: #F59E0B; }
+
+[class*="badge-"] {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: white;
+}
+
+.btn-seleccionar {
+    width: 100%;
+    padding: 0.75rem;
+    background: #FFCD11;
+    color: #0f1419;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.btn-seleccionar:hover {
+    background: #e6b800;
+}
+
+/* Filtros Grid */
+.filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.filtro-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    position: relative;
+}
+
+.filtro-card.obligatorio {
+    border-color: #10B981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.filtro-card img {
+    width: 100%;
+    height: 120px;
+    object-fit: contain;
+    margin-bottom: 0.5rem;
+}
+
+.filtro-card h4 {
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
+}
+
+.filtro-card p {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0.25rem 0;
+}
+
+.filtro-card .precio {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #FFCD11;
+    margin: 0.5rem 0;
+}
+
+.filtro-card input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+.badge-obligatorio {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: #10B981;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.badge-opcional {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: #6B7280;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.recomendacion-header {
+    margin-bottom: 1.5rem;
+}
+
+.recomendacion-header h3 {
+    font-size: 1.3rem;
+    color: #FFCD11;
+    margin-bottom: 0.5rem;
+}
+
+.recomendacion-header .specs {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+
+/* ============================================ */
+/* CARRUSEL DE ACEITES */
+/* ============================================ */
+
+.recomendacion-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.recomendacion-header h3 {
+    font-size: 1.5rem;
+    color: #FFCD11;
+    margin-bottom: 1rem;
+}
+
+.specs-box {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.spec-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 205, 17, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.spec-item i {
+    color: #FFCD11;
+}
+
+.specs-note {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.aceites-carrusel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.carrusel-container {
+    flex: 1;
+    overflow: hidden;
+    border-radius: 16px;
+}
+
+.carrusel-track {
+    display: flex;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.aceite-card {
+    min-width: 100%;
+    background: rgba(26, 35, 50, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.aceite-card.seleccionado {
+    border-color: #10B981;
+    background: rgba(16, 185, 129, 0.1);
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+}
+
+.aceite-card .badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+}
+
+.badge-oem { background: linear-gradient(135deg, #3B82F6, #2563EB); }
+.badge-premium { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
+.badge-estandar { background: linear-gradient(135deg, #10B981, #059669); }
+.badge-economico { background: linear-gradient(135deg, #F59E0B, #D97706); }
+
+.aceite-imagen {
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.aceite-imagen img {
+    width: 100%;
+    max-width: 250px;
+    height: 250px;
+    object-fit: contain;
+}
+
+.aceite-info {
+    flex: 1;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.aceite-nombre {
+    font-size: 1.3rem;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.aceite-marca {
+    color: #FFCD11;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.aceite-desc {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.aceite-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+}
+
+.aceite-precio {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.precio-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.precio-valor {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #FFCD11;
+}
+
+.btn-seleccionar-aceite {
+    width: 100%;
+    padding: 1rem;
+    background: #FFCD11;
+    color: #0f1419;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-seleccionar-aceite:hover {
+    background: #e6b800;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(255, 205, 17, 0.3);
+}
+
+.btn-sin-stock {
+    width: 100%;
+    padding: 1rem;
+    background: rgba(239, 68, 68, 0.2);
+    color: #EF4444;
+    border: 1px solid #EF4444;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: not-allowed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Botones de navegación */
+.carrusel-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 205, 17, 0.2);
+    border: 2px solid #FFCD11;
+    color: #FFCD11;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.carrusel-btn:hover {
+    background: #FFCD11;
+    color: #0f1419;
+    transform: scale(1.1);
+}
+
+/* Dots indicadores */
+.carrusel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dot.active {
+    background: #FFCD11;
+    width: 30px;
+    border-radius: 6px;
+}
+
+.dot:hover {
+    background: rgba(255, 205, 17, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .aceite-card {
+        padding: 1.5rem;
+    }
+    
+    .aceite-imagen img {
+        max-width: 200px;
+        height: 200px;
+    }
+    
+    .aceite-nombre {
+        font-size: 1.1rem;
+    }
+    
+    .precio-valor {
+        font-size: 1.5rem;
+    }
+    
+    .carrusel-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}
+
+
+.resumen-detallado {
+    background: rgba(26, 35, 50, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.resumen-detallado h3 {
+    color: #FFCD11;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.item-resumen {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.item-resumen:last-child {
+    border-bottom: none;
+}
+
+.item-resumen span {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.item-resumen strong {
+    color: white;
+    font-size: 1.1rem;
+}
+
+.item-resumen.total {
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 2px solid #FFCD11;
+    font-size: 1.2rem;
+}
+
+.item-resumen.total span {
+    color: #FFCD11;
+    font-weight: 700;
+}
+
+.item-resumen.total strong {
+    color: #FFCD11;
+    font-size: 1.5rem;
+}
+
+.fa-info-circle {
+    color: rgba(255, 205, 17, 0.6);
+    font-size: 0.9rem;
+    cursor: help;
+}
+
+.item-resumen.incluido {
+    background: rgba(16, 185, 129, 0.1);
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.incluido-text {
+    color: #10B981 !important;
+    font-weight: 700;
+}
+
+.nota-materiales {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(255, 205, 17, 0.1);
+    border-left: 3px solid #FFCD11;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.nota-materiales i {
+    color: #FFCD11;
+    margin-right: 0.5rem;
+}
