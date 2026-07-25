@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+
+{% block title %}Chat Demo - MITA{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/chat.css') }}">
+<style>
+    .demo-page {
+        min-height: 100vh;
+        background: var(--bg-primary, #0a0a0f);
+        padding: 0;
+    }
+    
+    .demo-header {
+        background: var(--bg-secondary, #111118);
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-color, #2a2a3a);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .demo-header h1 {
+        color: var(--mita-primary, #FFCD11);
+        font-size: 18px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .demo-header h1 i {
+        font-size: 24px;
+    }
+    
+    .demo-badge {
+        background: var(--mita-primary, #FFCD11);
+        color: #000;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .demo-container {
+        max-width: 500px;
+        margin: 0 auto;
+        height: calc(100vh - 60px);
+    }
+    
+    /* Selector de rol para demo */
+    .role-selector {
+        background: var(--bg-secondary, #111118);
+        padding: 12px 16px;
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        border-bottom: 1px solid var(--border-color, #2a2a3a);
+    }
+    
+    .role-btn {
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid var(--border-color, #2a2a3a);
+        background: transparent;
+        color: var(--text-secondary, #888);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 13px;
+    }
+    
+    .role-btn:hover {
+        border-color: var(--mita-primary, #FFCD11);
+        color: var(--mita-primary, #FFCD11);
+    }
+    
+    .role-btn.active {
+        background: var(--mita-primary, #FFCD11);
+        color: #000;
+        border-color: var(--mita-primary, #FFCD11);
+    }
+    
+    .chat-wrapper {
+        height: calc(100% - 50px);
+    }
+    
+    /* Info de conexión */
+    .connection-status {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bg-secondary, #111118);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--border-color, #2a2a3a);
+        z-index: 100;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .connection-status.visible {
+        opacity: 1;
+    }
+    
+    .connection-status.connected {
+        color: #22c55e;
+    }
+    
+    .connection-status.disconnected {
+        color: #ef4444;
+    }
+    
+    .connection-status.connecting {
+        color: var(--mita-primary, #FFCD11);
+    }
+    
+    /* Mensajes de sistema en el chat */
+    .chat-message.system {
+        align-self: center;
+        background: var(--bg-tertiary, #1a1a2e);
+        color: var(--text-secondary, #888);
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        max-width: 90%;
+        text-align: center;
+    }
+    
+    /* Responsive */
+    @media (max-width: 520px) {
+        .demo-container {
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="demo-page">
+    <div class="demo-header">
+        <h1>
+            <i class="fas fa-comments"></i>
+            Chat MITA
+        </h1>
+        <span class="demo-badge">DEMO</span>
+    </div>
+    
+    <div class="demo-container">
+        <!-- Selector de rol -->
+        <div class="role-selector">
+            <button class="role-btn active" data-role="cliente" onclick="cambiarRol('cliente')">
+                <i class="fas fa-user"></i> Cliente
+            </button>
+            <button class="role-btn" data-role="secretaria" onclick="cambiarRol('secretaria')">
+                <i class="fas fa-headset"></i> Secretaria
+            </button>
+            <button class="role-btn" data-role="tecnico" onclick="cambiarRol('tecnico')">
+                <i class="fas fa-hard-hat"></i> Técnico
+            </button>
+        </div>
+        
+        <!-- Chat container -->
+        <div class="chat-wrapper">
+            <div id="chat-container"></div>
+        </div>
+    </div>
+    
+    <!-- Estado de conexión -->
+    <div class="connection-status" id="connection-status">
+        <i class="fas fa-circle"></i>
+        <span id="connection-text">Conectando...</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', path='js/chat.js') }}"></script>
+<script>
+    // Configuración demo
+    const DEMO_CONFIG = {
+        conversacionId: 1,  // ID de prueba
+        roles: {
+            cliente: { id: 1, nombre: 'Juan Pérez' },
+            secretaria: { id: 1, nombre: 'María García' },
+            tecnico: { id: 1, nombre: 'Carlos López' }
+        }
+    };
+    
+    let currentRole = 'cliente';
+    let chatInstance = null;
+    
+    // Inicializar chat
+    function initChat() {
+        const roleConfig = DEMO_CONFIG.roles[currentRole];
+        
+        // Destruir instancia anterior si existe
+        if (chatInstance && chatInstance.ws) {
+            chatInstance.ws.close();
+        }
+        
+        // Crear nueva instancia
+        chatInstance = new MitaChat({
+            conversacionId: DEMO_CONFIG.conversacionId,
+            userType: currentRole,
+            userId: roleConfig.id,
+            userName: roleConfig.nombre,
+            containerId: 'chat-container',
+            onConnectionChange: updateConnectionStatus
+        });
+        
+        // Actualizar header del chat según rol
+        updateChatHeader();
+    }
+    
+    // Cambiar rol
+    function cambiarRol(nuevoRol) {
+        currentRole = nuevoRol;
+        
+        // Actualizar botones
+        document.querySelectorAll('.role-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.role === nuevoRol);
+        });
+        
+        // Reiniciar chat con nuevo rol
+        initChat();
+        
+        // Mostrar mensaje de cambio
+        showConnectionStatus('connecting', `Conectando como ${DEMO_CONFIG.roles[nuevoRol].nombre}...`);
+    }
+    
+    // Actualizar header del chat
+    function updateChatHeader() {
+        setTimeout(() => {
+            const partnerName = document.getElementById('chat-partner-name');
+            const avatarImg = document.getElementById('chat-avatar-img');
+            
+            if (partnerName) {
+                switch(currentRole) {
+                    case 'cliente':
+                        partnerName.textContent = 'Soporte MITA';
+                        break;
+                    case 'secretaria':
+                        partnerName.textContent = 'Panel de Chat';
+                        break;
+                    case 'tecnico':
+                        partnerName.textContent = 'Servicio #1234';
+                        break;
+                }
+            }
+        }, 100);
+    }
+    
+    // Estado de conexión
+    function updateConnectionStatus(status) {
+        showConnectionStatus(status, getStatusText(status));
+    }
+    
+    function getStatusText(status) {
+        switch(status) {
+            case 'connected': return 'Conectado';
+            case 'disconnected': return 'Desconectado';
+            case 'connecting': return 'Conectando...';
+            case 'error': return 'Error de conexión';
+            default: return status;
+        }
+    }
+    
+    function showConnectionStatus(status, text) {
+        const el = document.getElementById('connection-status');
+        const textEl = document.getElementById('connection-text');
+        
+        el.className = 'connection-status visible ' + status;
+        textEl.textContent = text;
+        
+        // Ocultar después de 3 segundos si está conectado
+        if (status === 'connected') {
+            setTimeout(() => {
+                el.classList.remove('visible');
+            }, 3000);
+        }
+    }
+    
+    // Extender MitaChat para callback de conexión
+    const originalConnect = MitaChat.prototype.connect;
+    MitaChat.prototype.connect = function() {
+        const self = this;
+        
+        if (this.onConnectionChange) {
+            this.onConnectionChange('connecting');
+        }
+        
+        originalConnect.call(this);
+        
+        // Sobrescribir eventos
+        const originalOnOpen = this.ws.onopen;
+        this.ws.onopen = function() {
+            if (self.onConnectionChange) {
+                self.onConnectionChange('connected');
+            }
+            if (originalOnOpen) originalOnOpen.call(self.ws);
+        };
+        
+        const originalOnClose = this.ws.onclose;
+        this.ws.onclose = function() {
+            if (self.onConnectionChange) {
+                self.onConnectionChange('disconnected');
+            }
+            if (originalOnClose) originalOnClose.call(self.ws);
+        };
+        
+        const originalOnError = this.ws.onerror;
+        this.ws.onerror = function(error) {
+            if (self.onConnectionChange) {
+                self.onConnectionChange('error');
+            }
+            if (originalOnError) originalOnError.call(self.ws, error);
+        };
+    };
+    
+    // Iniciar al cargar
+    document.addEventListener('DOMContentLoaded', function() {
+        initChat();
+        
+        // Agregar mensajes de ejemplo para demo
+        setTimeout(addDemoMessages, 1000);
+    });
+    
+    // Mensajes de ejemplo
+    function addDemoMessages() {
+        if (!chatInstance) return;
+        
+        const mensajesDemo = [
+            {
+                id: 1,
+                de_tipo: 'sistema',
+                de_nombre: 'Sistema',
+                contenido: 'Solicitud de servicio #1234 creada',
+                tipo: 'sistema',
+                created_at: new Date(Date.now() - 3600000).toISOString(),
+                estado: 'leido'
+            },
+            {
+                id: 2,
+                de_tipo: 'cliente',
+                de_id: 1,
+                de_nombre: 'Juan Pérez',
+                contenido: 'Hola, necesito un técnico para revisar una fuga de agua en la cocina',
+                tipo: 'texto',
+                created_at: new Date(Date.now() - 3500000).toISOString(),
+                estado: 'leido'
+            },
+            {
+                id: 3,
+                de_tipo: 'secretaria',
+                de_id: 1,
+                de_nombre: 'María García',
+                contenido: '¡Hola Juan! Claro, tenemos técnicos disponibles. ¿Es urgente o podemos programar para hoy en la tarde?',
+                tipo: 'texto',
+                created_at: new Date(Date.now() - 3400000).toISOString(),
+                estado: 'leido'
+            },
+            {
+                id: 4,
+                de_tipo: 'cliente',
+                de_id: 1,
+                de_nombre: 'Juan Pérez',
+                contenido: 'Sí, es bastante urgente. La fuga está mojando el piso.',
+                tipo: 'texto',
+                created_at: new Date(Date.now() - 3300000).toISOString(),
+                estado: 'leido'
+            },
+            {
+                id: 5,
+                de_tipo: 'secretaria',
+                de_id: 1,
+                de_nombre: 'María García',
+                contenido: 'Entiendo. Le asignaré a Carlos López, nuestro técnico especialista en gasfitería. Estará ahí en aproximadamente 30 minutos. El costo de la visita es S/ 50.',
+                tipo: 'texto',
+                created_at: new Date(Date.now() - 3200000).toISOString(),
+                estado: 'leido'
+            },
+            {
+                id: 6,
+                de_tipo: 'sistema',
+                de_nombre: 'Sistema',
+                contenido: 'Técnico Carlos López asignado al servicio',
+                tipo: 'sistema',
+                created_at: new Date(Date.now() - 3100000).toISOString(),
+                estado: 'leido'
+            },
+            {
+                id: 7,
+                de_tipo: 'tecnico',
+                de_id: 1,
+                de_nombre: 'Carlos López',
+                contenido: 'Buenas tardes, soy Carlos. Ya estoy en camino a su domicilio. ¿Me puede confirmar la dirección exacta?',
+                tipo: 'texto',
+                created_at: new Date(Date.now() - 1800000).toISOString(),
+                estado: 'leido'
+            },
+            {
+                id: 8,
+                de_tipo: 'cliente',
+                de_id: 1,
+                de_nombre: 'Juan Pérez',
+                contenido: 'Perfecto! Estoy en Av. Arequipa 1234, San Isidro. Departamento 502.',
+                tipo: 'texto',
+                created_at: new Date(Date.now() - 1700000).toISOString(),
+                estado: 'leido'
+            },
+            {
+                id: 9,
+                de_tipo: 'tecnico',
+                de_id: 1,
+                de_nombre: 'Carlos López',
+                contenido: 'Perfecto, llego en 15 minutos aproximadamente.',
+                tipo: 'texto',
+                created_at: new Date(Date.now() - 1600000).toISOString(),
+                estado: 'entregado'
+            }
+        ];
+        
+        // Limpiar loading
+        const container = document.getElementById('chat-messages');
+        if (container) {
+            container.innerHTML = '';
+            
+            // Agregar mensajes demo
+            mensajesDemo.forEach(msg => {
+                chatInstance.agregarMensaje(msg, false);
+            });
+            
+            chatInstance.scrollToBottom();
+        }
+    }
+</script>
+{% endblock %}
