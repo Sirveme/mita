@@ -23,6 +23,10 @@ from app.routes.solicitudes import router as solicitudes_router
 from app.routes.recomendaciones import router as recomendaciones_router
 from app.routes.servicios import router as servicios_router
 
+# Nuevos routers MITA (chat en tiempo real)
+from app.routes.chat_ws import router as chat_ws_router
+from app.routes.chat_mita import router as chat_mita_router
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -125,6 +129,10 @@ app.include_router(insumos_router, prefix="/api/v1/admin", tags=["Insumos"])
 app.include_router(recomendaciones_router, prefix="/api/v1", tags=["Recomendaciones"])
 
 app.include_router(servicios_router, prefix="/api/v1", tags=["Servicios"])
+
+# Chat MITA - WebSocket (tiempo real) + REST (historial/persistencia)
+app.include_router(chat_ws_router, tags=["Chat WS"])
+app.include_router(chat_mita_router, prefix="/api/v1", tags=["Chat"])
 
 # Cuando estén listos:
 # from app.routes.clientes import router as clientes_router
