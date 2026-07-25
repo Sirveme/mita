@@ -40,6 +40,12 @@ async def solicitar_servicio(request: Request):
     """Formulario genérico de solicitud (4 pasos) para cualquier categoría."""
     return templates.TemplateResponse("cliente/solicitar_servicio.html", {"request": request})
 
+# Demo del chat MITA (estilo WhatsApp) — mensajes precargados + WebSocket
+@router.get("/cliente/chat-demo", response_class=HTMLResponse)
+async def chat_demo(request: Request):
+    """Demo del chat MITA"""
+    return templates.TemplateResponse("cliente/chat_demo.html", {"request": request})
+
 # Formularios específicos
 @router.get("/cliente/servicio/aceite", response_class=HTMLResponse)
 async def solicitud_aceite(request: Request):
