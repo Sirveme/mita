@@ -37,6 +37,9 @@ from app.routes.login_mita import router as login_mita_router
 from app.routes.tecnicos_api import router as tecnicos_api_router
 from app.routes.solicitudes_api import router as solicitudes_api_router
 
+# API de billeteras electrónicas del personal
+from app.routes.billeteras_api import router as billeteras_api_router
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -153,6 +156,7 @@ app.include_router(login_mita_router)
 # Flujo MITA v2 (los routers ya definen su prefix /api/v1/...)
 app.include_router(tecnicos_api_router)
 app.include_router(solicitudes_api_router)
+app.include_router(billeteras_api_router)
 
 # Cuando estén listos:
 # from app.routes.clientes import router as clientes_router
