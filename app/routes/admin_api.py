@@ -230,6 +230,22 @@ def listar_usuarios(db: Session = Depends(get_db)):
     return {"success": True, "items": out}
 
 
+@router.post("/reset-password/{dni}")
+def reset_password_admin(dni: str, db: Session = Depends(get_db)):
+    """Resetea la clave de un usuario a su DNI, la marca para cambio y desbloquea la cuenta."""
+    import bcrypt
+    usuario = db.query(UsuarioMita).filter(UsuarioMita.dni == dni).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    # bcrypt directo (passlib es incompatible con bcrypt>=4.1 en este entorno); 72 bytes máx
+    usuario.password_hash = bcrypt.hashpw(dni.encode("utf-8")[:72], bcrypt.gensalt()).decode("utf-8")
+    usuario.requiere_cambio_clave = True
+    usuario.intentos_fallidos = 0
+    usuario.bloqueado_hasta = None
+    db.commit()
+    return {"success": True, "message": f"Clave reseteada para {dni} (nueva clave = DNI, cambio obligatorio)."}
+
+
 @router.put("/usuarios/{item_id}")
 def actualizar_usuario(item_id: int, data: dict = Body(...), db: Session = Depends(get_db)):
     """Actualiza un usuario del panel (p.ej. activar/desactivar)."""
