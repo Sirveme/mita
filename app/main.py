@@ -27,6 +27,16 @@ from app.routes.servicios import router as servicios_router
 from app.routes.chat_ws import router as chat_ws_router
 from app.routes.chat_mita import router as chat_mita_router
 
+# Router de administración (CRUD)
+from app.routes.admin_api import router as admin_api_router
+
+# Login del panel (DNI + cookie de sesión) — archivo nuevo, no toca auth.py (JWT)
+from app.routes.login_mita import router as login_mita_router
+
+# APIs del flujo MITA v2 (selector de técnicos + crear solicitud)
+from app.routes.tecnicos_api import router as tecnicos_api_router
+from app.routes.solicitudes_api import router as solicitudes_api_router
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -134,6 +144,16 @@ app.include_router(servicios_router, prefix="/api/v1", tags=["Servicios"])
 app.include_router(chat_ws_router, tags=["Chat WS"])
 app.include_router(chat_mita_router, prefix="/api/v1", tags=["Chat"])
 
+# Admin API - CRUD (el router ya define su prefix /api/v1/admin)
+app.include_router(admin_api_router)
+
+# Login del panel MITA (DNI + cookie de sesión) — dueño de /login, /logout
+app.include_router(login_mita_router)
+
+# Flujo MITA v2 (los routers ya definen su prefix /api/v1/...)
+app.include_router(tecnicos_api_router)
+app.include_router(solicitudes_api_router)
+
 # Cuando estén listos:
 # from app.routes.clientes import router as clientes_router
 # from app.routes.servicios import router as servicios_router
@@ -142,9 +162,9 @@ app.include_router(chat_mita_router, prefix="/api/v1", tags=["Chat"])
 
 
 
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+# NOTA: GET/POST /login y /logout los sirve ahora app.routes.login_mita
+# (login por DNI + cookie de sesión). Se retiró el handler inline anterior
+# que servía login.html para evitar la ruta duplicada.
 
 # ============================================
 # RUTAS HTML - ADMIN
