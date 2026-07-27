@@ -1,0 +1,93 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Usuarios{% endblock %}
+{% block page_title %}Usuarios del Sistema{% endblock %}
+
+{% block content %}
+<div id="banner-reset" style="display:none;" class="am-note"></div>
+
+<div class="am-toolbar">
+    <input type="text" id="searchInput" placeholder="Buscar por DNI, nombre o rol…" onkeyup="filtrarTabla()">
+</div>
+
+<table class="am-table" id="tablaUsuarios">
+    <thead><tr><th>DNI</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Cambio clave</th><th>Acciones</th></tr></thead>
+    <tbody id="tbody"><tr><td colspan="6" class="am-empty">Cargando…</td></tr></tbody>
+</table>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const API = '/api/v1/admin/usuarios';
+function esc(s){ return String(s==null?'':s).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Banner de resultado del reset (?reset=ok|notfound)
+(function(){
+    const p = new URLSearchParams(location.search).get('reset');
+    if (!p) return;
+    const b = document.getElementById('banner-reset');
+    b.style.display = 'block';
+    b.textContent = p === 'ok' ? '✓ Clave reseteada. El usuario deberá cambiarla en su próximo ingreso.'
+                                : '✕ No se encontró el usuario para resetear.';
+})();
+
+async function cargar(){
+    const tb = document.getElementById('tbody');
+    try {
+        const r = await fetch(API);
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        const items = (await r.json()).items || [];
+        if(!items.length){ tb.innerHTML = '<tr><td colspan="6" class="am-empty">Sin usuarios</td></tr>'; return; }
+        tb.innerHTML = items.map(u => `
+            <tr>
+                <td><b>${esc(u.dni)}</b></td>
+                <td>${esc(u.nombres)}</td>
+                <td>${esc(u.tipo)}</td>
+                <td>${u.activo?'<span class="badge badge-on">Activo</span>':'<span class="badge badge-off">Inactivo</span>'}</td>
+                <td>${u.requiere_cambio_clave?'<span class="badge badge-soon">Pendiente</span>':'—'}</td>
+                <td class="am-table-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="resetearClave('${esc(u.dni)}')" title="Resetear clave"><i class="fas fa-key"></i> Reset</button>
+                    <button class="am-btn-icon ${u.activo?'danger':''}" onclick="toggleActivo(${u.id}, ${u.activo?1:0}, '${esc(u.dni)}')" title="${u.activo?'Desactivar':'Activar'}">
+                        <i class="fas ${u.activo?'fa-ban':'fa-check'}"></i>
+                    </button>
+                </td>
+            </tr>`).join('');
+    } catch(e){
+        tb.innerHTML = `<tr><td colspan="6" class="am-error">Error al cargar (¿BD?): ${e.message}</td></tr>`;
+    }
+}
+
+function filtrarTabla(){
+    const filter = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#tablaUsuarios tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
+    });
+}
+
+async function resetearClave(dni){
+    const ok = await MitaAlert.confirm('Resetear Clave',
+        `¿Resetear la clave del usuario ${dni}? La nueva clave será su DNI.`);
+    if (!ok) return;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/admin/reset-clave/${dni}`;
+    document.body.appendChild(form);
+    form.submit();
+}
+
+async function toggleActivo(id, activo, dni){
+    const desactivar = activo === 1;
+    const ok = window.MitaAlert
+        ? await MitaAlert.confirm(desactivar?'Desactivar':'Activar', `¿${desactivar?'Desactivar':'Activar'} al usuario ${dni}?${desactivar?' No podrá acceder al sistema.':''}`)
+        : confirm('¿Cambiar estado de '+dni+'?');
+    if(!ok) return;
+    try {
+        const r = await fetch('/api/v1/admin/usuarios/'+id, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({activo: !desactivar}) });
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        cargar();
+    } catch(e){ if(window.MitaAlert) MitaAlert.error('Error','No se pudo actualizar'); else alert('Error'); }
+}
+window.toggleActivo = toggleActivo;
+cargar();
+</script>
+{% endblock %}

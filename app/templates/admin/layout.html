@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin{% endblock %} - MITA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/admin_mita.css">
+    {% block extra_css %}{% endblock %}
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --mita-primary: #FFCD11;
+            --mita-dark: #0a0a0f;
+            --mita-card: #111118;
+            --mita-border: #2a2a3a;
+            --mita-text: #ffffff;
+            --mita-text-secondary: #888;
+        }
+
+        body { margin: 0; }
+
+        .admin-layout { display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .admin-sidebar {
+            width: var(--sidebar-width);
+            background: var(--mita-card, #111118);
+            border-right: 1px solid var(--mita-border, #2a2a3a);
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--mita-border, #2a2a3a); }
+        .sidebar-logo { font-size: 28px; font-weight: 800; color: var(--mita-primary, #FFCD11); }
+        .sidebar-user { margin-top: 12px; font-size: 14px; color: var(--mita-text-secondary, #888); }
+        .sidebar-user strong { color: var(--mita-text, #fff); }
+
+        .sidebar-menu { padding: 16px 0 90px; }
+        .menu-section { padding: 8px 20px; font-size: 11px; text-transform: uppercase; color: var(--mita-text-secondary, #888); letter-spacing: 1px; }
+        .menu-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 20px; color: var(--mita-text-secondary, #888);
+            text-decoration: none; transition: all 0.2s;
+        }
+        .menu-item:hover { background: rgba(255,255,255,0.05); color: var(--mita-text, #fff); }
+        .menu-item.active { background: rgba(255, 205, 17, 0.1); color: var(--mita-primary, #FFCD11); border-right: 3px solid var(--mita-primary, #FFCD11); }
+        .menu-item i { width: 20px; text-align: center; }
+
+        .sidebar-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 20px; border-top: 1px solid var(--mita-border, #2a2a3a); background: var(--mita-card, #111118); }
+        .btn-logout { display: flex; align-items: center; gap: 8px; color: #ef4444; text-decoration: none; font-size: 14px; }
+
+        /* Main content */
+        .admin-main { flex: 1; margin-left: var(--sidebar-width); background: var(--mita-dark, #0a0a0f); min-height: 100vh; }
+        .admin-header { background: var(--mita-card, #111118); padding: 16px 24px; border-bottom: 1px solid var(--mita-border, #2a2a3a); display: flex; align-items: center; justify-content: space-between; }
+        .admin-header h1 { font-size: 20px; font-weight: 600; margin: 0; }
+        .admin-content { padding: 24px; }
+
+        /* Botón hamburguesa (móvil) */
+        .sidebar-toggle { display: none; background: none; border: none; color: var(--mita-text, #fff); font-size: 20px; cursor: pointer; }
+
+        @media (max-width: 768px) {
+            .admin-sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+            .admin-sidebar.open { transform: translateX(0); }
+            .admin-main { margin-left: 0; }
+            .sidebar-toggle { display: inline-block; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">MITA</div>
+                <div class="sidebar-user">
+                    <strong>{{ user.tipo | title if user else 'Admin' }}</strong><br>
+                    DNI: {{ user.dni if user else '---' }}
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <div class="menu-section">Principal</div>
+                <a href="/admin" class="menu-item {% if active == 'dashboard' %}active{% endif %}"><i class="fas fa-home"></i> Dashboard</a>
+
+                <div class="menu-section">Operaciones</div>
+                <a href="/admin/solicitudes" class="menu-item {% if active == 'solicitudes' %}active{% endif %}"><i class="fas fa-clipboard-list"></i> Solicitudes</a>
+                <a href="/cliente/chat" class="menu-item {% if active == 'chat' %}active{% endif %}"><i class="fas fa-comments"></i> Chat</a>
+
+                <div class="menu-section">Catálogos</div>
+                <a href="/admin/catalogo" class="menu-item {% if active == 'catalogo' %}active{% endif %}"><i class="fas fa-tools"></i> Servicios</a>
+                <a href="/admin/personal" class="menu-item {% if active == 'personal' %}active{% endif %}"><i class="fas fa-users"></i> Personal</a>
+                <a href="/admin/distritos" class="menu-item {% if active == 'distritos' %}active{% endif %}"><i class="fas fa-map-marker-alt"></i> Distritos</a>
+
+                <div class="menu-section">Finanzas</div>
+                <a href="/admin/ingresos" class="menu-item {% if active == 'ingresos' %}active{% endif %}"><i class="fas fa-arrow-down"></i> Ingresos</a>
+                <a href="/admin/egresos" class="menu-item {% if active == 'egresos' %}active{% endif %}"><i class="fas fa-arrow-up"></i> Egresos</a>
+                <a href="/admin/liquidaciones" class="menu-item {% if active == 'liquidaciones' %}active{% endif %}"><i class="fas fa-file-invoice-dollar"></i> Liquidaciones</a>
+
+                <div class="menu-section">Sistema</div>
+                <a href="/admin/configuraciones" class="menu-item {% if active == 'configuraciones' %}active{% endif %}"><i class="fas fa-cog"></i> Configuraciones</a>
+                <a href="/admin/usuarios" class="menu-item {% if active == 'usuarios' %}active{% endif %}"><i class="fas fa-user-shield"></i> Usuarios</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="admin-main">
+            <header class="admin-header">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <button class="sidebar-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+                    <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+                {% block header_actions %}{% endblock %}
+            </header>
+
+            <div class="admin-content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/mita_alerts.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

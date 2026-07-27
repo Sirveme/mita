@@ -1,0 +1,118 @@
+{% extends "admin/layout.html" %}
+{% block title %}Personal{% endblock %}
+{% block page_title %}Registro de Personal{% endblock %}
+
+{% block content %}
+    <div class="am-wrap" style="padding:0;">
+        <div class="am-toolbar">
+            <button class="btn btn-primary" onclick="abrirModal()"><i class="fas fa-user-plus"></i> Nuevo personal</button>
+            <select id="filtroTipo" onchange="cargar()">
+                <option value="">Todos</option>
+                <option value="secretaria">Secretarias</option>
+                <option value="tecnico">Técnicos</option>
+                <option value="admin">Admin</option>
+                <option value="gerente">Gerente</option>
+            </select>
+        </div>
+        <table class="am-table">
+            <thead><tr><th>DNI</th><th>Nombre</th><th>Tipo</th><th>Teléfono</th><th>Email</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="tbody"><tr><td colspan="7" class="am-empty">Cargando…</td></tr></tbody>
+        </table>
+    </div>
+
+    <div class="am-modal-backdrop" id="modalBackdrop">
+        <div class="am-modal">
+            <div class="am-modal-head"><h3>Nuevo personal</h3><button class="close" onclick="cerrarModal()">&times;</button></div>
+            <div class="am-modal-body">
+                <div class="field-row">
+                    <div class="field"><label>Tipo</label><select id="f_tipo">
+                        <option value="secretaria">Secretaria</option><option value="tecnico">Técnico</option>
+                        <option value="admin">Admin</option><option value="gerente">Gerente</option></select></div>
+                    <div class="field"><label>DNI</label><input id="f_dni" maxlength="15"></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Nombres</label><input id="f_nombres"></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Apellido paterno</label><input id="f_apellido_paterno"></div>
+                    <div class="field"><label>Apellido materno</label><input id="f_apellido_materno"></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Teléfono</label><input id="f_telefono"></div>
+                    <div class="field"><label>Email</label><input id="f_email" type="email"></div>
+                </div>
+                <div class="field"><label>Dirección</label><input id="f_direccion"></div>
+                <div class="field-row">
+                    <div class="field"><label>RUC (opcional)</label><input id="f_ruc" maxlength="11" placeholder="10XXXXXXXXX"></div>
+                    <div class="field"><label>Estado</label><select id="f_estado">
+                        <option value="activo">Activo</option><option value="inactivo">Inactivo</option>
+                        <option value="suspendido">Suspendido</option><option value="baja">Baja</option></select></div>
+                </div>
+                <div class="field field-check"><input type="checkbox" id="f_emite_recibo_honorarios"><label>Emite recibo por honorarios (4ta categoría)</label></div>
+            </div>
+            <div class="am-modal-foot">
+                <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardar()"><i class="fas fa-save"></i> Registrar</button>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+    const API = '/api/v1/admin/personal';
+    function esc(s){ return String(s==null?'':s).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    async function cargar(){
+        const tipo = document.getElementById('filtroTipo').value;
+        const tb = document.getElementById('tbody');
+        try {
+            const r = await fetch(API + (tipo?('?tipo='+tipo):''));
+            if(!r.ok) throw new Error('HTTP '+r.status);
+            const d = await r.json();
+            const items = d.items || [];
+            if(!items.length){ tb.innerHTML = '<tr><td colspan="7" class="am-empty">Sin personal</td></tr>'; return; }
+            tb.innerHTML = items.map(p => `
+                <tr>
+                    <td>${esc(p.dni)}</td>
+                    <td>${esc((p.nombres||'')+' '+(p.apellido_paterno||''))}</td>
+                    <td>${esc(p.tipo)}</td>
+                    <td>${esc(p.telefono)}</td>
+                    <td>${esc(p.email)}</td>
+                    <td>${p.estado==='activo'?'<span class="badge badge-on">Activo</span>':'<span class="badge badge-off">'+esc(p.estado)+'</span>'}</td>
+                    <td class="am-table-actions">
+                        <button class="am-btn-icon" onclick="location.href='/admin/personal/ficha?id=${p.id}'" title="Ver ficha"><i class="fas fa-eye"></i></button>
+                        <button class="am-btn-icon danger" onclick="eliminarPersonal(${p.id}, '${esc(p.nombres)}')" title="Eliminar"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`).join('');
+        } catch(e){ tb.innerHTML = `<tr><td colspan="7" class="am-error">Error al cargar (¿BD?): ${e.message}</td></tr>`; }
+    }
+    function abrirModal(){ document.getElementById('modalBackdrop').classList.add('show'); }
+    function cerrarModal(){ document.getElementById('modalBackdrop').classList.remove('show'); }
+    function v(id){ return document.getElementById(id).value; }
+    async function guardar(){
+        const data = { tipo:v('f_tipo'), dni:v('f_dni'), nombres:v('f_nombres'),
+            apellido_paterno:v('f_apellido_paterno'), apellido_materno:v('f_apellido_materno'),
+            telefono:v('f_telefono'), email:v('f_email'), direccion:v('f_direccion'), estado:v('f_estado'),
+            ruc:v('f_ruc'), emite_recibo_honorarios: document.getElementById('f_emite_recibo_honorarios').checked };
+        if(!data.dni || !data.nombres || !data.apellido_paterno || !data.telefono){ alert('DNI, nombres, apellido paterno y teléfono son obligatorios'); return; }
+        try {
+            const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+            if(!r.ok){ const t = await r.text(); throw new Error(t); }
+            cerrarModal(); cargar();
+        } catch(e){ alert('Error al registrar: '+e.message); }
+    }
+    async function eliminarPersonal(id, nombre){
+        const ok = window.MitaAlert ? await MitaAlert.confirmDelete(nombre) : confirm('¿Eliminar a '+nombre+'?');
+        if(!ok) return;
+        try {
+            const r = await fetch('/api/v1/admin/personal/'+id, {method:'DELETE'});
+            if(!r.ok) throw new Error('HTTP '+r.status);
+            if(window.MitaAlert) MitaAlert.success('Eliminado', nombre+' fue eliminado');
+            cargar();
+        } catch(e){ if(window.MitaAlert) MitaAlert.error('Error','No se pudo eliminar'); else alert('Error'); }
+    }
+    window.eliminarPersonal = eliminarPersonal;
+    cargar();
+    </script>
+{% endblock %}

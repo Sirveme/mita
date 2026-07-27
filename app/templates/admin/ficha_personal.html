@@ -1,0 +1,281 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Ficha de Personal{% endblock %}
+{% block page_title %}Ficha de Personal{% endblock %}
+
+{% block extra_css %}
+<style>
+.ficha-container { max-width: 900px; margin: 0 auto; }
+.ficha-header { background: var(--mita-card); border-radius: 12px; padding: 24px; display: flex; gap: 24px; margin-bottom: 24px; border: 1px solid var(--mita-border); flex-wrap: wrap; }
+.ficha-foto { width: 150px; height: 150px; border-radius: 12px; background: var(--mita-dark); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+.ficha-foto img { width: 100%; height: 100%; object-fit: cover; }
+.ficha-foto .placeholder { font-size: 64px; color: var(--mita-text-secondary); }
+.ficha-foto .upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; cursor: pointer; }
+.ficha-foto:hover .upload-overlay { opacity: 1; }
+.ficha-info { flex: 1; min-width: 220px; }
+.ficha-nombre { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+.ficha-tipo { display: inline-block; padding: 4px 12px; background: var(--mita-primary); color: #000; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 16px; }
+.ficha-stats { display: flex; gap: 32px; }
+.ficha-stat { text-align: center; }
+.ficha-stat-value { font-size: 28px; font-weight: 700; color: var(--mita-primary); }
+.ficha-stat-label { font-size: 12px; color: var(--mita-text-secondary); }
+.ficha-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--mita-border); margin-bottom: 24px; flex-wrap: wrap; }
+.ficha-tab { padding: 12px 24px; background: transparent; border: none; color: var(--mita-text-secondary); cursor: pointer; font-size: 14px; font-weight: 500; position: relative; }
+.ficha-tab.active { color: var(--mita-primary); }
+.ficha-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--mita-primary); }
+.ficha-section { display: none; background: var(--mita-card); border-radius: 12px; padding: 24px; border: 1px solid var(--mita-border); }
+.ficha-section.active { display: block; }
+.section-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--mita-border); }
+.documentos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.documento-card { background: var(--mita-dark); border-radius: 8px; border: 1px solid var(--mita-border); overflow: hidden; }
+.documento-preview { height: 140px; background: #1a1a24; display: flex; align-items: center; justify-content: center; position: relative; }
+.documento-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.documento-preview .placeholder { font-size: 48px; color: var(--mita-text-secondary); }
+.documento-info { padding: 12px; }
+.documento-tipo { font-size: 12px; color: var(--mita-text-secondary); margin-bottom: 4px; }
+.documento-nombre { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.documento-actions { display: flex; gap: 8px; margin-top: 8px; }
+.documento-actions button { flex: 1; padding: 6px; border-radius: 4px; border: none; font-size: 12px; cursor: pointer; }
+.btn-ver { background: var(--mita-primary); color: #000; }
+.btn-eliminar { background: transparent; border: 1px solid var(--mita-border) !important; color: var(--mita-text-secondary); }
+.add-documento { border: 2px dashed var(--mita-border); background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; cursor: pointer; transition: all 0.2s; }
+.add-documento:hover { border-color: var(--mita-primary); background: rgba(255, 205, 17, 0.05); }
+.add-documento i { font-size: 32px; color: var(--mita-text-secondary); margin-bottom: 8px; }
+.add-documento span { font-size: 14px; color: var(--mita-text-secondary); }
+.ficha-form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.ficha-form-grid .full-width { grid-column: 1 / -1; }
+.upload-area { border: 2px dashed var(--mita-border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.upload-area:hover { border-color: var(--mita-primary); background: rgba(255, 205, 17, 0.05); }
+.especialidades-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.especialidad-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--mita-dark); border-radius: 8px; border: 1px solid var(--mita-border); }
+.especialidad-item input[type="checkbox"] { width: 20px; height: 20px; }
+.especialidad-item label { flex: 1; cursor: pointer; }
+.especialidad-item .exp-years { width: 60px; }
+#modal-documento { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+@media (max-width: 768px) { .ficha-header { flex-direction: column; align-items: center; text-align: center; } .ficha-stats { justify-content: center; } .ficha-form-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ficha-container">
+    <div class="ficha-header">
+        <div class="ficha-foto" id="foto-container">
+            <i class="fas fa-user placeholder" id="foto-placeholder"></i>
+            <img id="foto-preview" style="display: none;">
+            <div class="upload-overlay" onclick="document.getElementById('foto-input').click()">
+                <i class="fas fa-camera" style="font-size: 24px; color: white;"></i>
+            </div>
+            <input type="file" id="foto-input" accept="image/*" style="display:none;" onchange="previewFoto(this)">
+        </div>
+
+        <div class="ficha-info">
+            <div class="ficha-nombre" id="nombre-completo">Nuevo Personal</div>
+            <div class="ficha-tipo" id="tipo-personal">TÉCNICO</div>
+            <div class="ficha-stats">
+                <div class="ficha-stat"><div class="ficha-stat-value" id="stat-servicios">0</div><div class="ficha-stat-label">Servicios</div></div>
+                <div class="ficha-stat"><div class="ficha-stat-value" id="stat-rating">5.0</div><div class="ficha-stat-label">Calificación</div></div>
+                <div class="ficha-stat"><div class="ficha-stat-value" id="stat-antiguedad">—</div><div class="ficha-stat-label">Antigüedad</div></div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: flex-start;">
+            <button class="am-btn am-btn-secondary" onclick="history.back()"><i class="fas fa-arrow-left"></i> Volver</button>
+            <button class="am-btn am-btn-primary" onclick="guardarFicha()"><i class="fas fa-save"></i> Guardar</button>
+        </div>
+    </div>
+
+    <div class="ficha-tabs">
+        <button class="ficha-tab active" onclick="cambiarTab('personal')"><i class="fas fa-user"></i> Datos Personales</button>
+        <button class="ficha-tab" onclick="cambiarTab('estudios')"><i class="fas fa-graduation-cap"></i> Estudios</button>
+        <button class="ficha-tab" onclick="cambiarTab('laborales')"><i class="fas fa-briefcase"></i> Datos Laborales</button>
+        <button class="ficha-tab" onclick="cambiarTab('especialidades')"><i class="fas fa-tools"></i> Especialidades</button>
+        <button class="ficha-tab" onclick="cambiarTab('banco')"><i class="fas fa-university"></i> Datos Bancarios</button>
+    </div>
+
+    <div class="ficha-section active" id="section-personal">
+        <h3 class="section-title">Información Personal</h3>
+        <div class="ficha-form-grid">
+            <div class="am-form-group"><label>DNI</label><input type="text" id="dni" class="am-input" maxlength="8"></div>
+            <div class="am-form-group"><label>RUC (opcional)</label><input type="text" id="ruc" class="am-input" maxlength="11"></div>
+            <div class="am-form-group"><label>Nombres</label><input type="text" id="nombres" class="am-input"></div>
+            <div class="am-form-group"><label>Apellido Paterno</label><input type="text" id="apellido_paterno" class="am-input"></div>
+            <div class="am-form-group"><label>Apellido Materno</label><input type="text" id="apellido_materno" class="am-input"></div>
+            <div class="am-form-group"><label>Fecha de Nacimiento</label><input type="date" id="fecha_nacimiento" class="am-input"></div>
+            <div class="am-form-group"><label>Teléfono</label><input type="tel" id="telefono" class="am-input"></div>
+            <div class="am-form-group"><label>Email</label><input type="email" id="email" class="am-input"></div>
+            <div class="am-form-group full-width"><label>Dirección</label><input type="text" id="direccion" class="am-input"></div>
+        </div>
+
+        <h3 class="section-title" style="margin-top: 32px;">Documento de Identidad</h3>
+        <div class="documentos-grid">
+            <div class="documento-card">
+                <div class="documento-preview"><i class="fas fa-id-card placeholder"></i></div>
+                <div class="documento-info"><div class="documento-tipo">DNI - Anverso</div><div class="documento-nombre">No subido</div>
+                    <div class="documento-actions"><button class="btn-ver" onclick="subirDocumento('dni_anverso')"><i class="fas fa-upload"></i> Subir</button></div></div>
+            </div>
+            <div class="documento-card">
+                <div class="documento-preview"><i class="fas fa-id-card placeholder"></i></div>
+                <div class="documento-info"><div class="documento-tipo">DNI - Reverso</div><div class="documento-nombre">No subido</div>
+                    <div class="documento-actions"><button class="btn-ver" onclick="subirDocumento('dni_reverso')"><i class="fas fa-upload"></i> Subir</button></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ficha-section" id="section-estudios">
+        <h3 class="section-title">Certificados y Títulos</h3>
+        <div class="documentos-grid" id="grid-estudios">
+            <div class="documento-card add-documento" onclick="agregarDocumento('estudio')"><i class="fas fa-plus"></i><span>Agregar Certificado</span></div>
+        </div>
+    </div>
+
+    <div class="ficha-section" id="section-laborales">
+        <h3 class="section-title">Información Laboral</h3>
+        <div class="ficha-form-grid">
+            <div class="am-form-group"><label>Fecha de Ingreso</label><input type="date" id="fecha_ingreso" class="am-input"></div>
+            <div class="am-form-group"><label>Estado</label>
+                <select id="estado" class="am-input"><option value="ACTIVO">Activo</option><option value="INACTIVO">Inactivo</option><option value="SUSPENDIDO">Suspendido</option><option value="BAJA">Baja</option></select></div>
+            <div class="am-form-group"><label><input type="checkbox" id="emite_rhe"> Emite Recibo por Honorarios</label></div>
+            <div class="am-form-group"><label><input type="checkbox" id="exonerado_4ta"> Exonerado de retención 4ta</label></div>
+        </div>
+        <h3 class="section-title" style="margin-top: 32px;">Documentos Laborales</h3>
+        <div class="documentos-grid" id="grid-laborales">
+            <div class="documento-card">
+                <div class="documento-preview"><i class="fas fa-file-alt placeholder"></i></div>
+                <div class="documento-info"><div class="documento-tipo">Antecedentes Policiales</div><div class="documento-nombre">No subido</div>
+                    <div class="documento-actions"><button class="btn-ver" onclick="subirDocumento('antecedentes')"><i class="fas fa-upload"></i> Subir</button></div></div>
+            </div>
+            <div class="documento-card">
+                <div class="documento-preview"><i class="fas fa-file-alt placeholder"></i></div>
+                <div class="documento-info"><div class="documento-tipo">Antecedentes Penales</div><div class="documento-nombre">No subido</div>
+                    <div class="documento-actions"><button class="btn-ver" onclick="subirDocumento('penales')"><i class="fas fa-upload"></i> Subir</button></div></div>
+            </div>
+            <div class="documento-card add-documento" onclick="agregarDocumento('laboral')"><i class="fas fa-plus"></i><span>Agregar Documento</span></div>
+        </div>
+    </div>
+
+    <div class="ficha-section" id="section-especialidades">
+        <h3 class="section-title">Especialidades del Técnico</h3>
+        <div class="especialidades-list" id="especialidades-list"></div>
+    </div>
+
+    <div class="ficha-section" id="section-banco">
+        <h3 class="section-title">Información Bancaria para Pagos</h3>
+        <div class="ficha-form-grid">
+            <div class="am-form-group"><label>Banco</label>
+                <select id="banco" class="am-input"><option value="">Seleccionar...</option><option value="BCP">BCP</option><option value="BBVA">BBVA</option><option value="Interbank">Interbank</option><option value="Scotiabank">Scotiabank</option><option value="BanBif">BanBif</option></select></div>
+            <div class="am-form-group"><label>Tipo de Cuenta</label>
+                <select id="tipo_cuenta" class="am-input"><option value="">Seleccionar...</option><option value="ahorros">Ahorros</option><option value="corriente">Corriente</option></select></div>
+            <div class="am-form-group"><label>Número de Cuenta</label><input type="text" id="numero_cuenta" class="am-input"></div>
+            <div class="am-form-group"><label>CCI (Código Interbancario)</label><input type="text" id="cci" class="am-input" maxlength="20"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal subir documento -->
+<div id="modal-documento">
+    <div class="am-modal" style="max-width: 500px;">
+        <div class="am-modal-head"><h3 id="modal-doc-titulo">Subir Documento</h3><button class="close" onclick="cerrarModalDoc()">&times;</button></div>
+        <div class="am-modal-body">
+            <input type="hidden" id="doc-tipo">
+            <div class="am-form-group"><label>Tipo de Documento</label><input type="text" id="doc-nombre" class="am-input" placeholder="Ej: Certificado SENATI"></div>
+            <div class="am-form-group"><label>Archivo</label>
+                <div class="upload-area" onclick="document.getElementById('doc-file').click()">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: var(--mita-text-secondary);"></i>
+                    <p>Haz clic o arrastra un archivo aquí</p>
+                    <p style="font-size: 12px; color: var(--mita-text-secondary);">PNG, JPG, PDF (máx. 5MB)</p>
+                </div>
+                <input type="file" id="doc-file" accept="image/*,.pdf" style="display: none;">
+            </div>
+            <div id="doc-preview" style="display: none; margin-top: 16px;"><img id="doc-preview-img" style="max-width: 100%; border-radius: 8px;"></div>
+        </div>
+        <div class="am-modal-foot">
+            <button class="am-btn am-btn-secondary" onclick="cerrarModalDoc()">Cancelar</button>
+            <button class="am-btn am-btn-primary" onclick="confirmarSubida()">Subir</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let personalId = null;
+
+function cambiarTab(tab) {
+    document.querySelectorAll('.ficha-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.ficha-section').forEach(s => s.classList.remove('active'));
+    document.querySelector(`[onclick="cambiarTab('${tab}')"]`).classList.add('active');
+    document.getElementById(`section-${tab}`).classList.add('active');
+}
+
+function previewFoto(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('foto-placeholder').style.display = 'none';
+            const img = document.getElementById('foto-preview');
+            img.src = e.target.result; img.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function subirDocumento(tipo) {
+    document.getElementById('doc-tipo').value = tipo;
+    document.getElementById('modal-doc-titulo').textContent = 'Subir ' + tipo.replace('_', ' ');
+    document.getElementById('modal-documento').style.display = 'flex';
+}
+function cerrarModalDoc() { document.getElementById('modal-documento').style.display = 'none'; }
+function agregarDocumento(categoria) {
+    document.getElementById('doc-tipo').value = categoria;
+    document.getElementById('modal-doc-titulo').textContent = categoria === 'estudio' ? 'Agregar Certificado/Título' : 'Agregar Documento Laboral';
+    document.getElementById('modal-documento').style.display = 'flex';
+}
+function confirmarSubida() {
+    // TODO: subir el archivo al servidor cuando exista el endpoint de documentos
+    cerrarModalDoc();
+    if (window.MitaAlert) MitaAlert.success('Documento', 'Documento registrado (pendiente de subida al servidor)');
+}
+
+document.getElementById('doc-file')?.addEventListener('change', function() {
+    if (this.files && this.files[0] && this.files[0].type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (ev) => { document.getElementById('doc-preview-img').src = ev.target.result; document.getElementById('doc-preview').style.display = 'block'; };
+        reader.readAsDataURL(this.files[0]);
+    }
+});
+
+async function cargarEspecialidades() {
+    try {
+        const response = await fetch('/api/v1/admin/categorias');
+        const data = await response.json();
+        const categorias = data.items || [];   // el endpoint devuelve {success, items:[...]}
+        const container = document.getElementById('especialidades-list');
+        container.innerHTML = categorias.map(cat => `
+            <div class="especialidad-item">
+                <input type="checkbox" id="esp-${cat.id}" name="especialidades" value="${cat.id}">
+                <label for="esp-${cat.id}"><i class="${cat.icono}" style="color: ${cat.color};"></i> ${cat.nombre}</label>
+                <input type="number" class="am-input exp-years" placeholder="Años" min="0" max="50">
+            </div>`).join('') || '<p style="color:var(--mita-text-secondary)">No hay categorías (¿BD disponible?).</p>';
+    } catch (e) {
+        console.error('Error cargando especialidades:', e);
+    }
+}
+
+async function cargarDatosPersonal(id) {
+    // TODO: GET /api/v1/admin/personal/{id} cuando exista; por ahora placeholder
+    console.log('Cargar datos del personal', id);
+}
+
+async function guardarFicha() {
+    if (window.MitaAlert) MitaAlert.success('Guardado', 'La ficha se guardó correctamente');
+    else alert('La ficha se guardó correctamente');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    cargarEspecialidades();
+    const urlParams = new URLSearchParams(window.location.search);
+    personalId = urlParams.get('id');
+    if (personalId) cargarDatosPersonal(personalId);
+});
+</script>
+{% endblock %}

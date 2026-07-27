@@ -1,0 +1,198 @@
+{% extends "admin/layout.html" %}
+{% block title %}Catálogo de Servicios{% endblock %}
+{% block page_title %}Catálogo de Servicios{% endblock %}
+
+{% block content %}
+    <div class="am-wrap" style="padding:0;">
+
+        <div class="am-tabs">
+            <button class="am-tab active" data-tab="categorias" onclick="cambiarTab('categorias')">Categorías</button>
+            <button class="am-tab" data-tab="tipos" onclick="cambiarTab('tipos')">Tipos de servicio</button>
+        </div>
+
+        <!-- CATEGORIAS -->
+        <div id="tab-categorias">
+            <div class="am-toolbar">
+                <button class="btn btn-primary" onclick="abrirModalCategoria()"><i class="fas fa-plus"></i> Nueva categoría</button>
+            </div>
+            <table class="am-table">
+                <thead><tr><th>Código</th><th>Nombre</th><th>Color</th><th>Orden</th><th>Estado</th><th></th></tr></thead>
+                <tbody id="tbodyCategorias"><tr><td colspan="6" class="am-empty">Cargando…</td></tr></tbody>
+            </table>
+        </div>
+
+        <!-- TIPOS -->
+        <div id="tab-tipos" style="display:none;">
+            <div class="am-toolbar">
+                <button class="btn btn-primary" onclick="abrirModalTipo()"><i class="fas fa-plus"></i> Nuevo tipo</button>
+                <select id="filtroCategoria" onchange="renderTipos()"><option value="">Todas las categorías</option></select>
+            </div>
+            <table class="am-table">
+                <thead><tr><th>Código</th><th>Nombre</th><th>Categoría</th><th>Visita</th><th>Duración</th><th></th></tr></thead>
+                <tbody id="tbodyTipos"><tr><td colspan="6" class="am-empty">Cargando…</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div class="am-modal-backdrop" id="modalBackdrop">
+        <div class="am-modal">
+            <div class="am-modal-head">
+                <h3 id="modalTitulo">Editar</h3>
+                <button class="close" onclick="cerrarModal()">&times;</button>
+            </div>
+            <div class="am-modal-body" id="modalBody"></div>
+            <div class="am-modal-foot">
+                <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn btn-primary" id="btnGuardar" onclick="guardar()"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+    const API = '/api/v1/admin';
+    let categorias = [], tipos = [], modo = null, editId = null;
+
+    async function api(path, opts) {
+        const res = await fetch(API + path, opts);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+    }
+    function esc(s){ return String(s==null?'':s).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function cambiarTab(t){
+        document.querySelectorAll('.am-tab').forEach(b => b.classList.toggle('active', b.dataset.tab===t));
+        document.getElementById('tab-categorias').style.display = t==='categorias'?'block':'none';
+        document.getElementById('tab-tipos').style.display = t==='tipos'?'block':'none';
+    }
+
+    async function cargar(){
+        try {
+            const [c, tp] = await Promise.all([api('/categorias'), api('/tipos')]);
+            categorias = c.items || []; tipos = tp.items || [];
+            renderCategorias(); llenarFiltro(); renderTipos();
+        } catch(e){
+            document.getElementById('tbodyCategorias').innerHTML = `<tr><td colspan="6" class="am-error">Error al cargar (¿BD disponible?): ${e.message}</td></tr>`;
+        }
+    }
+
+    function renderCategorias(){
+        const tb = document.getElementById('tbodyCategorias');
+        if(!categorias.length){ tb.innerHTML = '<tr><td colspan="6" class="am-empty">Sin categorías</td></tr>'; return; }
+        tb.innerHTML = categorias.map(c => `
+            <tr>
+                <td><b>${esc(c.codigo)}</b></td>
+                <td>${esc(c.nombre)}</td>
+                <td><span class="dot-color" style="background:${esc(c.color)}"></span>${esc(c.color)}</td>
+                <td>${c.orden ?? ''}</td>
+                <td>${c.proximamente?'<span class="badge badge-soon">Próximamente</span>':(c.activo?'<span class="badge badge-on">Activo</span>':'<span class="badge badge-off">Inactivo</span>')}</td>
+                <td><div class="acts">
+                    <button class="btn btn-secondary btn-sm" onclick='abrirModalCategoria(${JSON.stringify(c)})'><i class="fas fa-pen"></i></button>
+                    <button class="btn btn-danger btn-sm" onclick="eliminar('categorias',${c.id})"><i class="fas fa-trash"></i></button>
+                </div></td>
+            </tr>`).join('');
+    }
+
+    function llenarFiltro(){
+        const sel = document.getElementById('filtroCategoria');
+        sel.innerHTML = '<option value="">Todas las categorías</option>' +
+            categorias.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join('');
+    }
+
+    function nombreCategoria(id){ const c = categorias.find(x=>x.id===id); return c?c.nombre:'—'; }
+
+    function renderTipos(){
+        const filtro = document.getElementById('filtroCategoria').value;
+        const tb = document.getElementById('tbodyTipos');
+        let lista = tipos;
+        if(filtro) lista = tipos.filter(t => String(t.categoria_id)===filtro);
+        if(!lista.length){ tb.innerHTML = '<tr><td colspan="6" class="am-empty">Sin tipos</td></tr>'; return; }
+        tb.innerHTML = lista.map(t => `
+            <tr>
+                <td><b>${esc(t.codigo)}</b></td>
+                <td>${esc(t.nombre)}</td>
+                <td>${esc(nombreCategoria(t.categoria_id))}</td>
+                <td>S/ ${t.precio_visita ?? 50}</td>
+                <td>${t.duracion_estimada_min ?? 60} min</td>
+                <td><div class="acts">
+                    <button class="btn btn-secondary btn-sm" onclick='abrirModalTipo(${JSON.stringify(t)})'><i class="fas fa-pen"></i></button>
+                    <button class="btn btn-danger btn-sm" onclick="eliminar('tipos',${t.id})"><i class="fas fa-trash"></i></button>
+                </div></td>
+            </tr>`).join('');
+    }
+
+    // ---- Modales ----
+    function abrirModal(titulo){ document.getElementById('modalTitulo').textContent = titulo; document.getElementById('modalBackdrop').classList.add('show'); }
+    function cerrarModal(){ document.getElementById('modalBackdrop').classList.remove('show'); }
+
+    function abrirModalCategoria(c){
+        modo='categorias'; editId = c?c.id:null; c = c || {};
+        document.getElementById('modalBody').innerHTML = `
+            <div class="field-row">
+                <div class="field"><label>Código</label><input id="f_codigo" value="${esc(c.codigo)}" placeholder="ELEC"></div>
+                <div class="field"><label>Orden</label><input id="f_orden" type="number" value="${c.orden ?? 0}"></div>
+            </div>
+            <div class="field"><label>Nombre</label><input id="f_nombre" value="${esc(c.nombre)}"></div>
+            <div class="field"><label>Descripción</label><textarea id="f_descripcion">${esc(c.descripcion)}</textarea></div>
+            <div class="field-row">
+                <div class="field"><label>Ícono (Font Awesome)</label><input id="f_icono" value="${esc(c.icono||'fas fa-tools')}"></div>
+                <div class="field"><label>Color</label><input id="f_color" type="color" value="${esc(c.color||'#FFCD11')}"></div>
+            </div>
+            <div class="field field-check"><input type="checkbox" id="f_activo" ${c.activo!==false?'checked':''}><label>Activo</label></div>
+            <div class="field field-check"><input type="checkbox" id="f_proximamente" ${c.proximamente?'checked':''}><label>Próximamente</label></div>`;
+        abrirModal(editId?'Editar categoría':'Nueva categoría');
+    }
+
+    function abrirModalTipo(t){
+        modo='tipos'; editId = t?t.id:null; t = t || {};
+        const opts = categorias.map(c=>`<option value="${c.id}" ${t.categoria_id===c.id?'selected':''}>${esc(c.nombre)}</option>`).join('');
+        document.getElementById('modalBody').innerHTML = `
+            <div class="field"><label>Categoría</label><select id="f_categoria_id">${opts}</select></div>
+            <div class="field-row">
+                <div class="field"><label>Código</label><input id="f_codigo" value="${esc(t.codigo)}" placeholder="ELEC-TOMA"></div>
+                <div class="field"><label>Duración (min)</label><input id="f_duracion_estimada_min" type="number" value="${t.duracion_estimada_min ?? 60}"></div>
+            </div>
+            <div class="field"><label>Nombre</label><input id="f_nombre" value="${esc(t.nombre)}"></div>
+            <div class="field"><label>Descripción</label><textarea id="f_descripcion">${esc(t.descripcion)}</textarea></div>
+            <div class="field-row">
+                <div class="field"><label>Precio visita (S/)</label><input id="f_precio_visita" type="number" step="0.01" value="${t.precio_visita ?? 50}"></div>
+            </div>
+            <div class="field field-check"><input type="checkbox" id="f_requiere_materiales" ${t.requiere_materiales?'checked':''}><label>Requiere materiales</label></div>
+            <div class="field field-check"><input type="checkbox" id="f_activo" ${t.activo!==false?'checked':''}><label>Activo</label></div>`;
+        abrirModal(editId?'Editar tipo':'Nuevo tipo');
+    }
+
+    function val(id){ const el=document.getElementById(id); return el?el.value:undefined; }
+    function chk(id){ const el=document.getElementById(id); return el?el.checked:undefined; }
+
+    async function guardar(){
+        let data;
+        if(modo==='categorias'){
+            data = { codigo:(val('f_codigo')||'').toUpperCase().trim(), nombre:val('f_nombre'), descripcion:val('f_descripcion'),
+                icono:val('f_icono'), color:val('f_color'), orden:parseInt(val('f_orden'))||0,
+                activo:chk('f_activo'), proximamente:chk('f_proximamente') };
+        } else {
+            data = { categoria_id:parseInt(val('f_categoria_id'))||null, codigo:(val('f_codigo')||'').toUpperCase().trim(), nombre:val('f_nombre'),
+                descripcion:val('f_descripcion'), precio_visita:parseFloat(val('f_precio_visita'))||50,
+                duracion_estimada_min:parseInt(val('f_duracion_estimada_min'))||60,
+                requiere_materiales:chk('f_requiere_materiales'), activo:chk('f_activo') };
+        }
+        try {
+            const opts = { method: editId?'PUT':'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) };
+            await api(`/${modo}${editId?'/'+editId:''}`, opts);
+            cerrarModal(); cargar();
+        } catch(e){ alert('Error al guardar: '+e.message); }
+    }
+
+    async function eliminar(entidad, id){
+        if(!confirm('¿Eliminar este registro?')) return;
+        try { await api(`/${entidad}/${id}`, {method:'DELETE'}); cargar(); }
+        catch(e){ alert('Error al eliminar: '+e.message); }
+    }
+
+    cargar();
+    </script>
+{% endblock %}

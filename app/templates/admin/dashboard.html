@@ -1,0 +1,72 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .kpi {
+        background: var(--am-panel, #111b21); border: 1px solid var(--am-border, #2a373f);
+        border-radius: 14px; padding: 20px; display: flex; align-items: center; gap: 16px;
+    }
+    .kpi .icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .kpi .value { font-size: 26px; font-weight: 800; color: var(--am-text, #e9edef); }
+    .kpi .label { font-size: 13px; color: var(--am-text-2, #8696a0); }
+
+    .quick-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .quick-card {
+        background: var(--am-panel, #111b21); border: 1px solid var(--am-border, #2a373f);
+        border-radius: 14px; padding: 20px; text-decoration: none; color: var(--am-text, #e9edef);
+        display: flex; align-items: center; gap: 14px; transition: transform .15s, border-color .15s;
+    }
+    .quick-card:hover { transform: translateY(-2px); border-color: var(--am-accent, #FFCD11); }
+    .quick-card i { font-size: 22px; color: var(--am-accent, #FFCD11); width: 28px; text-align: center; }
+    .quick-card .t { font-weight: 600; }
+    .quick-card .d { font-size: 12px; color: var(--am-text-2, #8696a0); }
+    .section-title { font-size: 14px; color: var(--am-text-2, #8696a0); text-transform: uppercase; letter-spacing: .05em; margin: 8px 0 14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="kpi-grid" id="kpiGrid">
+        <div class="kpi"><div class="icon" style="background:rgba(0,168,132,.15);color:#06cf9c;"><i class="fas fa-clipboard-list"></i></div>
+            <div><div class="value" id="kpiSolicitudes">—</div><div class="label">Solicitudes</div></div></div>
+        <div class="kpi"><div class="icon" style="background:rgba(255,205,17,.15);color:#FFCD11;"><i class="fas fa-hand-holding-dollar"></i></div>
+            <div><div class="value" id="kpiIngresos">—</div><div class="label">Ingresos MITA</div></div></div>
+        <div class="kpi"><div class="icon" style="background:rgba(83,189,235,.15);color:#53bdeb;"><i class="fas fa-users"></i></div>
+            <div><div class="value" id="kpiCategorias">—</div><div class="label">Categorías</div></div></div>
+        <div class="kpi"><div class="icon" style="background:rgba(239,68,68,.15);color:#f87171;"><i class="fas fa-check-circle"></i></div>
+            <div><div class="value" id="kpiCompletados">—</div><div class="label">Completados</div></div></div>
+    </div>
+
+    <div class="section-title">Accesos rápidos</div>
+    <div class="quick-grid">
+        <a class="quick-card" href="/admin/catalogo"><i class="fas fa-tools"></i><div><div class="t">Servicios</div><div class="d">Categorías y tipos</div></div></a>
+        <a class="quick-card" href="/admin/personal"><i class="fas fa-users"></i><div><div class="t">Personal</div><div class="d">Técnicos y secretarias</div></div></a>
+        <a class="quick-card" href="/admin/distritos"><i class="fas fa-map-marker-alt"></i><div><div class="t">Distritos</div><div class="d">Cobertura</div></div></a>
+        <a class="quick-card" href="/admin/configuraciones"><i class="fas fa-cog"></i><div><div class="t">Configuraciones</div><div class="d">Tarifas y parámetros</div></div></a>
+        <a class="quick-card" href="/cliente/chat"><i class="fas fa-comments"></i><div><div class="t">Chat</div><div class="d">Conversaciones</div></div></a>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Intenta poblar KPIs desde la API (si la BD está disponible)
+    (async () => {
+        try {
+            const r = await fetch('/api/v1/servicios/estadisticas/resumen');
+            if (r.ok) {
+                const d = await r.json();
+                document.getElementById('kpiSolicitudes').textContent = d.total_solicitudes ?? 0;
+                document.getElementById('kpiIngresos').textContent = 'S/ ' + (d.ingresos_mita ?? 0);
+                document.getElementById('kpiCompletados').textContent = d.completados ?? 0;
+            }
+        } catch (e) { /* BD no disponible: se dejan en — */ }
+        try {
+            const rc = await fetch('/api/v1/admin/categorias');
+            if (rc.ok) { const dc = await rc.json(); document.getElementById('kpiCategorias').textContent = (dc.items || []).length; }
+        } catch (e) {}
+    })();
+</script>
+{% endblock %}

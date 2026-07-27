@@ -1,0 +1,25 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Resetear Clave{% endblock %}
+{% block page_title %}Resetear Clave{% endblock %}
+
+{% block content %}
+<div class="am-modal" style="max-width:460px; margin:40px auto;">
+    <div class="am-modal-head"><h3><i class="fas fa-key" style="color:var(--am-accent)"></i> Resetear clave</h3></div>
+    <div class="am-modal-body">
+        <p style="color:var(--am-text-2); margin-bottom:16px;">
+            Vas a resetear la clave del usuario con DNI <b style="color:var(--am-text)">{{ dni }}</b>.
+        </p>
+        <div class="am-note" style="display:block;">
+            <i class="fas fa-triangle-exclamation"></i>
+            La nueva clave será <b>su propio DNI</b> y se le pedirá cambiarla en el próximo ingreso.
+        </div>
+    </div>
+    <div class="am-modal-foot">
+        <a href="/admin/usuarios" class="btn btn-secondary">Cancelar</a>
+        <form method="POST" action="/admin/reset-clave/{{ dni }}" style="display:inline;">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Confirmar reset</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

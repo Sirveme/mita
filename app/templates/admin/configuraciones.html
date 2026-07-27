@@ -1,0 +1,171 @@
+{% extends "admin/layout.html" %}
+{% block title %}Configuraciones{% endblock %}
+{% block page_title %}Configuraciones del Sistema{% endblock %}
+
+{% block content %}
+    <div class="am-wrap" style="padding:0;">
+
+        <div class="am-tabs">
+            <button class="am-tab active" data-tab="config" onclick="cambiarTab('config')">Parámetros generales</button>
+            <button class="am-tab" data-tab="tarifas" onclick="cambiarTab('tarifas')">Tarifas</button>
+        </div>
+
+        <!-- CONFIG GENERAL -->
+        <div id="tab-config">
+            <div class="am-toolbar">
+                <button class="btn btn-primary" onclick="abrirModalConfig()"><i class="fas fa-plus"></i> Nuevo parámetro</button>
+            </div>
+            <table class="am-table">
+                <thead><tr><th>Clave</th><th>Valor</th><th>Tipo</th><th>Categoría</th><th></th></tr></thead>
+                <tbody id="tbodyConfig"><tr><td colspan="5" class="am-empty">Cargando…</td></tr></tbody>
+            </table>
+        </div>
+
+        <!-- TARIFAS -->
+        <div id="tab-tarifas" style="display:none;">
+            <div class="am-toolbar">
+                <button class="btn btn-primary" onclick="abrirModalTarifa()"><i class="fas fa-plus"></i> Nueva tarifa</button>
+            </div>
+            <table class="am-table">
+                <thead><tr><th>Visita</th><th>Comisión MITA</th><th>Pago técnico</th><th>Recargo urgente</th><th>Estado</th><th></th></tr></thead>
+                <tbody id="tbodyTarifas"><tr><td colspan="6" class="am-empty">Cargando…</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIG -->
+    <div class="am-modal-backdrop" id="modalConfig">
+        <div class="am-modal">
+            <div class="am-modal-head"><h3 id="tituloConfig">Parámetro</h3><button class="close" onclick="cerrar('modalConfig')">&times;</button></div>
+            <div class="am-modal-body">
+                <div class="field"><label>Clave</label><input id="c_clave" placeholder="visita_precio"></div>
+                <div class="field"><label>Valor</label><input id="c_valor"></div>
+                <div class="field-row">
+                    <div class="field"><label>Tipo</label><select id="c_tipo"><option>string</option><option>number</option><option>boolean</option><option>json</option></select></div>
+                    <div class="field"><label>Categoría</label><input id="c_categoria" placeholder="tarifas"></div>
+                </div>
+                <div class="field"><label>Descripción</label><input id="c_descripcion"></div>
+            </div>
+            <div class="am-modal-foot">
+                <button class="btn btn-secondary" onclick="cerrar('modalConfig')">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarConfig()"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TARIFA -->
+    <div class="am-modal-backdrop" id="modalTarifa">
+        <div class="am-modal">
+            <div class="am-modal-head"><h3 id="tituloTarifa">Tarifa</h3><button class="close" onclick="cerrar('modalTarifa')">&times;</button></div>
+            <div class="am-modal-body">
+                <div class="field-row">
+                    <div class="field"><label>Precio visita</label><input id="t_precio_visita" type="number" step="0.01" value="50"></div>
+                    <div class="field"><label>Comisión MITA</label><input id="t_comision_mita" type="number" step="0.01" value="15"></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Pago técnico</label><input id="t_pago_tecnico" type="number" step="0.01" value="35"></div>
+                    <div class="field"><label>Descuento máx (%)</label><input id="t_descuento_maximo" type="number" step="0.01" value="0"></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Recargo urgente</label><input id="t_recargo_urgente" type="number" step="0.01" value="0"></div>
+                    <div class="field"><label>Recargo nocturno</label><input id="t_recargo_nocturno" type="number" step="0.01" value="0"></div>
+                </div>
+                <div class="field field-check"><input type="checkbox" id="t_activo" checked><label>Activo</label></div>
+            </div>
+            <div class="am-modal-foot">
+                <button class="btn btn-secondary" onclick="cerrar('modalTarifa')">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarTarifa()"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+    const API = '/api/v1/admin';
+    function esc(s){ return String(s==null?'':s).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function cerrar(id){ document.getElementById(id).classList.remove('show'); }
+    function cambiarTab(t){
+        document.querySelectorAll('.am-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===t));
+        document.getElementById('tab-config').style.display = t==='config'?'block':'none';
+        document.getElementById('tab-tarifas').style.display = t==='tarifas'?'block':'none';
+    }
+
+    // ---- Config general ----
+    let editClave = null;
+    async function cargarConfig(){
+        const tb = document.getElementById('tbodyConfig');
+        try {
+            const r = await fetch(API+'/config'); if(!r.ok) throw new Error('HTTP '+r.status);
+            const items = (await r.json()).items || [];
+            if(!items.length){ tb.innerHTML = '<tr><td colspan="5" class="am-empty">Sin parámetros</td></tr>'; return; }
+            tb.innerHTML = items.map(c => `
+                <tr>
+                    <td><b>${esc(c.clave)}</b></td><td>${esc(c.valor)}</td><td>${esc(c.tipo)}</td><td>${esc(c.categoria)}</td>
+                    <td><button class="btn btn-secondary btn-sm" onclick='abrirModalConfig(${JSON.stringify(c)})'><i class="fas fa-pen"></i></button></td>
+                </tr>`).join('');
+        } catch(e){ tb.innerHTML = `<tr><td colspan="5" class="am-error">Error (¿BD?): ${e.message}</td></tr>`; }
+    }
+    function abrirModalConfig(c){
+        c = c || {}; editClave = c.clave || null;
+        document.getElementById('tituloConfig').textContent = editClave?'Editar parámetro':'Nuevo parámetro';
+        document.getElementById('c_clave').value = c.clave||''; document.getElementById('c_clave').disabled = !!editClave;
+        document.getElementById('c_valor').value = c.valor||'';
+        document.getElementById('c_tipo').value = c.tipo||'string';
+        document.getElementById('c_categoria').value = c.categoria||'';
+        document.getElementById('c_descripcion').value = c.descripcion||'';
+        document.getElementById('modalConfig').classList.add('show');
+    }
+    async function guardarConfig(){
+        const clave = document.getElementById('c_clave').value.trim();
+        if(!clave){ alert('La clave es obligatoria'); return; }
+        const data = { valor:document.getElementById('c_valor').value, tipo:document.getElementById('c_tipo').value,
+            categoria:document.getElementById('c_categoria').value, descripcion:document.getElementById('c_descripcion').value };
+        try { const r = await fetch(API+'/config/'+encodeURIComponent(clave), { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+            if(!r.ok) throw new Error('HTTP '+r.status); cerrar('modalConfig'); cargarConfig();
+        } catch(e){ alert('Error: '+e.message); }
+    }
+
+    // ---- Tarifas ----
+    let editTarifa = null;
+    async function cargarTarifas(){
+        const tb = document.getElementById('tbodyTarifas');
+        try {
+            const r = await fetch(API+'/tarifas'); if(!r.ok) throw new Error('HTTP '+r.status);
+            const items = (await r.json()).items || [];
+            if(!items.length){ tb.innerHTML = '<tr><td colspan="6" class="am-empty">Sin tarifas</td></tr>'; return; }
+            tb.innerHTML = items.map(t => `
+                <tr>
+                    <td>S/ ${t.precio_visita ?? 50}</td><td>S/ ${t.comision_mita ?? 15}</td><td>S/ ${t.pago_tecnico ?? 35}</td>
+                    <td>S/ ${t.recargo_urgente ?? 0}</td>
+                    <td>${t.activo?'<span class="badge badge-on">Activo</span>':'<span class="badge badge-off">Inactivo</span>'}</td>
+                    <td><button class="btn btn-secondary btn-sm" onclick='abrirModalTarifa(${JSON.stringify(t)})'><i class="fas fa-pen"></i></button></td>
+                </tr>`).join('');
+        } catch(e){ tb.innerHTML = `<tr><td colspan="6" class="am-error">Error (¿BD?): ${e.message}</td></tr>`; }
+    }
+    function abrirModalTarifa(t){
+        t = t || {}; editTarifa = t.id || null;
+        document.getElementById('tituloTarifa').textContent = editTarifa?'Editar tarifa':'Nueva tarifa';
+        document.getElementById('t_precio_visita').value = t.precio_visita ?? 50;
+        document.getElementById('t_comision_mita').value = t.comision_mita ?? 15;
+        document.getElementById('t_pago_tecnico').value = t.pago_tecnico ?? 35;
+        document.getElementById('t_descuento_maximo').value = t.descuento_maximo ?? 0;
+        document.getElementById('t_recargo_urgente').value = t.recargo_urgente ?? 0;
+        document.getElementById('t_recargo_nocturno').value = t.recargo_nocturno ?? 0;
+        document.getElementById('t_activo').checked = t.activo!==false;
+        document.getElementById('modalTarifa').classList.add('show');
+    }
+    async function guardarTarifa(){
+        const n = id => parseFloat(document.getElementById(id).value)||0;
+        const data = { precio_visita:n('t_precio_visita'), comision_mita:n('t_comision_mita'), pago_tecnico:n('t_pago_tecnico'),
+            descuento_maximo:n('t_descuento_maximo'), recargo_urgente:n('t_recargo_urgente'), recargo_nocturno:n('t_recargo_nocturno'),
+            activo: document.getElementById('t_activo').checked };
+        try { const r = await fetch(API+'/tarifas'+(editTarifa?'/'+editTarifa:''), { method: editTarifa?'PUT':'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+            if(!r.ok) throw new Error('HTTP '+r.status); cerrar('modalTarifa'); cargarTarifas();
+        } catch(e){ alert('Error: '+e.message); }
+    }
+
+    cargarConfig(); cargarTarifas();
+    </script>
+{% endblock %}

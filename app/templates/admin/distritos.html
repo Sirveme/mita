@@ -1,0 +1,149 @@
+{% extends "admin/layout.html" %}
+{% block title %}Distritos{% endblock %}
+{% block page_title %}Distritos y Cobertura{% endblock %}
+
+{% block content %}
+    <div class="am-wrap" style="padding:0;">
+        <div class="am-toolbar">
+            <button class="btn btn-primary" onclick="abrirModal()"><i class="fas fa-plus"></i> Nuevo distrito</button>
+            <input type="text" id="buscar" placeholder="Buscar distrito…" oninput="render()">
+            <select id="filtroZona" onchange="render()"><option value="">Todas las zonas</option>
+                <option>Lima Centro</option><option>Lima Norte</option><option>Lima Sur</option>
+                <option>Lima Este</option><option>Callao</option></select>
+        </div>
+        <table class="am-table">
+            <thead><tr><th>Nombre</th><th>Zona</th><th>Ubigeo</th><th>Centro (lat, lng)</th><th>Cobertura</th><th></th></tr></thead>
+            <tbody id="tbody"><tr><td colspan="6" class="am-empty">Cargando…</td></tr></tbody>
+        </table>
+    </div>
+
+    <div class="am-modal-backdrop" id="modalBackdrop">
+        <div class="am-modal">
+            <div class="am-modal-head"><h3 id="modalTitulo">Nuevo distrito</h3><button class="close" onclick="cerrarModal()">&times;</button></div>
+            <div class="am-modal-body">
+                <input type="hidden" id="f_ubigeo_id">
+                <div class="field">
+                    <label>Buscar distrito (ubigeo)</label>
+                    <div class="am-select-search">
+                        <input type="text" id="buscarUbigeo" autocomplete="off" placeholder="Escribe para buscar… (ej. Miraflores)" oninput="buscarUbigeos(this.value)">
+                        <div class="dropdown" id="dropdownUbigeos"></div>
+                    </div>
+                </div>
+                <div class="field"><label>Nombre</label><input id="f_nombre"></div>
+                <div class="field"><label>Zona</label>
+                    <select id="f_zona"><option>Lima Centro</option><option>Lima Norte</option><option>Lima Sur</option><option>Lima Este</option><option>Callao</option></select>
+                </div>
+                <div class="field"><label>Código Ubigeo</label><input id="f_codigo_ubigeo"></div>
+                <div class="field-row">
+                    <div class="field"><label>Centro Lat</label><input id="f_centro_lat" type="number" step="0.00000001"></div>
+                    <div class="field"><label>Centro Lng</label><input id="f_centro_lng" type="number" step="0.00000001"></div>
+                </div>
+                <div class="field field-check"><input type="checkbox" id="f_activo" checked><label>Cobertura activa</label></div>
+            </div>
+            <div class="am-modal-foot">
+                <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardar()"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+    const API = '/api/v1/admin/distritos';
+    let items = [], editId = null;
+    let ubigeos = [], tBusqueda = null;
+    function esc(s){ return String(s==null?'':s).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // ---- Buscador de ubigeos ----
+    async function cargarUbigeos(){
+        try { const r = await fetch('/api/v1/admin/ubigeos'); if(r.ok) ubigeos = await r.json(); }
+        catch(e){ console.warn('Ubigeos no disponibles:', e.message); }
+    }
+    function buscarUbigeos(q){
+        clearTimeout(tBusqueda);
+        const dd = document.getElementById('dropdownUbigeos');
+        if(!q || q.length < 2){ dd.classList.remove('show'); return; }
+        tBusqueda = setTimeout(() => {
+            const res = ubigeos.filter(u =>
+                u.distrito.toLowerCase().includes(q.toLowerCase()) ||
+                u.provincia.toLowerCase().includes(q.toLowerCase())).slice(0, 10);
+            dd.innerHTML = res.length
+                ? res.map(u => `<div class="dropdown-item" onclick="seleccionarUbigeo(${u.id},'${esc(u.distrito)}','${esc(u.provincia)}','${esc(u.departamento)}','${u.codigo}')">
+                        <strong>${esc(u.distrito)}</strong><div class="distrito-info">${esc(u.provincia)}, ${esc(u.departamento)} (${u.codigo})</div></div>`).join('')
+                : '<div class="dropdown-item">Sin resultados</div>';
+            dd.classList.add('show');
+        }, 250);
+    }
+    function seleccionarUbigeo(id, distrito, provincia, departamento, codigo){
+        document.getElementById('f_ubigeo_id').value = id;
+        document.getElementById('f_nombre').value = distrito;
+        document.getElementById('f_codigo_ubigeo').value = codigo;
+        document.getElementById('buscarUbigeo').value = distrito;
+        if(departamento === 'CALLAO') document.getElementById('f_zona').value = 'Callao';
+        document.getElementById('dropdownUbigeos').classList.remove('show');
+    }
+    window.buscarUbigeos = buscarUbigeos;
+    window.seleccionarUbigeo = seleccionarUbigeo;
+    document.addEventListener('click', e => {
+        if(!e.target.closest('.am-select-search')) document.getElementById('dropdownUbigeos')?.classList.remove('show');
+    });
+    async function api(path, opts){ const r = await fetch(API+path, opts); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
+
+    async function cargar(){
+        try { const d = await api(''); items = d.items || []; render(); }
+        catch(e){ document.getElementById('tbody').innerHTML = `<tr><td colspan="6" class="am-error">Error al cargar (¿BD?): ${e.message}</td></tr>`; }
+    }
+    function render(){
+        const q = (document.getElementById('buscar').value||'').toLowerCase();
+        const z = document.getElementById('filtroZona').value;
+        let lista = items.filter(d => (d.nombre||'').toLowerCase().includes(q) && (!z || d.zona===z));
+        const tb = document.getElementById('tbody');
+        if(!lista.length){ tb.innerHTML = '<tr><td colspan="6" class="am-empty">Sin distritos</td></tr>'; return; }
+        tb.innerHTML = lista.map(d => `
+            <tr>
+                <td><b>${esc(d.nombre)}</b></td>
+                <td>${esc(d.zona)}</td>
+                <td>${esc(d.codigo_ubigeo)}</td>
+                <td>${d.centro_lat ?? '—'}, ${d.centro_lng ?? '—'}</td>
+                <td>${d.activo?'<span class="badge badge-on">Activa</span>':'<span class="badge badge-off">Inactiva</span>'}</td>
+                <td><div class="acts">
+                    <button class="btn btn-secondary btn-sm" onclick='abrirModal(${JSON.stringify(d)})'><i class="fas fa-pen"></i></button>
+                    <button class="btn btn-danger btn-sm" onclick="eliminar(${d.id})"><i class="fas fa-trash"></i></button>
+                </div></td>
+            </tr>`).join('');
+    }
+    function abrirModal(d){
+        editId = d?d.id:null; d = d || {};
+        document.getElementById('modalTitulo').textContent = editId?'Editar distrito':'Nuevo distrito';
+        document.getElementById('f_nombre').value = d.nombre||'';
+        document.getElementById('f_zona').value = d.zona||'Lima Centro';
+        document.getElementById('f_codigo_ubigeo').value = d.codigo_ubigeo||'';
+        document.getElementById('f_centro_lat').value = d.centro_lat ?? '';
+        document.getElementById('f_centro_lng').value = d.centro_lng ?? '';
+        document.getElementById('f_activo').checked = d.activo!==false;
+        document.getElementById('f_ubigeo_id').value = d.ubigeo_id || '';
+        document.getElementById('buscarUbigeo').value = '';
+        document.getElementById('dropdownUbigeos').classList.remove('show');
+        document.getElementById('modalBackdrop').classList.add('show');
+    }
+    function cerrarModal(){ document.getElementById('modalBackdrop').classList.remove('show'); }
+    function v(id){ return document.getElementById(id).value; }
+    async function guardar(){
+        const data = { nombre:v('f_nombre'), zona:v('f_zona'), codigo_ubigeo:v('f_codigo_ubigeo'),
+            ubigeo_id: v('f_ubigeo_id')?parseInt(v('f_ubigeo_id')):null,
+            centro_lat: v('f_centro_lat')?parseFloat(v('f_centro_lat')):null,
+            centro_lng: v('f_centro_lng')?parseFloat(v('f_centro_lng')):null,
+            activo: document.getElementById('f_activo').checked };
+        try { await api(editId?'/'+editId:'', { method: editId?'PUT':'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+            cerrarModal(); cargar(); } catch(e){ alert('Error: '+e.message); }
+    }
+    async function eliminar(id){
+        const ok = window.MitaAlert ? await MitaAlert.confirmDelete('este distrito') : confirm('¿Eliminar distrito?');
+        if(!ok) return;
+        try { await api('/'+id, {method:'DELETE'}); cargar(); } catch(e){ alert('Error: '+e.message); } }
+    cargar();
+    cargarUbigeos();
+    </script>
+{% endblock %}
