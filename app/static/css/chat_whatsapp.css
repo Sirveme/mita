@@ -1,0 +1,471 @@
+/**
+ * Chat MITA - Estilo WhatsApp Web exacto
+ * Dark theme
+ */
+
+:root {
+    --wa-bg-app: #111b21;
+    --wa-bg-panel: #0b141a;
+    --wa-bg-chat: #0b141a;
+    --wa-bg-input: #1e2a30;
+    --wa-bg-sent: #005c4b;
+    --wa-bg-received: #1f2c33;
+    --wa-border: #2a373f;
+    --wa-text-primary: #e9edef;
+    --wa-text-secondary: #8696a0;
+    --wa-accent: #00a884;
+    --wa-header: #1f2c33;
+}
+
+/* Patrón de fondo tipo WhatsApp */
+.chat-bg-pattern {
+    background-color: var(--wa-bg-chat);
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23182229' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Container principal 2 columnas */
+.whatsapp-container {
+    display: flex;
+    height: 100vh;
+    background: var(--wa-bg-app);
+}
+
+/* Panel izquierdo - Lista de chats */
+.chat-list-panel {
+    width: 30%;
+    min-width: 300px;
+    max-width: 420px;
+    background: var(--wa-bg-panel);
+    border-right: 1px solid var(--wa-border);
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-list-header {
+    height: 60px;
+    background: var(--wa-header);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+}
+
+.chat-list-header .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--wa-text-secondary);
+}
+
+.chat-list-header .header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.chat-list-header .header-actions button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--wa-text-secondary);
+    cursor: pointer;
+}
+
+.chat-list-header .header-actions button:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Buscador */
+.chat-search {
+    padding: 8px 12px;
+    background: var(--wa-bg-panel);
+}
+
+.chat-search input {
+    width: 100%;
+    padding: 8px 32px 8px 40px;
+    border-radius: 8px;
+    border: none;
+    background: var(--wa-bg-input);
+    color: var(--wa-text-primary);
+    font-size: 14px;
+}
+
+.chat-search input::placeholder {
+    color: var(--wa-text-secondary);
+}
+
+/* Lista de conversaciones */
+.chat-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.chat-list-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--wa-border);
+    transition: background 0.15s;
+}
+
+.chat-list-item:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.chat-list-item.active {
+    background: var(--wa-bg-input);
+}
+
+.chat-list-item .avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--wa-text-secondary);
+    margin-right: 12px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: var(--wa-bg-panel);
+}
+
+.chat-list-item .chat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.chat-list-item .chat-info-top {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.chat-list-item .chat-name {
+    font-size: 16px;
+    color: var(--wa-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-list-item .chat-time {
+    font-size: 12px;
+    color: var(--wa-text-secondary);
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.chat-list-item .chat-preview {
+    font-size: 14px;
+    color: var(--wa-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.chat-list-item .unread-badge {
+    background: var(--wa-accent);
+    color: var(--wa-bg-panel);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: auto;
+}
+
+/* Panel derecho - Conversación */
+.chat-conversation-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--wa-bg-chat);
+}
+
+/* Header conversación */
+.conversation-header {
+    height: 60px;
+    background: var(--wa-header);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--wa-border);
+}
+
+.conversation-header .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--wa-text-secondary);
+    margin-right: 12px;
+}
+
+.conversation-header .contact-info {
+    flex: 1;
+}
+
+.conversation-header .contact-name {
+    font-size: 16px;
+    color: var(--wa-text-primary);
+}
+
+.conversation-header .contact-status {
+    font-size: 13px;
+    color: var(--wa-text-secondary);
+}
+
+.conversation-header .header-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.conversation-header .header-actions button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--wa-text-secondary);
+    cursor: pointer;
+}
+
+/* Área de mensajes */
+.conversation-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 60px;
+}
+
+/* Mensaje individual */
+.wa-message {
+    max-width: 65%;
+    margin-bottom: 2px;
+    display: flex;
+    flex-direction: column;
+}
+
+.wa-message.sent {
+    margin-left: auto;
+}
+
+.wa-message.received {
+    margin-right: auto;
+}
+
+.wa-message .bubble {
+    padding: 6px 8px 8px 9px;
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+}
+
+.wa-message.sent .bubble {
+    background: var(--wa-bg-sent);
+    border-top-right-radius: 0;
+}
+
+.wa-message.received .bubble {
+    background: var(--wa-bg-received);
+    border-top-left-radius: 0;
+}
+
+.wa-message .sender-name {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--wa-accent);
+    margin-bottom: 2px;
+}
+
+.wa-message .text {
+    font-size: 14.2px;
+    line-height: 19px;
+    color: var(--wa-text-primary);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.wa-message .meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.wa-message .time {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+}
+
+.wa-message .status {
+    font-size: 14px;
+    color: rgba(255,255,255,0.6);
+}
+
+.wa-message .status.read {
+    color: #53bdeb;
+}
+
+/* Mensaje de sistema */
+.wa-message.system {
+    max-width: none;
+    margin: 8px auto;
+}
+
+.wa-message.system .bubble {
+    background: rgba(255,255,255,0.1);
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: var(--wa-text-secondary);
+    text-align: center;
+}
+
+/* Input área */
+.conversation-input {
+    padding: 10px 16px;
+    background: var(--wa-header);
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.conversation-input button.icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--wa-text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.conversation-input button.icon-btn:hover {
+    color: var(--wa-text-primary);
+}
+
+.conversation-input .input-wrapper {
+    flex: 1;
+    background: var(--wa-bg-input);
+    border-radius: 8px;
+    padding: 9px 12px;
+    display: flex;
+    align-items: center;
+}
+
+.conversation-input textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--wa-text-primary);
+    font-size: 15px;
+    resize: none;
+    max-height: 100px;
+    line-height: 1.4;
+}
+
+.conversation-input textarea::placeholder {
+    color: var(--wa-text-secondary);
+}
+
+.conversation-input button.send-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--wa-accent);
+    color: var(--wa-bg-panel);
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.conversation-input button.send-btn:hover {
+    background: #06cf9c;
+}
+
+/* Typing indicator */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+}
+
+.typing-indicator .dots {
+    display: flex;
+    gap: 3px;
+}
+
+.typing-indicator .dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--wa-text-secondary);
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-indicator .dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator .dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% { opacity: 0.3; }
+    40% { opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .chat-list-panel {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+        max-width: none;
+        z-index: 10;
+        transform: translateX(-100%);
+        transition: transform 0.3s;
+    }
+
+    .chat-list-panel.visible {
+        transform: translateX(0);
+    }
+
+    .conversation-messages {
+        padding: 16px;
+    }
+
+    .wa-message {
+        max-width: 85%;
+    }
+}
+
+/* ============================================
+   zMita-7 - WATERMARK MITA - FONDO DEL CHAT
+   ============================================ */
+.chat-bg-pattern, .conversation-messages, #chat-messages, #messagesContainer {
+    background-color: #0b141a;
+    position: relative;
+}
+.chat-bg-pattern::before, .conversation-messages::before, #chat-messages::before, #messagesContainer::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none; opacity: 0.03;
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='100' y='100' font-family='Arial, sans-serif' font-size='48' font-weight='bold' fill='%23FFFFFF' text-anchor='middle' dominant-baseline='middle' transform='rotate(-30 100 100)'%3EMITA%3C/text%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='100' y='100' font-family='Arial, sans-serif' font-size='48' font-weight='bold' fill='%23FFFFFF' text-anchor='middle' dominant-baseline='middle' transform='rotate(30 100 100)'%3EMITA%3C/text%3E%3C/svg%3E");
+    background-size: 300px 300px, 300px 300px;
+    background-position: 0 0, 150px 150px;
+    z-index: 0;
+}
+.wa-message { position: relative; z-index: 1; }

@@ -1,0 +1,202 @@
+/* ============================================
+   MITA - Estilos base para módulos admin (dark)
+   Usado por catalogo_servicios / personal / distritos / configuraciones
+   ============================================ */
+:root {
+    --am-bg: #0b141a;
+    --am-panel: #111b21;
+    --am-panel-2: #1e2a30;
+    --am-border: #2a373f;
+    --am-text: #e9edef;
+    --am-text-2: #8696a0;
+    --am-accent: #FFCD11;
+    --am-accent-2: #00a884;
+    --am-danger: #ef4444;
+}
+
+* { box-sizing: border-box; }
+body.admin-mita {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--am-bg);
+    color: var(--am-text);
+}
+
+.am-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px; background: var(--am-panel); border-bottom: 1px solid var(--am-border);
+    position: sticky; top: 0; z-index: 5;
+}
+.am-header h1 { font-size: 20px; margin: 0; display: flex; align-items: center; gap: 10px; }
+.am-header h1 i { color: var(--am-accent); }
+.am-header .am-sub { color: var(--am-text-2); font-size: 13px; }
+
+.am-wrap { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+.am-toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.am-toolbar input[type="text"], .am-toolbar select {
+    background: var(--am-panel-2); border: 1px solid var(--am-border); color: var(--am-text);
+    padding: 9px 12px; border-radius: 8px; font-size: 14px; min-width: 200px;
+}
+
+.am-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.am-tab {
+    padding: 8px 16px; border-radius: 20px; border: 1px solid var(--am-border);
+    background: transparent; color: var(--am-text-2); cursor: pointer; font-size: 14px;
+}
+.am-tab.active { background: var(--am-accent); color: #0a0e1a; border-color: var(--am-accent); font-weight: 600; }
+
+.btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 8px;
+    border: none; cursor: pointer; font-size: 14px; font-weight: 600; text-decoration: none;
+}
+.btn-primary { background: var(--am-accent); color: #0a0e1a; }
+.btn-secondary { background: var(--am-panel-2); color: var(--am-text); border: 1px solid var(--am-border); }
+.btn-danger { background: transparent; color: var(--am-danger); border: 1px solid var(--am-danger); }
+.btn-sm { padding: 5px 10px; font-size: 13px; }
+.btn:hover { filter: brightness(1.08); }
+
+table.am-table { width: 100%; border-collapse: collapse; background: var(--am-panel); border-radius: 10px; overflow: hidden; }
+.am-table th, .am-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--am-border); font-size: 14px; }
+.am-table th { background: var(--am-panel-2); color: var(--am-text-2); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.am-table tr:hover td { background: rgba(255,255,255,0.03); }
+.am-table td .acts { display: flex; gap: 8px; }
+
+.badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.badge-on { background: rgba(0,168,132,0.2); color: #06cf9c; }
+.badge-off { background: rgba(239,68,68,0.15); color: #f87171; }
+.badge-soon { background: rgba(255,205,17,0.15); color: var(--am-accent); }
+.dot-color { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
+
+.am-empty, .am-error { text-align: center; color: var(--am-text-2); padding: 40px; }
+.am-error { color: #f87171; }
+
+/* Modal */
+.am-modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none;
+    align-items: center; justify-content: center; z-index: 100; padding: 16px;
+}
+.am-modal-backdrop.show { display: flex; }
+.am-modal {
+    background: var(--am-panel); border: 1px solid var(--am-border); border-radius: 14px;
+    width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+}
+.am-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--am-border); }
+.am-modal-head h3 { margin: 0; font-size: 17px; }
+.am-modal-head .close { background: none; border: none; color: var(--am-text-2); font-size: 20px; cursor: pointer; }
+.am-modal-body { padding: 20px; }
+.am-modal-foot { padding: 16px 20px; border-top: 1px solid var(--am-border); display: flex; justify-content: flex-end; gap: 10px; }
+
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 13px; color: var(--am-text-2); margin-bottom: 6px; }
+.field input, .field select, .field textarea {
+    width: 100%; background: var(--am-panel-2); border: 1px solid var(--am-border); color: var(--am-text);
+    padding: 9px 12px; border-radius: 8px; font-size: 14px;
+}
+.field textarea { resize: vertical; min-height: 60px; }
+.field-row { display: flex; gap: 12px; }
+.field-row .field { flex: 1; }
+.field-check { display: flex; align-items: center; gap: 8px; }
+.field-check input { width: auto; }
+
+.am-note { background: rgba(255,205,17,0.08); border: 1px solid rgba(255,205,17,0.3); color: var(--am-accent);
+    padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+
+/* ============================================
+   zMita-6 - FIXES DE LEGIBILIDAD
+   Refuerzo para clases propias (.am-*) y compatibilidad con clases tipo Bootstrap
+   ============================================ */
+
+/* Selects/options legibles (algunos navegadores pintan el texto oscuro) */
+.am-modal select option, .field select option { color: #000; }
+
+/* Banner informativo oculto por defecto (se elimina de los templates) */
+.info-banner { display: none !important; }
+
+/* Compatibilidad con clases Bootstrap por si algún template las usa */
+.admin-table th, .admin-table td { color: var(--am-text, #ffffff) !important; }
+.admin-table th { background: var(--am-panel-2, #1e2a30) !important; color: var(--am-text-2, #8696a0) !important; }
+.badge.active, .badge.activo { background: #22c55e !important; color: #000 !important; }
+.badge.inactive, .badge.inactivo { background: #ef4444 !important; color: #fff !important; }
+.modal-content { background: var(--am-panel, #111b21) !important; color: var(--am-text, #fff) !important; border: 1px solid var(--am-border, #2a373f) !important; }
+.modal-header, .modal-footer { background: var(--am-bg, #0b141a) !important; border-color: var(--am-border, #2a373f) !important; }
+.modal-header h5, .modal-title, .modal-body { color: var(--am-text, #fff) !important; }
+.modal-body label { color: var(--am-text-2, #8696a0) !important; }
+.modal-body input, .modal-body select, .modal-body textarea {
+    background: var(--am-bg, #0b141a) !important; color: var(--am-text, #fff) !important; border: 1px solid var(--am-border, #2a373f) !important; }
+.nav-tabs .nav-link { color: var(--am-text-2, #8696a0) !important; background: transparent !important; border: none !important; }
+.nav-tabs .nav-link.active { color: var(--am-accent, #FFCD11) !important; border-bottom: 2px solid var(--am-accent, #FFCD11) !important; }
+
+/* ============================================
+   zMita-7 - FIX DEFINITIVO - TEXTOS LEGIBLES
+   Forzar color claro en TODOS los elementos (admin)
+   ============================================ */
+.am-card, .am-modal, .am-table, .admin-content, .modal-content, [class*="admin"], [class*="am-"] { color: #e0e0e0 !important; }
+
+.am-modal-header, .modal-header { background: #0a0a0f !important; border-bottom: 1px solid #2a2a3a !important; }
+.am-modal-header h3, .am-modal-header h4, .am-modal-header h5, .am-modal-title,
+.modal-header h3, .modal-header h4, .modal-header h5, .modal-header .modal-title, .modal-title { color: #ffffff !important; margin: 0; }
+.am-modal-body, .modal-body { background: #111118 !important; color: #e0e0e0 !important; }
+.am-modal-footer, .modal-footer { background: #0a0a0f !important; border-top: 1px solid #2a2a3a !important; }
+
+.am-modal label, .modal-body label, .am-form-group label, .form-group label, label { color: #888888 !important; display: block; margin-bottom: 6px; font-size: 13px; }
+.am-modal input, .am-modal select, .am-modal textarea, .modal-body input, .modal-body select, .modal-body textarea, .am-input, .form-control {
+    background: #0a0a0f !important; color: #ffffff !important; border: 1px solid #2a2a3a !important; padding: 10px 12px; border-radius: 6px; width: 100%; }
+.am-modal input:focus, .am-modal select:focus, .am-modal textarea:focus, .modal-body input:focus, .modal-body select:focus, .modal-body textarea:focus {
+    border-color: #FFCD11 !important; outline: none !important; box-shadow: 0 0 0 2px rgba(255, 205, 17, 0.2) !important; }
+.am-modal input::placeholder, .modal-body input::placeholder { color: #555555 !important; }
+
+select option { background: #111118 !important; color: #ffffff !important; padding: 8px; }
+select optgroup { background: #0a0a0f !important; color: #FFCD11 !important; }
+
+.am-table, .admin-table, table { color: #e0e0e0 !important; }
+.am-table th, .admin-table th, table th { background: #0a0a0f !important; color: #888888 !important; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; padding: 12px 16px !important; border-bottom: 1px solid #2a2a3a !important; }
+.am-table td, .admin-table td, table td { color: #e0e0e0 !important; padding: 12px 16px !important; border-bottom: 1px solid #1a1a24 !important; }
+.am-table tr:hover td, .admin-table tr:hover td, table tr:hover td { background: rgba(255, 255, 255, 0.03) !important; }
+
+h1, h2, h3, h4, h5, h6 { color: #ffffff !important; }
+.am-section-title, .section-title, .card-title { color: #ffffff !important; font-weight: 600; }
+.am-section-subtitle, .section-subtitle, .card-subtitle, .text-muted { color: #888888 !important; }
+
+.am-tabs .am-tab, .nav-tabs .nav-link { color: #888888 !important; background: transparent !important; border: none !important; padding: 12px 20px; cursor: pointer; }
+.am-tabs .am-tab.active, .nav-tabs .nav-link.active { color: #FFCD11 !important; border-bottom: 2px solid #FFCD11 !important; }
+.am-tabs .am-tab:hover, .nav-tabs .nav-link:hover { color: #ffffff !important; }
+
+.am-badge, .badge { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+.am-badge-success, .badge-success, .badge.activo, .badge.active { background: #22c55e !important; color: #000000 !important; }
+.am-badge-danger, .badge-danger, .badge.inactivo, .badge.inactive { background: #ef4444 !important; color: #ffffff !important; }
+.am-badge-warning, .badge-warning { background: #f59e0b !important; color: #000000 !important; }
+.am-badge-info, .badge-info { background: #3b82f6 !important; color: #ffffff !important; }
+
+.am-btn-primary, .btn-primary { background: #FFCD11 !important; color: #000000 !important; }
+.am-btn-primary:hover, .btn-primary:hover { background: #e6b800 !important; }
+.am-btn-secondary, .btn-secondary { background: transparent !important; color: #888888 !important; border: 1px solid #2a2a3a !important; }
+.am-btn-secondary:hover, .btn-secondary:hover { color: #ffffff !important; border-color: #3a3a4a !important; }
+.am-btn-danger, .btn-danger { background: #ef4444 !important; color: #ffffff !important; }
+
+.am-modal-close, .btn-close, .close { color: #888888 !important; background: transparent !important; border: none; font-size: 24px; cursor: pointer; opacity: 0.7; }
+.am-modal-close:hover, .btn-close:hover, .close:hover { color: #ffffff !important; opacity: 1; }
+
+input[type="checkbox"], input[type="radio"] { width: auto !important; margin-right: 8px; }
+
+.am-search, .search-box input { background: #0a0a0f !important; color: #ffffff !important; border: 1px solid #2a2a3a !important; padding: 10px 16px; border-radius: 8px; width: 100%; }
+.am-search::placeholder, .search-box input::placeholder { color: #555555 !important; }
+
+/* Buscador tipo dropdown (ubigeos) */
+.am-select-search { position: relative; }
+.am-select-search input { padding-right: 40px; }
+.am-select-search .dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #111118; border: 1px solid #2a2a3a; border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 1000; display: none; }
+.am-select-search .dropdown.show { display: block; }
+.am-select-search .dropdown-item { padding: 10px 16px; cursor: pointer; color: #e0e0e0; border-bottom: 1px solid #1a1a24; }
+.am-select-search .dropdown-item:hover { background: rgba(255, 205, 17, 0.1); color: #FFCD11; }
+.am-select-search .dropdown-item:last-child { border-bottom: none; }
+.am-select-search .dropdown-item .distrito-info { font-size: 12px; color: #666666; }
+
+/* ============================================
+   zMita-8 - Botones de acción en tablas
+   ============================================ */
+.am-table-actions { white-space: nowrap; }
+.am-btn-icon { width: 32px; height: 32px; border-radius: 6px; border: none; background: transparent; color: var(--am-text-2, #8696a0); cursor: pointer; transition: all 0.2s; }
+.am-btn-icon:hover { background: rgba(255,255,255,0.1); color: var(--am-text, #fff); }
+.am-btn-icon.danger:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.am-form-group { margin-bottom: 16px; }
