@@ -86,6 +86,10 @@ class Personal(Base):
     cci = Column(String(25))
     tipo_cuenta = Column(String(20))  # ahorro, corriente
 
+    # Tributario (recibo por honorarios / 4ta categoría)
+    ruc = Column(String(11))
+    emite_recibo_honorarios = Column(Boolean, default=False)  # emite RxH (4ta)
+
     # Meta
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -236,6 +240,9 @@ class Distrito(Base):
     # Centro geográfico aproximado
     centro_lat = Column(Numeric(10, 8))
     centro_lng = Column(Numeric(11, 8))
+
+    # Referencia opcional al catálogo de ubigeos (zMita-6)
+    ubigeo_id = Column(Integer, ForeignKey("ubigeos.id"))
 
     personal = relationship("Personal", back_populates="distrito")
 
