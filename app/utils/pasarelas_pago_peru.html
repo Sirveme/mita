@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparativa de Pasarelas de Pago - Perú | MITA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Dark Theme Colors */
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-card: #242939;
+            --bg-hover: #2d3348;
+            
+            /* Text Colors */
+            --text-primary: #ffffff;
+            --text-secondary: #b3b8c2;
+            --text-muted: #6b7280;
+            
+            /* Accent Colors */
+            --accent-yellow: #FFCD11;
+            --accent-green: #10b981;
+            --accent-blue: #3b82f6;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            
+            /* Borders */
+            --border-color: #374151;
+            
+            /* Shadows */
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+            padding: 3rem 2rem;
+            text-align: center;
+            border-bottom: 3px solid var(--accent-yellow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 205, 17, 0.05) 0%, transparent 70%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-yellow) 0%, #fbbf24 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .header .date {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--accent-yellow);
+            font-size: 1.5rem;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-yellow) 0%, #fbbf24 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--accent-yellow);
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--bg-hover);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .card-title {
+            flex: 1;
+        }
+
+        .card-title h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-title .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--accent-green);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .card-title .badge.recommended {
+            background: var(--accent-yellow);
+            color: var(--bg-primary);
+        }
+
+        .card-title .badge.premium {
+            background: var(--accent-purple);
+        }
+
+        .card-content {
+            margin-bottom: 1rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .info-value {
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .info-value.highlight {
+            color: var(--accent-yellow);
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .pros, .cons {
+            padding: 1rem;
+            background: var(--bg-hover);
+            border-radius: 8px;
+        }
+
+        .pros h4 {
+            color: var(--accent-green);
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .cons h4 {
+            color: var(--accent-red);
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .pros ul, .cons ul {
+            list-style: none;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .pros ul li::before {
+            content: '✓ ';
+            color: var(--accent-green);
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .cons ul li::before {
+            content: '✗ ';
+            color: var(--accent-red);
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        /* Comparison Table */
+        .comparison-table-wrapper {
+            overflow-x: auto;
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th {
+            background: var(--bg-hover);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--accent-yellow);
+        }
+
+        .comparison-table th:first-child {
+            border-top-left-radius: 8px;
+        }
+
+        .comparison-table th:last-child {
+            border-top-right-radius: 8px;
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table tbody tr:hover {
+            background: var(--bg-hover);
+        }
+
+        .comparison-table .check-icon {
+            color: var(--accent-green);
+            font-size: 1.2rem;
+        }
+
+        .comparison-table .cross-icon {
+            color: var(--accent-red);
+            font-size: 1.2rem;
+        }
+
+        /* Calculator Section */
+        .calculator {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .calculator-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .calculator-input label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .calculator-input input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-hover);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .calculator-input input:focus {
+            outline: none;
+            border-color: var(--accent-yellow);
+            box-shadow: 0 0 0 3px rgba(255, 205, 17, 0.1);
+        }
+
+        .calculator-results {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .result-card {
+            background: var(--bg-hover);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-yellow);
+        }
+
+        .result-card.winner {
+            border-left-color: var(--accent-green);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, var(--bg-hover) 100%);
+        }
+
+        .result-card h4 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .result-card .amount {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-yellow);
+        }
+
+        .result-card .detail {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Recommendation Box */
+        .recommendation {
+            background: linear-gradient(135deg, rgba(255, 205, 17, 0.1) 0%, transparent 100%);
+            border: 2px solid var(--accent-yellow);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .recommendation-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .recommendation-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--accent-yellow);
+            color: var(--bg-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .recommendation h3 {
+            font-size: 1.5rem;
+        }
+
+        .recommendation-content {
+            padding-left: 76px;
+        }
+
+        .recommendation-phases {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .phase {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .phase-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+            color: var(--accent-yellow);
+        }
+
+        .phase-content ul {
+            list-style: none;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .phase-content li {
+            padding: 0.25rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .phase-content li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-yellow);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            text-align: center;
+            margin-top: 4rem;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .footer-note {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+            .header {
+                background: #f3f4f6;
+                border-bottom: 3px solid #FFCD11;
+            }
+            .card, .calculator, .recommendation {
+                border: 1px solid #e5e7eb;
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            .calculator-grid {
+                grid-template-columns: 1fr;
+            }
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+            .comparison-table-wrapper {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1><i class="fas fa-credit-card"></i> Comparativa de Pasarelas de Pago</h1>
+            <p class="subtitle">Análisis completo para el mercado peruano | MITA</p>
+            <div class="date">
+                <i class="far fa-calendar"></i>
+                <span>Actualizado: Diciembre 2024</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- Executive Summary -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                Resumen Ejecutivo
+            </h2>
+            <div class="card">
+                <p style="margin-bottom: 1rem; color: var(--text-secondary); line-height: 1.8;">
+                    Este documento analiza las principales pasarelas de pago disponibles en Perú para plataformas de servicios digitales. 
+                    Se evalúan criterios como comisiones, facilidad de integración, métodos de pago soportados, y tiempo de implementación. 
+                    <strong style="color: var(--accent-yellow);">La recomendación principal es CULQI para fase MVP</strong> por su rapidez de implementación 
+                    y comisiones competitivas, con migración a NIUBIZ en fase de escalamiento.
+                </p>
+            </div>
+        </section>
+
+        <!-- Detailed Cards -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-building"></i>
+                Análisis Detallado de Pasarelas
+            </h2>
+            <div class="cards-grid">
+                
+                <!-- CULQI -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="color: #00D4AA;">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div class="card-title">
+                            <h3>Culqi</h3>
+                            <span class="badge recommended">RECOMENDADO MVP</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="info-label">Comisión por transacción</span>
+                            <span class="info-value highlight">3.79% + S/.0.50</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Tiempo de afiliación</span>
+                            <span class="info-value">24-48 horas</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Integración API</span>
+                            <span class="info-value">Moderna (REST)</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Dashboard</span>
+                            <span class="info-value">Intuitivo</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Requisitos</span>
+                            <span class="info-value">RUC (persona natural)</span>
+                        </div>
+                    </div>
+                    <div class="pros-cons">
+                        <div class="pros">
+                            <h4><i class="fas fa-check-circle"></i> VENTAJAS</h4>
+                            <ul>
+                                <li>Setup rápido</li>
+                                <li>API moderna</li>
+                                <li>Yape integrado</li>
+                                <li>Buen soporte</li>
+                                <li>Dashboard claro</li>
+                            </ul>
+                        </div>
+                        <div class="cons">
+                            <h4><i class="fas fa-times-circle"></i> DESVENTAJAS</h4>
+                            <ul>
+                                <li>No acepta Amex</li>
+                                <li>Menos reconocido</li>
+                                <li>Comisión fija alta</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NIUBIZ -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="color: #0066CC;">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="card-title">
+                            <h3>Niubiz (Visanet)</h3>
+                            <span class="badge">LÍDER PERÚ</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="info-label">Comisión por transacción</span>
+                            <span class="info-value">3.99% + S/.0.30</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Tiempo de afiliación</span>
+                            <span class="info-value">2-3 semanas</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Integración API</span>
+                            <span class="info-value">Robusta</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Dashboard</span>
+                            <span class="info-value">Completo</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Requisitos</span>
+                            <span class="info-value">Empresa constituida</span>
+                        </div>
+                    </div>
+                    <div class="pros-cons">
+                        <div class="pros">
+                            <h4><i class="fas fa-check-circle"></i> VENTAJAS</h4>
+                            <ul>
+                                <li>Marca Visa reconocida</li>
+                                <li>Todas las tarjetas</li>
+                                <li>Alta confianza</li>
+                                <li>Soporte robusto</li>
+                                <li>Seguridad máxima</li>
+                            </ul>
+                        </div>
+                        <div class="cons">
+                            <h4><i class="fas fa-times-circle"></i> DESVENTAJAS</h4>
+                            <ul>
+                                <li>Afiliación lenta</li>
+                                <li>Comisión alta</li>
+                                <li>Requiere empresa</li>
+                                <li>Proceso burocrático</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MERCADO PAGO -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="color: #00B1EA;">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="card-title">
+                            <h3>Mercado Pago</h3>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="info-label">Comisión por transacción</span>
+                            <span class="info-value">3.99% + IGV</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Tiempo de afiliación</span>
+                            <span class="info-value">Inmediato</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Integración API</span>
+                            <span class="info-value">Completa</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Dashboard</span>
+                            <span class="info-value">Estándar</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Requisitos</span>
+                            <span class="info-value">Cuenta MP</span>
+                        </div>
+                    </div>
+                    <div class="pros-cons">
+                        <div class="pros">
+                            <h4><i class="fas fa-check-circle"></i> VENTAJAS</h4>
+                            <ul>
+                                <li>Reconocimiento regional</li>
+                                <li>Split payments</li>
+                                <li>Setup instantáneo</li>
+                                <li>Checkout pre-diseñado</li>
+                            </ul>
+                        </div>
+                        <div class="cons">
+                            <h4><i class="fas fa-times-circle"></i> DESVENTAJAS</h4>
+                            <ul>
+                                <li>UX menos flexible</li>
+                                <li>Menos elegante</li>
+                                <li>Comisión + IGV</li>
+                                <li>Branding MP visible</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IZIPAY -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="color: #FF6B00;">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <div class="card-title">
+                            <h3>Izipay</h3>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="info-label">Comisión por transacción</span>
+                            <span class="info-value">3.50% + S/.0.60</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Tiempo de afiliación</span>
+                            <span class="info-value">3-5 días</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Integración API</span>
+                            <span class="info-value">Buena</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Dashboard</span>
+                            <span class="info-value">Básico</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Requisitos</span>
+                            <span class="info-value">RUC</span>
+                        </div>
+                    </div>
+                    <div class="pros-cons">
+                        <div class="pros">
+                            <h4><i class="fas fa-check-circle"></i> VENTAJAS</h4>
+                            <ul>
+                                <li>Respaldo Intercorp</li>
+                                <li>Buena documentación</li>
+                                <li>Links de pago</li>
+                                <li>Setup rápido</li>
+                            </ul>
+                        </div>
+                        <div class="cons">
+                            <h4><i class="fas fa-times-circle"></i> DESVENTAJAS</h4>
+                            <ul>
+                                <li>Dashboard básico</li>
+                                <li>Menos flexible</li>
+                                <li>Menor adopción</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGOEFECTIVO -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="color: #F7931E;">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="card-title">
+                            <h3>PagoEfectivo</h3>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="info-label">Comisión por transacción</span>
+                            <span class="info-value">3.95%</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Tiempo de afiliación</span>
+                            <span class="info-value">1 semana</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Integración API</span>
+                            <span class="info-value">Sencilla</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Confirmación</span>
+                            <span class="info-value">No inmediata</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Requisitos</span>
+                            <span class="info-value">RUC</span>
+                        </div>
+                    </div>
+                    <div class="pros-cons">
+                        <div class="pros">
+                            <h4><i class="fas fa-check-circle"></i> VENTAJAS</h4>
+                            <ul>
+                                <li>Pagos en efectivo</li>
+                                <li>Sin tarjeta bancaria</li>
+                                <li>Alcance inclusivo</li>
+                                <li>Red amplia (agentes)</li>
+                            </ul>
+                        </div>
+                        <div class="cons">
+                            <h4><i class="fas fa-times-circle"></i> DESVENTAJAS</h4>
+                            <ul>
+                                <li>No es tiempo real</li>
+                                <li>Confirmación tardía</li>
+                                <li>Flujo menos ágil</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- YAPE EMPRESARIAL -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="color: #6D28D9;">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <div class="card-title">
+                            <h3>Yape Empresarial</h3>
+                            <span class="badge">COMPLEMENTO</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="info-label">Comisión por transacción</span>
+                            <span class="info-value highlight">2.90%</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Tiempo de afiliación</span>
+                            <span class="info-value">1 semana</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Integración API</span>
+                            <span class="info-value">Disponible</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Límite diario</span>
+                            <span class="info-value">S/.10,000+</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Requisitos</span>
+                            <span class="info-value">Cuenta BCP empresarial</span>
+                        </div>
+                    </div>
+                    <div class="pros-cons">
+                        <div class="pros">
+                            <h4><i class="fas fa-check-circle"></i> VENTAJAS</h4>
+                            <ul>
+                                <li>Comisión más baja</li>
+                                <li>Más usado en Perú</li>
+                                <li>QR único negocio</li>
+                                <li>Dashboard reportes</li>
+                                <li>Depósito automático</li>
+                            </ul>
+                        </div>
+                        <div class="cons">
+                            <h4><i class="fas fa-times-circle"></i> DESVENTAJAS</h4>
+                            <ul>
+                                <li>Solo BCP</li>
+                                <li>Cuenta aparte</li>
+                                <li>No en Culqi</li>
+                                <li>Implementación extra</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Comparison Table -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                Tabla Comparativa Rápida
+            </h2>
+            <div class="comparison-table-wrapper">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Característica</th>
+                            <th>Culqi</th>
+                            <th>Niubiz</th>
+                            <th>Mercado Pago</th>
+                            <th>Izipay</th>
+                            <th>Yape Emp.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Comisión %</strong></td>
+                            <td>3.79%</td>
+                            <td>3.99%</td>
+                            <td>3.99%</td>
+                            <td>3.50%</td>
+                            <td style="color: var(--accent-green); font-weight: bold;">2.90%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Comisión fija</strong></td>
+                            <td>S/.0.50</td>
+                            <td>S/.0.30</td>
+                            <td>—</td>
+                            <td>S/.0.60</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Setup rápido</strong></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-times-circle cross-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Visa/Mastercard</strong></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-times-circle cross-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td><strong>American Express</strong></td>
+                            <td><i class="fas fa-times-circle cross-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-times-circle cross-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td><strong>API moderna</strong></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Reconocimiento Perú</strong></td>
+                            <td>Medio</td>
+                            <td style="color: var(--accent-green); font-weight: bold;">Alto</td>
+                            <td>Alto</td>
+                            <td>Medio</td>
+                            <td style="color: var(--accent-green); font-weight: bold;">Muy Alto</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Requiere empresa</strong></td>
+                            <td><i class="fas fa-times-circle cross-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                            <td><i class="fas fa-times-circle cross-icon"></i></td>
+                            <td><i class="fas fa-times-circle cross-icon"></i></td>
+                            <td><i class="fas fa-check-circle check-icon"></i></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Mejor para</strong></td>
+                            <td>MVP/Startup</td>
+                            <td>Escalado</td>
+                            <td>Marketplace</td>
+                            <td>Links pago</td>
+                            <td>Complemento</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Calculator -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-calculator"></i>
+                Calculadora de Costos Proyectados
+            </h2>
+            <div class="calculator">
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                    Ingresa tus proyecciones mensuales para comparar el costo real de cada pasarela:
+                </p>
+                <div class="calculator-grid">
+                    <div>
+                        <div class="calculator-input">
+                            <label for="numTransacciones">
+                                <i class="fas fa-exchange-alt"></i> Número de transacciones mensuales
+                            </label>
+                            <input type="number" id="numTransacciones" value="100" min="1" oninput="calcularCostos()">
+                        </div>
+                        <div class="calculator-input">
+                            <label for="montoPromedio">
+                                <i class="fas fa-dollar-sign"></i> Monto promedio por transacción (S/.)
+                            </label>
+                            <input type="number" id="montoPromedio" value="150" min="1" oninput="calcularCostos()">
+                        </div>
+                        <div class="calculator-input">
+                            <label style="color: var(--text-primary); font-weight: bold;">
+                                <i class="fas fa-chart-line"></i> Volumen mensual total
+                            </label>
+                            <input type="text" id="volumenTotal" value="S/. 15,000" readonly style="font-weight: bold; color: var(--accent-yellow);">
+                        </div>
+                    </div>
+                    <div class="calculator-results" id="resultados">
+                        <!-- Resultados se llenarán con JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recommendation -->
+        <section class="section">
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    <div class="recommendation-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <div>
+                        <h3>Recomendación Estratégica para MITA</h3>
+                        <p style="color: var(--text-secondary);">Plan de implementación por fases</p>
+                    </div>
+                </div>
+                <div class="recommendation-content">
+                    <div class="recommendation-phases">
+                        <div class="phase">
+                            <div class="phase-title">
+                                <i class="fas fa-rocket"></i>
+                                Fase MVP (0-3 meses)
+                            </div>
+                            <div class="phase-content">
+                                <ul>
+                                    <li><strong>Principal:</strong> CULQI</li>
+                                    <li>Setup en 24-48 horas</li>
+                                    <li>Visa/Mastercard</li>
+                                    <li>Costo: 3.79% + S/.0.50</li>
+                                    <li><strong>Alternativo:</strong> Yape/Plin manual</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="phase">
+                            <div class="phase-title">
+                                <i class="fas fa-chart-line"></i>
+                                Fase Crecimiento (3-6 meses)
+                            </div>
+                            <div class="phase-content">
+                                <ul>
+                                    <li>Agregar Yape Empresarial</li>
+                                    <li>Abrir cuenta BCP empresarial</li>
+                                    <li>Reducir comisión a 2.9%</li>
+                                    <li>Mantener Culqi como backup</li>
+                                    <li>Monitorear volumen</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="phase">
+                            <div class="phase-title">
+                                <i class="fas fa-crown"></i>
+                                Fase Escalado (6+ meses)
+                            </div>
+                            <div class="phase-content">
+                                <ul>
+                                    <li>Migrar a NIUBIZ (principal)</li>
+                                    <li>Todas las tarjetas (inc. Amex)</li>
+                                    <li>Mayor confianza corporativa</li>
+                                    <li>Mantener Culqi + Yape</li>
+                                    <li>PagoEfectivo para cash</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-card); border-radius: 8px; border-left: 4px solid var(--accent-green);">
+                        <h4 style="margin-bottom: 0.75rem; color: var(--accent-green);">
+                            <i class="fas fa-check-double"></i> Justificación de la Recomendación
+                        </h4>
+                        <ul style="list-style: none; color: var(--text-secondary); line-height: 1.8;">
+                            <li style="margin-bottom: 0.5rem;">
+                                <strong style="color: var(--text-primary);">✓ Velocidad:</strong> Culqi permite lanzar en menos de 48 horas vs. 2-3 semanas de Niubiz
+                            </li>
+                            <li style="margin-bottom: 0.5rem;">
+                                <strong style="color: var(--text-primary);">✓ Costo inicial:</strong> Diferencia de comisión es mínima en bajo volumen (~S/.20-30/mes)
+                            </li>
+                            <li style="margin-bottom: 0.5rem;">
+                                <strong style="color: var(--text-primary);">✓ Flexibilidad:</strong> No requiere empresa constituida, ideal para validar MVP
+                            </li>
+                            <li style="margin-bottom: 0.5rem;">
+                                <strong style="color: var(--text-primary);">✓ Escalabilidad:</strong> Migración futura a Niubiz es sencilla cuando justifique
+                            </li>
+                            <li>
+                                <strong style="color: var(--text-primary);">✓ Cobertura:</strong> 95% de tarjetas en Perú (Visa + Mastercard)
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Additional Notes -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Consideraciones Adicionales
+            </h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-lock" style="color: var(--accent-green);"></i>
+                        Seguridad PCI DSS
+                    </h3>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">
+                        Todas las pasarelas listadas cumplen con certificación PCI DSS Level 1, 
+                        garantizando que los datos de tarjetas nunca pasan por tus servidores. 
+                        Utilizan tokenización y encriptación end-to-end.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-undo-alt" style="color: var(--accent-blue);"></i>
+                        Políticas de Reembolso
+                    </h3>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">
+                        Culqi y Niubiz permiten reembolsos parciales y totales desde el dashboard. 
+                        El tiempo de procesamiento es de 5-10 días hábiles. 
+                        Importante: Los reembolsos NO devuelven las comisiones pagadas.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-code" style="color: var(--accent-purple);"></i>
+                        Facilidad de Integración
+                    </h3>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">
+                        Culqi ofrece SDKs para Python, Node.js, PHP. La documentación es clara con ejemplos. 
+                        Niubiz tiene documentación más técnica pero completa. 
+                        Tiempo estimado de integración: 2-3 días para desarrollador mid-level.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-headset" style="color: var(--accent-yellow);"></i>
+                        Soporte Técnico
+                    </h3>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">
+                        <strong>Culqi:</strong> Soporte por Slack, email. Respuesta < 24 horas.<br>
+                        <strong>Niubiz:</strong> Soporte telefónico + email. Más formal.<br>
+                        Ambos tienen comunidades de desarrolladores activas.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Links & Resources -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-link"></i>
+                Enlaces y Recursos
+            </h2>
+            <div class="card">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem; color: var(--accent-yellow);">
+                            <i class="fas fa-bolt"></i> Culqi
+                        </h4>
+                        <ul style="list-style: none; color: var(--text-secondary); font-size: 0.9rem;">
+                            <li>→ <a href="https://culqi.com" target="_blank" style="color: var(--accent-blue);">culqi.com</a></li>
+                            <li>→ <a href="https://docs.culqi.com" target="_blank" style="color: var(--accent-blue);">Documentación</a></li>
+                            <li>→ Email: soporte@culqi.com</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem; color: var(--accent-yellow);">
+                            <i class="fas fa-shield-alt"></i> Niubiz
+                        </h4>
+                        <ul style="list-style: none; color: var(--text-secondary); font-size: 0.9rem;">
+                            <li>→ <a href="https://www.niubiz.com.pe" target="_blank" style="color: var(--accent-blue);">niubiz.com.pe</a></li>
+                            <li>→ <a href="https://developers.niubiz.com.pe" target="_blank" style="color: var(--accent-blue);">Developers</a></li>
+                            <li>→ Tel: 01 2150000</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem; color: var(--accent-yellow);">
+                            <i class="fas fa-mobile-alt"></i> Yape Empresarial
+                        </h4>
+                        <ul style="list-style: none; color: var(--text-secondary); font-size: 0.9rem;">
+                            <li>→ <a href="https://yape.com.pe/empresas" target="_blank" style="color: var(--accent-blue);">yape.com.pe/empresas</a></li>
+                            <li>→ Requiere cuenta BCP</li>
+                            <li>→ Tel BCP: 01 311-9898</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem;">
+            <i class="fas fa-rocket" style="color: var(--accent-yellow);"></i>
+            MITA - Plataforma de Servicios Técnicos
+        </p>
+        <p class="footer-note">
+            Documento preparado para análisis de pasarelas de pago en Perú<br>
+            Última actualización: Diciembre 2024 | Datos sujetos a cambios por las pasarelas
+        </p>
+    </footer>
+
+    <script>
+        // Calculator Logic
+        function calcularCostos() {
+            const numTransacciones = parseFloat(document.getElementById('numTransacciones').value) || 0;
+            const montoPromedio = parseFloat(document.getElementById('montoPromedio').value) || 0;
+            const volumenTotal = numTransacciones * montoPromedio;
+
+            // Actualizar volumen total
+            document.getElementById('volumenTotal').value = `S/. ${volumenTotal.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+            // Calcular costos por pasarela
+            const pasarelas = [
+                {
+                    nombre: 'Culqi',
+                    icon: 'fa-bolt',
+                    color: '#00D4AA',
+                    comisionPorcentaje: 0.0379,
+                    comisionFija: 0.50
+                },
+                {
+                    nombre: 'Niubiz',
+                    icon: 'fa-shield-alt',
+                    color: '#0066CC',
+                    comisionPorcentaje: 0.0399,
+                    comisionFija: 0.30
+                },
+                {
+                    nombre: 'Mercado Pago',
+                    icon: 'fa-shopping-cart',
+                    color: '#00B1EA',
+                    comisionPorcentaje: 0.0399 * 1.18, // + IGV
+                    comisionFija: 0
+                },
+                {
+                    nombre: 'Izipay',
+                    icon: 'fa-university',
+                    color: '#FF6B00',
+                    comisionPorcentaje: 0.0350,
+                    comisionFija: 0.60
+                },
+                {
+                    nombre: 'Yape Empresarial',
+                    icon: 'fa-mobile-alt',
+                    color: '#6D28D9',
+                    comisionPorcentaje: 0.0290,
+                    comisionFija: 0
+                }
+            ];
+
+            let resultados = [];
+            pasarelas.forEach(pasarela => {
+                const costoTotal = (volumenTotal * pasarela.comisionPorcentaje) + (numTransacciones * pasarela.comisionFija);
+                const costoPorTransaccion = costoTotal / numTransacciones;
+                resultados.push({
+                    ...pasarela,
+                    costoTotal,
+                    costoPorTransaccion
+                });
+            });
+
+            // Ordenar por costo total (menor a mayor)
+            resultados.sort((a, b) => a.costoTotal - b.costoTotal);
+
+            // Mostrar resultados
+            const resultadosDiv = document.getElementById('resultados');
+            resultadosDiv.innerHTML = '';
+
+            resultados.forEach((resultado, index) => {
+                const isWinner = index === 0;
+                const card = document.createElement('div');
+                card.className = `result-card ${isWinner ? 'winner' : ''}`;
+                card.innerHTML = `
+                    <h4>
+                        <i class="fas ${resultado.icon}" style="color: ${resultado.color};"></i>
+                        ${resultado.nombre}
+                        ${isWinner ? '<span style="margin-left: 0.5rem; color: var(--accent-green); font-size: 0.85rem;">🏆 MÁS ECONÓMICO</span>' : ''}
+                    </h4>
+                    <div class="amount">S/. ${resultado.costoTotal.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                    <div class="detail">
+                        S/. ${resultado.costoPorTransaccion.toFixed(2)} por transacción
+                    </div>
+                    <div class="detail">
+                        ${(resultado.comisionPorcentaje * 100).toFixed(2)}% ${resultado.comisionFija > 0 ? `+ S/.${resultado.comisionFija}` : ''} por operación
+                    </div>
+                `;
+                resultadosDiv.appendChild(card);
+            });
+        }
+
+        // Calcular costos al cargar la página
+        window.addEventListener('DOMContentLoaded', calcularCostos);
+    </script>
+
+</body>
+</html>

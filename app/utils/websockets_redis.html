@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arquitectura del Sistema de Chat - MITA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-card: #242939;
+            --bg-hover: #2d3348;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b8c2;
+            --text-muted: #6b7280;
+            --accent-yellow: #FFCD11;
+            --accent-green: #10b981;
+            --accent-blue: #3b82f6;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --border-color: #374151;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+            padding: 3rem 2rem;
+            text-align: center;
+            border-bottom: 3px solid var(--accent-yellow);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-yellow) 0%, #fbbf24 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--accent-yellow);
+        }
+
+        /* Architecture Diagram */
+        .architecture-diagram {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .diagram-container {
+            min-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 1rem;
+        }
+
+        .diagram-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            position: relative;
+        }
+
+        .component-box {
+            background: var(--bg-hover);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            min-width: 200px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .component-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-color: var(--accent-yellow);
+        }
+
+        .component-box.client {
+            border-color: var(--accent-blue);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, var(--bg-hover) 100%);
+        }
+
+        .component-box.server {
+            border-color: var(--accent-yellow);
+            background: linear-gradient(135deg, rgba(255, 205, 17, 0.1) 0%, var(--bg-hover) 100%);
+        }
+
+        .component-box.database {
+            border-color: var(--accent-green);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, var(--bg-hover) 100%);
+        }
+
+        .component-box.cache {
+            border-color: var(--accent-red);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, var(--bg-hover) 100%);
+        }
+
+        .component-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .component-box.client .component-icon { color: var(--accent-blue); }
+        .component-box.server .component-icon { color: var(--accent-yellow); }
+        .component-box.database .component-icon { color: var(--accent-green); }
+        .component-box.cache .component-icon { color: var(--accent-red); }
+
+        .component-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .component-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Arrows */
+        .arrow {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-yellow);
+            font-size: 1.5rem;
+        }
+
+        .arrow-label {
+            position: absolute;
+            top: -25px;
+            background: var(--bg-card);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Flow Steps */
+        .flow-steps {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .flow-step {
+            background: var(--bg-card);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .flow-step:hover {
+            transform: translateX(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-yellow);
+            color: var(--bg-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            margin-bottom: 0.5rem;
+            color: var(--accent-yellow);
+        }
+
+        .step-content p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Tech Stack Cards */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .tech-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .tech-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .tech-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tech-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--bg-hover);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .tech-card.fastapi .tech-icon { color: var(--accent-green); }
+        .tech-card.redis .tech-icon { color: var(--accent-red); }
+        .tech-card.postgres .tech-icon { color: var(--accent-blue); }
+        .tech-card.websocket .tech-icon { color: var(--accent-purple); }
+
+        .tech-title h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .tech-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--accent-yellow);
+            color: var(--bg-primary);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .tech-details {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .tech-details ul {
+            list-style: none;
+            margin-top: 0.75rem;
+        }
+
+        .tech-details li {
+            padding: 0.25rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .tech-details li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            color: var(--text-secondary);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .code-block .keyword {
+            color: var(--accent-purple);
+        }
+
+        .code-block .string {
+            color: var(--accent-green);
+        }
+
+        .code-block .comment {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .info-box.warning {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, transparent 100%);
+            border-left-color: var(--warning);
+        }
+
+        .info-box.success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%);
+            border-left-color: var(--accent-green);
+        }
+
+        .info-box h4 {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-box p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Cost Table */
+        .cost-table {
+            width: 100%;
+            background: var(--bg-card);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .cost-table th {
+            background: var(--bg-hover);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--accent-yellow);
+        }
+
+        .cost-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .cost-table tr:hover {
+            background: var(--bg-hover);
+        }
+
+        .cost-table .recommended {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, var(--bg-card) 100%);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .diagram-container {
+                min-width: auto;
+            }
+            .diagram-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <header class="header">
+        <h1><i class="fas fa-comments"></i> Arquitectura del Sistema de Chat</h1>
+        <p class="subtitle">WebSocket + FastAPI + Redis | MITA</p>
+    </header>
+
+    <div class="container">
+        
+        <!-- Main Architecture Diagram -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-project-diagram"></i>
+                Arquitectura General del Sistema
+            </h2>
+            <div class="architecture-diagram">
+                <div class="diagram-container">
+                    
+                    <!-- Clientes -->
+                    <div class="diagram-row">
+                        <div class="component-box client">
+                            <div class="component-icon">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div class="component-title">Cliente A</div>
+                            <div class="component-desc">Usuario PWA/Web</div>
+                        </div>
+                        <div class="component-box client">
+                            <div class="component-icon">
+                                <i class="fas fa-laptop"></i>
+                            </div>
+                            <div class="component-title">Cliente B</div>
+                            <div class="component-desc">Usuario PWA/Web</div>
+                        </div>
+                        <div class="component-box client">
+                            <div class="component-icon">
+                                <i class="fas fa-tablet-alt"></i>
+                            </div>
+                            <div class="component-title">Cliente C</div>
+                            <div class="component-desc">Usuario PWA/Web</div>
+                        </div>
+                    </div>
+
+                    <!-- Arrow Down -->
+                    <div style="text-align: center; position: relative;">
+                        <div style="color: var(--accent-yellow); font-size: 2rem;">
+                            ⬇️
+                        </div>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-card); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); white-space: nowrap;">
+                            <span style="color: var(--accent-blue);">WebSocket</span> (Conexión persistente)
+                        </div>
+                    </div>
+
+                    <!-- FastAPI Server -->
+                    <div class="diagram-row">
+                        <div class="component-box server" style="min-width: 400px;">
+                            <div class="component-icon">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <div class="component-title">FastAPI Server</div>
+                            <div class="component-desc">
+                                <strong>/chat/ws</strong> endpoint<br>
+                                Gestión de WebSockets<br>
+                                Enrutamiento de mensajes
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Arrow Down Split -->
+                    <div class="diagram-row" style="gap: 8rem;">
+                        <div style="text-align: center;">
+                            <div style="color: var(--accent-red); font-size: 2rem;">⬇️</div>
+                            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Caché temporal</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="color: var(--accent-green); font-size: 2rem;">⬇️</div>
+                            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Almacenamiento permanente</div>
+                        </div>
+                    </div>
+
+                    <!-- Databases -->
+                    <div class="diagram-row">
+                        <div class="component-box cache">
+                            <div class="component-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div class="component-title">Redis</div>
+                            <div class="component-desc">
+                                Mensajes en tiempo real<br>
+                                Presencia online<br>
+                                Últimos 50 mensajes
+                            </div>
+                        </div>
+                        <div class="component-box database">
+                            <div class="component-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="component-title">PostgreSQL</div>
+                            <div class="component-desc">
+                                Historial completo<br>
+                                Persistencia permanente<br>
+                                Auditoría y reportes
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Message Flow -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-paper-plane"></i>
+                Flujo de Envío de Mensaje
+            </h2>
+            <div class="flow-steps">
+                
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Cliente A envía mensaje</h4>
+                        <p>Usuario escribe mensaje y presiona enviar. El frontend JavaScript emite el mensaje a través del WebSocket establecido.</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>FastAPI recibe por WebSocket</h4>
+                        <p>El servidor FastAPI recibe el mensaje en el endpoint <code>/chat/ws</code>. Valida el token JWT y extrae la información del usuario emisor.</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Almacenamiento dual</h4>
+                        <p><strong>Redis:</strong> Almacena el mensaje en una lista (caché rápido) con TTL de 24 horas.<br>
+                        <strong>PostgreSQL:</strong> Guarda el mensaje de forma permanente en la tabla <code>mensajes_chat</code>.</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Redis Pub/Sub</h4>
+                        <p>Redis publica el mensaje en un canal específico (<code>chat:conversacion_123</code>). Esto permite que múltiples servidores FastAPI reciban la notificación.</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h4>Broadcast a receptores</h4>
+                        <p>FastAPI identifica todos los clientes conectados a esa conversación y envía el mensaje a cada uno a través de sus WebSockets activos.</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <h4>Cliente B recibe mensaje</h4>
+                        <p>El navegador/PWA del Cliente B recibe el mensaje vía WebSocket, actualiza la UI instantáneamente y reproduce sonido/vibración de notificación.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="info-box success" style="margin-top: 1.5rem;">
+                <h4><i class="fas fa-clock"></i> Latencia Típica</h4>
+                <p><strong>Total end-to-end: 50-200ms</strong> dependiendo de la conexión del usuario. Redis procesa comandos en ~1ms, WebSocket tiene latencia de red variable.</p>
+            </div>
+        </section>
+
+        <!-- Tech Stack Details -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-code"></i>
+                Stack Tecnológico Detallado
+            </h2>
+            <div class="tech-grid">
+                
+                <!-- FastAPI -->
+                <div class="tech-card fastapi">
+                    <div class="tech-header">
+                        <div class="tech-icon">
+                            <i class="fab fa-python"></i>
+                        </div>
+                        <div class="tech-title">
+                            <h3>FastAPI</h3>
+                            <span class="tech-badge">BACKEND</span>
+                        </div>
+                    </div>
+                    <div class="tech-details">
+                        <strong>Rol:</strong> Servidor WebSocket principal
+                        <ul>
+                            <li>Manejo de conexiones WebSocket</li>
+                            <li>Autenticación JWT</li>
+                            <li>Routing de mensajes</li>
+                            <li>API REST complementaria</li>
+                            <li>Integración con SQLAlchemy</li>
+                        </ul>
+                        <div class="code-block">
+                            <pre><span class="comment"># Endpoint WebSocket</span>
+<span class="keyword">@app.websocket</span>(<span class="string">"/chat/ws"</span>)
+<span class="keyword">async def</span> websocket_endpoint(
+    websocket: WebSocket
+):
+    <span class="keyword">await</span> websocket.accept()
+    <span class="comment"># Lógica de chat...</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Redis -->
+                <div class="tech-card redis">
+                    <div class="tech-header">
+                        <div class="tech-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="tech-title">
+                            <h3>Redis</h3>
+                            <span class="tech-badge">CACHE</span>
+                        </div>
+                    </div>
+                    <div class="tech-details">
+                        <strong>Rol:</strong> Base de datos en memoria (RAM)
+                        <ul>
+                            <li>Caché de mensajes recientes</li>
+                            <li>Pub/Sub para multi-servidor</li>
+                            <li>Presencia de usuarios online</li>
+                            <li>Estado "escribiendo..."</li>
+                            <li>Rate limiting</li>
+                        </ul>
+                        <div class="code-block">
+                            <pre><span class="comment"># Guardar mensaje en Redis</span>
+redis.lpush(
+    <span class="string">f"chat:{conv_id}"</span>,
+    json.dumps(mensaje)
+)
+redis.expire(<span class="string">f"chat:{conv_id}"</span>, <span class="keyword">86400</span>)</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PostgreSQL -->
+                <div class="tech-card postgres">
+                    <div class="tech-header">
+                        <div class="tech-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="tech-title">
+                            <h3>PostgreSQL</h3>
+                            <span class="tech-badge">DATABASE</span>
+                        </div>
+                    </div>
+                    <div class="tech-details">
+                        <strong>Rol:</strong> Almacenamiento permanente
+                        <ul>
+                            <li>Historial completo de mensajes</li>
+                            <li>Metadata de conversaciones</li>
+                            <li>Usuarios y servicios</li>
+                            <li>Auditoría y reportes</li>
+                            <li>Backup y recuperación</li>
+                        </ul>
+                        <div class="code-block">
+                            <pre><span class="comment"># Tabla de mensajes</span>
+<span class="keyword">CREATE TABLE</span> mensajes_chat (
+    id SERIAL PRIMARY KEY,
+    conversacion_id INT,
+    emisor_id INT,
+    contenido TEXT,
+    created_at TIMESTAMP
+);</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WebSocket -->
+                <div class="tech-card websocket">
+                    <div class="tech-header">
+                        <div class="tech-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="tech-title">
+                            <h3>WebSocket</h3>
+                            <span class="tech-badge">PROTOCOL</span>
+                        </div>
+                    </div>
+                    <div class="tech-details">
+                        <strong>Rol:</strong> Comunicación bidireccional
+                        <ul>
+                            <li>Conexión persistente cliente-servidor</li>
+                            <li>Push de mensajes sin polling</li>
+                            <li>Baja latencia (< 100ms)</li>
+                            <li>Eficiente en recursos</li>
+                            <li>Reconexión automática</li>
+                        </ul>
+                        <div class="code-block">
+                            <pre><span class="comment">// Cliente JavaScript</span>
+<span class="keyword">const</span> ws = <span class="keyword">new</span> WebSocket(
+    <span class="string">'wss://ervin.app/chat/ws'</span>
+);
+ws.onmessage = (event) => {
+    displayMessage(JSON.parse(event.data));
+};</pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Why Redis? -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-question-circle"></i>
+                ¿Por qué necesitamos Redis?
+            </h2>
+            
+            <div class="info-box">
+                <h4><i class="fas fa-bolt"></i> Velocidad</h4>
+                <p>Redis opera en RAM, procesando comandos en ~1ms vs. 10-50ms de PostgreSQL en disco. Esto es crucial para mensajería en tiempo real donde cada milisegundo cuenta.</p>
+            </div>
+
+            <div class="info-box" style="border-left-color: var(--accent-purple);">
+                <h4><i class="fas fa-server"></i> Escalabilidad Multi-Servidor</h4>
+                <p>Con Redis Pub/Sub, si tienes 2+ servidores FastAPI (load balancing), todos se enteran de los mensajes. Sin Redis, un mensaje enviado al Servidor A no llegaría a usuarios conectados al Servidor B.</p>
+            </div>
+
+            <div class="info-box warning">
+                <h4><i class="fas fa-users"></i> Presencia Online</h4>
+                <p>Redis permite saber quién está "escribiendo..." o "online" sin consultar PostgreSQL constantemente. Usa estructuras como Sets con TTL automático.</p>
+            </div>
+
+            <div class="info-box success">
+                <h4><i class="fas fa-tachometer-alt"></i> Performance</h4>
+                <p><strong>Sin Redis:</strong> Cada mensaje = 2 queries SQL (escribir + leer usuarios activos) = ~100ms<br>
+                <strong>Con Redis:</strong> Mensaje en cache + pub/sub = ~5ms. ¡20x más rápido!</p>
+            </div>
+        </section>
+
+        <!-- Hosting Options -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-cloud"></i>
+                Opciones de Hosting para Redis
+            </h2>
+            
+            <table class="cost-table">
+                <thead>
+                    <tr>
+                        <th>Proveedor</th>
+                        <th>Plan</th>
+                        <th>Costo</th>
+                        <th>Memoria</th>
+                        <th>Mejor para</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="recommended">
+                        <td><strong>Redis Cloud</strong></td>
+                        <td>Free Tier</td>
+                        <td style="color: var(--accent-green); font-weight: bold;">GRATIS</td>
+                        <td>30 MB</td>
+                        <td>MVP (100-200 usuarios concurrentes)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Railway</strong></td>
+                        <td>Redis Addon</td>
+                        <td>$5/mes</td>
+                        <td>256 MB</td>
+                        <td>Pequeña escala (500-1000 usuarios)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Upstash</strong></td>
+                        <td>Serverless</td>
+                        <td>$0.20 / 100k comandos</td>
+                        <td>Sin límite</td>
+                        <td>Escalado (pago por uso)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AWS ElastiCache</strong></td>
+                        <td>t3.micro</td>
+                        <td>~$15/mes</td>
+                        <td>1 GB</td>
+                        <td>Producción enterprise</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box success" style="margin-top: 1.5rem;">
+                <h4><i class="fas fa-lightbulb"></i> Recomendación para ERVIN MVP</h4>
+                <p><strong>Redis Cloud (Gratis 30MB)</strong> es perfecto para empezar. 30MB pueden almacenar ~15,000 mensajes en caché, suficiente para validar el producto. Cuando llegues a ~500 usuarios concurrentes, migra a Railway ($5/mes).</p>
+            </div>
+        </section>
+
+        <!-- Implementation Steps -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-tasks"></i>
+                Pasos de Implementación
+            </h2>
+            
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Setup Redis Cloud</h4>
+                        <p>Crear cuenta gratuita en <a href="https://redis.com/try-free/" target="_blank" style="color: var(--accent-blue);">redis.com</a>. Obtener URL de conexión (redis://:password@host:port).</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Instalar dependencias Python</h4>
+                        <p><code>pip install redis aioredis --break-system-packages</code></p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Crear WebSocket Manager</h4>
+                        <p>Clase que gestiona conexiones activas, envío de mensajes, y suscripción a Redis Pub/Sub.</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Crear endpoint /chat/ws</h4>
+                        <p>FastAPI endpoint que acepta WebSocket, autentica usuario, y maneja mensajes entrantes/salientes.</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h4>Integrar frontend</h4>
+                        <p>JavaScript/TypeScript que establece conexión WebSocket, envía/recibe mensajes, y maneja reconexión.</p>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <h4>Testing y optimización</h4>
+                        <p>Probar con múltiples usuarios, medir latencia, ajustar TTLs en Redis, implementar rate limiting.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Enabled -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-star"></i>
+                Funcionalidades Habilitadas por esta Arquitectura
+            </h2>
+            
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-bolt" style="color: var(--accent-yellow);"></i>
+                        Mensajería Real-Time
+                    </h3>
+                    <p style="color: var(--text-secondary);">Mensajes instantáneos sin refresh. WebSocket + Redis garantizan latencia < 200ms end-to-end.</p>
+                </div>
+
+                <div class="tech-card">
+                    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-circle" style="color: var(--accent-green);"></i>
+                        Presencia Online
+                    </h3>
+                    <p style="color: var(--text-secondary);">Indicador "online/offline" y "escribiendo..." usando Redis Sets con TTL automático.</p>
+                </div>
+
+                <div class="tech-card">
+                    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-check-double" style="color: var(--accent-blue);"></i>
+                        Mensajes Leídos
+                    </h3>
+                    <p style="color: var(--text-secondary);">Doble check azul estilo WhatsApp. Confirmaciones de entrega y lectura via WebSocket.</p>
+                </div>
+
+                <div class="tech-card">
+                    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-image" style="color: var(--accent-purple);"></i>
+                        Multimedia
+                    </h3>
+                    <p style="color: var(--text-secondary);">Imágenes, videos, audios. Upload a S3/Cloudinary, envío de URL por WebSocket.</p>
+                </div>
+
+                <div class="tech-card">
+                    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-history" style="color: var(--accent-green);"></i>
+                        Historial Completo
+                    </h3>
+                    <p style="color: var(--text-secondary);">PostgreSQL guarda todo. Redis caché solo últimos 50 mensajes para carga rápida.</p>
+                </div>
+
+                <div class="tech-card">
+                    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-shield-alt" style="color: var(--accent-red);"></i>
+                        Seguridad
+                    </h3>
+                    <p style="color: var(--text-secondary);">Auth JWT en WebSocket, validación de permisos, moderación admin, reportar mensajes.</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+</body>
+</html>
