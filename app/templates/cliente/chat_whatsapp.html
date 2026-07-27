@@ -11,7 +11,14 @@
 {% endblock %}
 
 {% block content %}
-<div class="whatsapp-container">
+<!-- Header de navegación -->
+<header class="mita-nav-header">
+    <button class="nav-back-btn" onclick="window.location.href='/cliente/home'" title="Volver"><i class="fas fa-arrow-left"></i></button>
+    <div class="nav-title"><span>Mis Conversaciones</span></div>
+    <button class="nav-home-btn" onclick="window.location.href='/cliente/home'" title="Inicio"><i class="fas fa-home"></i></button>
+</header>
+
+<div class="whatsapp-container with-nav">
     <!-- Panel izquierdo - Lista de chats -->
     <div class="chat-list-panel">
         <div class="chat-list-header">
@@ -23,35 +30,11 @@
         </div>
 
         <div class="chat-search">
-            <input type="text" placeholder="Buscar o iniciar chat" id="search-chats">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Buscar o iniciar chat" id="search-chats" oninput="filtrarChats(this.value)">
         </div>
 
-        <div class="chat-list" id="chat-list">
-            <div class="chat-list-item active" data-chat-id="1">
-                <div class="avatar"><i class="fas fa-tools"></i></div>
-                <div class="chat-info">
-                    <div class="chat-info-top">
-                        <span class="chat-name">Servicio #1234</span>
-                        <span class="chat-time">10:30</span>
-                    </div>
-                    <div class="chat-preview">
-                        <i class="fas fa-check-double" style="color: #53bdeb;"></i>
-                        Perfecto, llego en 10 minutos...
-                    </div>
-                </div>
-            </div>
-
-            <div class="chat-list-item" data-chat-id="2">
-                <div class="avatar" style="background: #f59e0b;"><i class="fas fa-bolt"></i></div>
-                <div class="chat-info">
-                    <div class="chat-info-top">
-                        <span class="chat-name">Servicio #1198</span>
-                        <span class="chat-time">Ayer</span>
-                    </div>
-                    <div class="chat-preview">Gracias por su atención</div>
-                </div>
-            </div>
-        </div>
+        <div class="chat-list" id="chat-list"><!-- dinámico --></div>
     </div>
 
     <!-- Panel derecho - Conversación -->
@@ -118,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
         userType: 'cliente',
         userId: 1,
         userName: 'Juan Pérez',
-        demoMode: true
+        demoMode: false   // producción: WebSocket + API reales (cae a demo si no hay datos)
     });
 
     document.getElementById('btn-camera')?.addEventListener('click', () => {
@@ -128,7 +111,113 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.files.length > 0) window.chat.procesarArchivos(e.target.files);
     });
     document.getElementById('btn-voice')?.addEventListener('click', () => iniciarGrabacionVoz());
+
+    cargarConversaciones();
 });
+
+// ============================================
+// Lista de conversaciones clickeable (sidebar)
+// ============================================
+let conversaciones = [];
+let conversacionActiva = null;
+
+async function cargarConversaciones() {
+    const lista = document.getElementById('chat-list');
+    if (!lista) { console.error('No se encontró #chat-list'); return; }
+    try {
+        const response = await fetch('/api/v1/chat/conversaciones');
+        if (!response.ok) throw new Error('API no disponible');
+        const data = await response.json();
+        if (!data.length) throw new Error('vacío');
+        conversaciones = data;
+    } catch (e) {
+        conversaciones = [
+            { id: 1, titulo: 'Servicio #1234', subtitulo: 'Gasfitería - Carlos López', ultimoMensaje: 'Perfecto, llego en 10 minutos...', hora: '10:30', noLeidos: 0, icono: 'fa-tools', color: '#3b82f6', estado: 'activo' },
+            { id: 2, titulo: 'Servicio #1198', subtitulo: 'Electricidad - Juan Pérez', ultimoMensaje: 'Gracias por su atención', hora: 'Ayer', noLeidos: 0, icono: 'fa-bolt', color: '#f59e0b', estado: 'completado' },
+            { id: 3, titulo: 'Servicio #1185', subtitulo: 'Electrodomésticos', ultimoMensaje: 'La lavadora ya funciona correctamente', hora: 'Lun', noLeidos: 0, icono: 'fa-tv', color: '#8b5cf6', estado: 'completado' }
+        ];
+    }
+    renderConversaciones();
+    if (conversaciones.length > 0 && !conversacionActiva) seleccionarConversacion(conversaciones[0].id);
+}
+
+function renderConversaciones(filtro = '') {
+    const lista = document.getElementById('chat-list');
+    if (!lista) return;
+    let filtered = conversaciones;
+    if (filtro) {
+        const l = filtro.toLowerCase();
+        filtered = conversaciones.filter(c => c.titulo.toLowerCase().includes(l) || c.subtitulo.toLowerCase().includes(l));
+    }
+    if (filtered.length === 0) { lista.innerHTML = '<div class="chat-list-empty"><i class="fas fa-comments"></i><p>No hay conversaciones</p></div>'; return; }
+    lista.innerHTML = filtered.map(conv => `
+        <div class="chat-list-item ${conversacionActiva === conv.id ? 'active' : ''} ${conv.estado === 'activo' ? 'en-curso' : ''}" data-id="${conv.id}">
+            <div class="avatar" style="background: ${conv.color}20; color: ${conv.color};"><i class="fas ${conv.icono}"></i></div>
+            <div class="chat-info">
+                <div class="chat-info-top"><span class="chat-name">${conv.titulo}</span><span class="chat-time">${conv.hora}</span></div>
+                <div class="chat-preview">${conv.noLeidos === 0 ? '<i class="fas fa-check-double" style="color:#53bdeb; margin-right:4px;"></i>' : ''}${conv.ultimoMensaje}</div>
+            </div>
+            ${conv.noLeidos > 0 ? `<span class="chat-badge">${conv.noLeidos}</span>` : ''}
+        </div>`).join('');
+    // Listeners tras render (más robusto que onclick inline)
+    lista.querySelectorAll('.chat-list-item').forEach(item => {
+        item.addEventListener('click', () => seleccionarConversacion(parseInt(item.dataset.id)));
+    });
+}
+
+function seleccionarConversacion(id) {
+    conversacionActiva = id;
+    document.querySelectorAll('.chat-list-item').forEach(item => item.classList.toggle('active', parseInt(item.dataset.id) === id));
+    const conv = conversaciones.find(c => c.id === id);
+    if (!conv) return;
+    const nameEl = document.getElementById('chat-contact-name'); if (nameEl) nameEl.textContent = conv.titulo;
+    const statusEl = document.getElementById('chat-contact-status'); if (statusEl) statusEl.textContent = conv.subtitulo;
+    const avatar = document.getElementById('chat-avatar');
+    if (avatar) { avatar.style.background = `${conv.color}20`; avatar.style.color = conv.color; avatar.innerHTML = `<i class="fas ${conv.icono}"></i>`; }
+    if (window.chat) {
+        window.chat.conversacionId = id;                 // los mensajes enviados van a esta conversación
+        if (window.chat.demoMode) cargarMensajesConversacion(id);   // demo: mensajes de ejemplo por conversación
+        else window.chat.cargarMensajes();               // real: trae los mensajes de la BD
+    } else {
+        cargarMensajesConversacion(id);
+    }
+}
+
+// Mensajes de ejemplo distintos por conversación (para que el cambio se note en demo)
+function cargarMensajesConversacion(id) {
+    const container = document.getElementById('chat-messages');
+    if (!container) return;
+    const demo = {
+        1: [
+            { tipo: 'recibido', texto: 'Hola, soy Carlos. Estoy revisando tu solicitud.', hora: '10:25' },
+            { tipo: 'enviado', texto: 'Perfecto, te espero', hora: '10:26' },
+            { tipo: 'recibido', texto: 'Perfecto, llego en 10 minutos...', hora: '10:30' }
+        ],
+        2: [
+            { tipo: 'recibido', texto: 'Buenas tardes, ya revisé el problema eléctrico', hora: '15:40' },
+            { tipo: 'enviado', texto: 'Excelente, ¿cuánto sería?', hora: '15:42' },
+            { tipo: 'recibido', texto: 'El servicio completo serían S/80', hora: '15:43' },
+            { tipo: 'enviado', texto: 'Perfecto, adelante', hora: '15:45' },
+            { tipo: 'recibido', texto: 'Gracias por su atención', hora: '16:30' }
+        ],
+        3: [
+            { tipo: 'recibido', texto: 'Ya terminé de revisar la lavadora', hora: '11:20' },
+            { tipo: 'enviado', texto: '¿Qué era el problema?', hora: '11:21' },
+            { tipo: 'recibido', texto: 'Era la bomba de desagüe, ya la cambié', hora: '11:22' },
+            { tipo: 'recibido', texto: 'La lavadora ya funciona correctamente', hora: '11:25' }
+        ]
+    };
+    const mensajes = demo[id] || [];
+    container.innerHTML = mensajes.map(m => `
+        <div class="wa-message ${m.tipo === 'enviado' ? 'sent' : 'received'}">
+            <div class="bubble"><div class="text">${m.texto}</div><div class="meta"><span class="time">${m.hora}</span></div></div>
+        </div>`).join('');
+    container.scrollTop = container.scrollHeight;
+}
+
+function filtrarChats(q) { renderConversaciones(q); }
+window.seleccionarConversacion = seleccionarConversacion;
+window.filtrarChats = filtrarChats;
 
 function toggleServiceInfo() {
     document.getElementById('service-info').classList.toggle('collapsed');
