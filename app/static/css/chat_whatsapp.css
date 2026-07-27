@@ -469,3 +469,80 @@
     z-index: 0;
 }
 .wa-message { position: relative; z-index: 1; }
+
+/* ============================================
+   zMita-11 - FIX ICONOS INPUT + LISTA CLICKEABLE
+   ============================================ */
+.conversation-input .icon-btn i, .conversation-input button.icon-btn i { font-size: 20px; line-height: 1; }
+.icon-btn .fa, .icon-btn .fas, .icon-btn .far, .icon-btn .fab {
+    display: inline-block; font-style: normal; text-rendering: auto; -webkit-font-smoothing: antialiased;
+}
+.icon-btn.recording { color: #ef4444 !important; animation: pulse-recording 1s infinite; }
+@keyframes pulse-recording { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* Búsqueda con ícono */
+.chat-search { display: flex; align-items: center; gap: 12px; }
+.chat-search i { color: var(--wa-text-secondary, #8696a0); }
+.chat-search input { flex: 1; padding: 8px 12px; }
+
+/* Lista de chats clickeable */
+.chat-list-item .avatar { font-size: 20px; }
+.chat-list-item.active { background: rgba(255, 205, 17, 0.1); }
+.chat-list-item.en-curso { border-left: 3px solid #22c55e; }
+.chat-list-item .chat-badge {
+    background: #22c55e; color: #000; font-size: 11px; font-weight: 600;
+    padding: 2px 6px; border-radius: 10px; min-width: 20px; text-align: center; margin-left: auto;
+}
+.chat-list-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: var(--wa-text-secondary, #8696a0); }
+.chat-list-empty i { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+
+/* ============================================
+   zMita-12 - FIX ICONOS VISIBLES + NAV + MENSAJES
+   ============================================ */
+/* Header del chat: botones visibles */
+.conversation-header .header-actions button,
+.chat-list-header .header-actions button,
+.header-actions .icon-btn {
+    background: transparent; border: none; cursor: pointer;
+    color: #aebac1 !important; width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; transition: all .2s;
+}
+.conversation-header .header-actions button:hover,
+.chat-list-header .header-actions button:hover {
+    background: rgba(255,255,255,0.1); color: #e9edef !important;
+}
+.conversation-header .header-actions button i,
+.chat-list-header .header-actions button i { font-size: 18px; color: inherit !important; }
+
+/* Input: iconos visibles */
+.conversation-input .icon-btn { color: #8696a0 !important; }
+.conversation-input .icon-btn:hover { color: #e9edef !important; background: rgba(255,255,255,0.1); }
+.conversation-input .icon-btn i { color: inherit !important; font-size: 20px; }
+.conversation-input .send-btn { background: #FFCD11 !important; color: #000 !important; }
+.conversation-input .send-btn i { color: #000 !important; font-size: 18px; }
+
+/* Header de navegación MITA */
+.mita-nav-header {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 52px; padding: 0 12px; background: #1a1a2e; border-bottom: 1px solid #2a3942;
+    position: sticky; top: 0; z-index: 200;
+}
+.mita-nav-header .nav-back-btn, .mita-nav-header .nav-home-btn {
+    width: 40px; height: 40px; border-radius: 50%; border: none; background: transparent;
+    color: #FFCD11; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.mita-nav-header .nav-back-btn:hover, .mita-nav-header .nav-home-btn:hover { background: rgba(255,205,17,0.1); }
+.mita-nav-header .nav-title { flex: 1; text-align: center; color: #e9edef; font-size: 16px; font-weight: 500; }
+
+/* Cuando hay nav header, el contenedor ocupa el resto */
+.whatsapp-container.with-nav { height: calc(100vh - 52px); }
+
+/* Mensajes estilo simple por conversación (sidebar demo) */
+.message { display: flex; margin-bottom: 8px; padding: 0 16px; }
+.message.sent { justify-content: flex-end; }
+.message.received { justify-content: flex-start; }
+.message .message-content { max-width: 65%; padding: 8px 12px; border-radius: 8px; }
+.message.sent .message-content { background: #005c4b; border-bottom-right-radius: 0; }
+.message.received .message-content { background: #202c33; border-bottom-left-radius: 0; }
+.message .message-content p { margin: 0; color: #e9edef; font-size: 14px; line-height: 1.4; }
+.message .message-time { font-size: 11px; color: #8696a0; float: right; margin-left: 8px; margin-top: 4px; }
