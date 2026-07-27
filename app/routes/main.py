@@ -11,8 +11,8 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    """Página principal"""
-    return templates.TemplateResponse("cliente/home_cliente.html", {"request": request})
+    """Landing principal (nueva, centrada en el problema)"""
+    return templates.TemplateResponse("landing_v2.html", {"request": request})
 
 @router.get("/cliente/registro", response_class=HTMLResponse)
 async def registro_cliente(request: Request):
@@ -34,17 +34,104 @@ async def buscando_tecnico(request: Request):
 async def seguimiento_servicio(request: Request):
     return templates.TemplateResponse("cliente/seguimiento.html", {"request": request})
 
-# Formulario GENÉRICO MITA (carga tipos por categoría vía ?categoria=CODIGO)
+# Flujo MITA v2: describe problema → categoría → técnico → dirección → chat
 @router.get("/cliente/solicitar", response_class=HTMLResponse)
 async def solicitar_servicio(request: Request):
-    """Formulario genérico de solicitud (4 pasos) para cualquier categoría."""
-    return templates.TemplateResponse("cliente/solicitar_servicio.html", {"request": request})
+    """Solicitud con selector de técnico (recibe ?problema= desde la landing)."""
+    return templates.TemplateResponse("cliente/solicitar.html", {"request": request})
 
 # Demo del chat MITA (estilo WhatsApp) — mensajes precargados + WebSocket
 @router.get("/cliente/chat-demo", response_class=HTMLResponse)
 async def chat_demo(request: Request):
     """Demo del chat MITA"""
     return templates.TemplateResponse("cliente/chat_demo.html", {"request": request})
+
+# Chat estilo WhatsApp Web (2 columnas)
+@router.get("/cliente/chat", response_class=HTMLResponse)
+async def chat_whatsapp(request: Request):
+    """Chat MITA estilo WhatsApp Web"""
+    return templates.TemplateResponse("cliente/chat_whatsapp.html", {"request": request})
+
+# ========================================
+# ADMIN - PANEL (zMita-4)
+# ========================================
+@router.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard(request: Request):
+    """Dashboard del panel admin (con sidebar)"""
+    return templates.TemplateResponse("admin/dashboard.html", {"request": request, "active": "dashboard"})
+
+# ========================================
+# ADMIN - MÓDULOS CRUD (zMita-3)
+# ========================================
+@router.get("/admin/catalogo", response_class=HTMLResponse)
+async def admin_catalogo(request: Request):
+    """Catálogo de servicios (categorías / tipos)"""
+    return templates.TemplateResponse("admin/catalogo_servicios.html", {"request": request, "active": "catalogo"})
+
+@router.get("/admin/personal", response_class=HTMLResponse)
+async def admin_personal(request: Request):
+    """Registro de personal"""
+    return templates.TemplateResponse("admin/personal.html", {"request": request, "active": "personal"})
+
+@router.get("/admin/personal/ficha", response_class=HTMLResponse)
+async def ficha_personal(request: Request, id: int = None):
+    """Ficha completa de un miembro del personal"""
+    return templates.TemplateResponse("admin/ficha_personal.html", {"request": request, "active": "personal"})
+
+@router.get("/admin/distritos", response_class=HTMLResponse)
+async def admin_distritos(request: Request):
+    """Distritos y cobertura"""
+    return templates.TemplateResponse("admin/distritos.html", {"request": request, "active": "distritos"})
+
+@router.get("/admin/configuraciones", response_class=HTMLResponse)
+async def admin_configuraciones(request: Request):
+    """Configuraciones del sistema"""
+    return templates.TemplateResponse("admin/configuraciones.html", {"request": request, "active": "configuraciones"})
+
+@router.get("/admin/usuarios", response_class=HTMLResponse)
+async def admin_usuarios(request: Request):
+    """Lista de usuarios del panel + reset de clave"""
+    return templates.TemplateResponse("admin/usuarios.html", {"request": request, "active": "usuarios"})
+
+# ---- Módulos aún en desarrollo (placeholder) ----
+@router.get("/admin/solicitudes", response_class=HTMLResponse)
+async def admin_solicitudes(request: Request):
+    return templates.TemplateResponse("shared/en_desarrollo.html", {"request": request, "active": "solicitudes", "titulo": "Solicitudes", "ruta": "/admin/solicitudes"})
+
+@router.get("/admin/ingresos", response_class=HTMLResponse)
+async def admin_ingresos(request: Request):
+    return templates.TemplateResponse("shared/en_desarrollo.html", {"request": request, "active": "ingresos", "titulo": "Ingresos", "ruta": "/admin/ingresos"})
+
+@router.get("/admin/egresos", response_class=HTMLResponse)
+async def admin_egresos(request: Request):
+    return templates.TemplateResponse("shared/en_desarrollo.html", {"request": request, "active": "egresos", "titulo": "Egresos", "ruta": "/admin/egresos"})
+
+@router.get("/admin/liquidaciones", response_class=HTMLResponse)
+async def admin_liquidaciones(request: Request):
+    return templates.TemplateResponse("shared/en_desarrollo.html", {"request": request, "active": "liquidaciones", "titulo": "Liquidaciones", "ruta": "/admin/liquidaciones"})
+
+# ========================================
+# SECRETARIA (zMita-10)
+# ========================================
+@router.get("/secretaria", response_class=HTMLResponse)
+async def secretaria_dashboard(request: Request):
+    return templates.TemplateResponse("secretaria/solicitudes.html", {"request": request, "active": "solicitudes"})
+
+@router.get("/secretaria/solicitudes", response_class=HTMLResponse)
+async def secretaria_solicitudes(request: Request):
+    return templates.TemplateResponse("secretaria/solicitudes.html", {"request": request, "active": "solicitudes"})
+
+@router.get("/secretaria/activos", response_class=HTMLResponse)
+async def secretaria_activos(request: Request):
+    return templates.TemplateResponse("shared/en_desarrollo.html", {"request": request, "titulo": "Servicios Activos", "ruta": "/secretaria/activos"})
+
+@router.get("/secretaria/tecnicos", response_class=HTMLResponse)
+async def secretaria_tecnicos(request: Request):
+    return templates.TemplateResponse("shared/en_desarrollo.html", {"request": request, "titulo": "Técnicos", "ruta": "/secretaria/tecnicos"})
+
+@router.get("/secretaria/historial", response_class=HTMLResponse)
+async def secretaria_historial(request: Request):
+    return templates.TemplateResponse("shared/en_desarrollo.html", {"request": request, "titulo": "Historial", "ruta": "/secretaria/historial"})
 
 # Formularios específicos
 @router.get("/cliente/servicio/aceite", response_class=HTMLResponse)
@@ -75,9 +162,32 @@ async def registro_tecnico(request: Request):
 async def login_tecnico(request: Request):
     return templates.TemplateResponse("tecnico/login_tecnico.html", {"request": request})
 
+# ---- Panel del técnico MITA (zMita-5, layout con nav inferior) ----
+@router.get("/tecnico", response_class=HTMLResponse)
+async def tecnico_dashboard(request: Request):
+    """Inicio del panel del técnico"""
+    return templates.TemplateResponse("tecnico/dashboard.html", {"request": request, "active": "home"})
+
+@router.get("/tecnico/servicios", response_class=HTMLResponse)
+async def tecnico_servicios(request: Request):
+    return templates.TemplateResponse("tecnico/servicios.html", {"request": request, "active": "servicios"})
+
+@router.get("/tecnico/chat", response_class=HTMLResponse)
+async def tecnico_chat(request: Request):
+    return templates.TemplateResponse("tecnico/chat.html", {"request": request, "active": "chat"})
+
+@router.get("/tecnico/ganancias", response_class=HTMLResponse)
+async def tecnico_ganancias(request: Request):
+    return templates.TemplateResponse("tecnico/ganancias.html", {"request": request, "active": "ganancias"})
+
+@router.get("/tecnico/perfil", response_class=HTMLResponse)
+async def tecnico_perfil(request: Request):
+    return templates.TemplateResponse("tecnico/perfil.html", {"request": request, "active": "perfil"})
+
+# ---- Vistas legacy del técnico (se conservan) ----
 @router.get("/tecnico/panel", response_class=HTMLResponse)
 async def panel_tecnico(request: Request):
-    """Dashboard principal del técnico"""
+    """Dashboard legacy del técnico"""
     return templates.TemplateResponse("tecnico/panel_tecnico.html", {"request": request})
 
 @router.get("/tecnico/solicitudes", response_class=HTMLResponse)
@@ -89,16 +199,6 @@ async def solicitudes_tecnico_view(request: Request):
 async def historial_tecnico_view(request: Request):
     """Historial de servicios completados"""
     return templates.TemplateResponse("tecnico/historial_tecnico.html", {"request": request})
-
-@router.get("/tecnico/ganancias", response_class=HTMLResponse)
-async def ganancias_tecnico_view(request: Request):
-    """Vista de ganancias y finanzas"""
-    return templates.TemplateResponse("tecnico/ganancias_tecnico.html", {"request": request})
-
-@router.get("/tecnico/perfil", response_class=HTMLResponse)
-async def perfil_tecnico_view(request: Request):
-    """Perfil del técnico"""
-    return templates.TemplateResponse("tecnico/perfil_tecnico.html", {"request": request})
 
 # ========================================
 # ADMIN - VISTAS HTML
