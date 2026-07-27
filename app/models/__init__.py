@@ -37,3 +37,4 @@ from app.models.configuracion import (
 from app.models.auth_mita import UsuarioMita, SesionMita
 from app.models.ubigeo import Ubigeo
 from app.models.solicitud_mita import Solicitud
+from app.models.billetera import BilleteraPersonal

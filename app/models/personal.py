@@ -61,6 +61,7 @@ class Personal(Base):
 
     # Contacto
     telefono = Column(String(20), nullable=False, index=True)
+    celular_2 = Column(String(15))  # segundo número (zMita-11)
     telefono_emergencia = Column(String(20))
     email = Column(String(150), index=True)
 
