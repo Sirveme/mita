@@ -3,7 +3,7 @@
 // Ubicación: app/static/sw.js
 // ============================================
 
-const CACHE_VERSION = 'serviplus-v2.0.0';
+const CACHE_VERSION = 'serviplus-v2.1.0';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_DYNAMIC = `${CACHE_VERSION}-dynamic`;
 const CACHE_IMAGES = `${CACHE_VERSION}-images`;
@@ -125,8 +125,8 @@ async function cacheFirstStrategy(request, cacheName) {
         // Si no está en caché, traer de red
         const networkResponse = await fetch(request);
         
-        // Guardar en caché para futuro
-        if (networkResponse.ok) {
+        // Guardar en caché para futuro (NO cachear respuestas parciales 206)
+        if (networkResponse.ok && networkResponse.status !== 206) {
             const cache = await caches.open(cacheName);
             cache.put(request, networkResponse.clone());
         }
@@ -153,8 +153,8 @@ async function networkFirstStrategy(request) {
         // Intentar traer de red primero
         const networkResponse = await fetch(request);
         
-        // Guardar en caché dinámico
-        if (networkResponse.ok) {
+        // Guardar en caché dinámico (NO cachear respuestas parciales 206)
+        if (networkResponse.ok && networkResponse.status !== 206) {
             const cache = await caches.open(CACHE_DYNAMIC);
             cache.put(request, networkResponse.clone());
         }
