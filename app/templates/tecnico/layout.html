@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Panel Técnico{% endblock %} - MITA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --mita-primary: #FFCD11;
+            --mita-dark: #0a0a0f;
+            --mita-card: #111118;
+            --mita-border: #2a2a3a;
+            --mita-text: #ffffff;
+            --mita-text-secondary: #888;
+            --mita-success: #22c55e;
+            --mita-warning: #f59e0b;
+            --mita-danger: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--mita-dark);
+            color: var(--mita-text);
+            min-height: 100vh;
+        }
+
+        .tech-header {
+            background: var(--mita-card);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--mita-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .tech-header .logo { font-size: 24px; font-weight: 800; color: var(--mita-primary); }
+        .tech-header .user-info { display: flex; align-items: center; gap: 12px; }
+        .tech-header .avatar {
+            width: 40px; height: 40px; border-radius: 50%; background: var(--mita-primary);
+            display: flex; align-items: center; justify-content: center; color: #000; font-weight: 600;
+        }
+
+        .status-bar {
+            background: var(--mita-card);
+            padding: 16px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--mita-border);
+        }
+        .status-indicator { display: flex; align-items: center; gap: 8px; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--mita-success); }
+        .status-dot.busy { background: var(--mita-warning); }
+        .status-dot.offline { background: var(--mita-text-secondary); }
+        .status-toggle {
+            padding: 8px 16px; border-radius: 20px; border: 1px solid var(--mita-border);
+            background: transparent; color: var(--mita-text); cursor: pointer;
+        }
+        .status-toggle.active { background: var(--mita-success); color: #000; border-color: var(--mita-success); }
+
+        .tech-content { padding: 20px; padding-bottom: 80px; }
+
+        .service-card {
+            background: var(--mita-card); border-radius: 12px; padding: 16px; margin-bottom: 16px;
+            border: 1px solid var(--mita-border);
+        }
+        .service-card.urgent { border-left: 4px solid var(--mita-danger); }
+        .service-card.new { border-left: 4px solid var(--mita-primary); }
+        .service-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+        .service-type { font-weight: 600; color: var(--mita-primary); }
+        .service-time { font-size: 12px; color: var(--mita-text-secondary); }
+        .service-client { margin-bottom: 8px; }
+        .service-address { font-size: 14px; color: var(--mita-text-secondary); display: flex; align-items: start; gap: 8px; }
+        .service-actions { display: flex; gap: 8px; margin-top: 16px; }
+        .btn-accept { flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--mita-success); color: #fff; font-weight: 600; cursor: pointer; }
+        .btn-reject { padding: 12px 16px; border-radius: 8px; border: 1px solid var(--mita-border); background: transparent; color: var(--mita-text-secondary); cursor: pointer; }
+
+        .tech-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--mita-card); border-top: 1px solid var(--mita-border);
+            display: flex; justify-content: space-around; padding: 12px 0; z-index: 100;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            color: var(--mita-text-secondary); text-decoration: none; font-size: 12px; padding: 8px 16px;
+            position: relative;
+        }
+        .nav-item i { font-size: 20px; }
+        .nav-item.active { color: var(--mita-primary); }
+        .nav-item .badge {
+            position: absolute; top: 0; right: 0; background: var(--mita-danger); color: #fff;
+            font-size: 10px; padding: 2px 6px; border-radius: 10px;
+        }
+
+        /* Utilidades reutilizables por las vistas */
+        .card-panel { background: var(--mita-card); border: 1px solid var(--mita-border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+        .stat { background: var(--mita-card); border: 1px solid var(--mita-border); border-radius: 12px; padding: 16px; }
+        .stat .v { font-size: 24px; font-weight: 800; color: var(--mita-primary); }
+        .stat .l { font-size: 12px; color: var(--mita-text-secondary); margin-top: 4px; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="tech-header">
+        <div class="logo">MITA</div>
+        <div class="user-info">
+            <span>{{ user.nombres if user else 'Técnico' }}</span>
+            <div class="avatar">{{ user.nombres[0] if user and user.nombres else 'T' }}</div>
+        </div>
+    </header>
+
+    <div class="status-bar">
+        <div class="status-indicator">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">Disponible</span>
+        </div>
+        <button class="status-toggle active" id="status-toggle" onclick="toggleStatus()">
+            <i class="fas fa-power-off"></i> En línea
+        </button>
+    </div>
+
+    <main class="tech-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <nav class="tech-nav">
+        <a href="/tecnico" class="nav-item {% if active == 'home' %}active{% endif %}"><i class="fas fa-home"></i><span>Inicio</span></a>
+        <a href="/tecnico/servicios" class="nav-item {% if active == 'servicios' %}active{% endif %}"><i class="fas fa-clipboard-list"></i><span>Servicios</span></a>
+        <a href="/tecnico/chat" class="nav-item {% if active == 'chat' %}active{% endif %}"><i class="fas fa-comments"></i><span>Chat</span></a>
+        <a href="/tecnico/ganancias" class="nav-item {% if active == 'ganancias' %}active{% endif %}"><i class="fas fa-wallet"></i><span>Ganancias</span></a>
+        <a href="/tecnico/perfil" class="nav-item {% if active == 'perfil' %}active{% endif %}"><i class="fas fa-user"></i><span>Perfil</span></a>
+    </nav>
+
+    <script>
+        function toggleStatus() {
+            const btn = document.getElementById('status-toggle');
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            if (btn.classList.contains('active')) {
+                btn.classList.remove('active');
+                btn.innerHTML = '<i class="fas fa-power-off"></i> Desconectado';
+                dot.classList.add('offline');
+                text.textContent = 'Desconectado';
+            } else {
+                btn.classList.add('active');
+                btn.innerHTML = '<i class="fas fa-power-off"></i> En línea';
+                dot.classList.remove('offline');
+                text.textContent = 'Disponible';
+            }
+            // TODO: Enviar estado al servidor
+        }
+    </script>
+    <script src="/static/js/mita_alerts.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

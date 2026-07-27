@@ -1,0 +1,41 @@
+{% extends "tecnico/layout.html" %}
+
+{% block title %}Servicios{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 16px;">Mis Servicios</h2>
+
+<div class="service-card new">
+    <div class="service-header">
+        <div>
+            <div class="service-type"><i class="fas fa-bolt"></i> Electricidad</div>
+            <div>Instalación de tomacorrientes</div>
+        </div>
+        <div class="service-time">En proceso</div>
+    </div>
+    <div class="service-client"><strong>Jorge Castillo</strong></div>
+    <div class="service-address"><i class="fas fa-map-marker-alt"></i><span>Calle Los Pinos 456, Miraflores</span></div>
+    <div class="service-actions">
+        <a href="/tecnico/chat" class="btn-accept" style="text-align:center;text-decoration:none;"><i class="fas fa-comments"></i> Abrir chat</a>
+        <button class="btn-reject"><i class="fas fa-check-double"></i></button>
+    </div>
+</div>
+
+<h3 style="margin: 24px 0 12px; color: var(--mita-text-secondary); font-size: 14px; text-transform: uppercase;">Completados hoy</h3>
+
+<div class="service-card">
+    <div class="service-header">
+        <div>
+            <div class="service-type"><i class="fas fa-faucet"></i> Gasfitería</div>
+            <div>Reparación de fuga</div>
+        </div>
+        <div class="service-time"><i class="fas fa-check" style="color:var(--mita-success)"></i> Completado</div>
+    </div>
+    <div class="service-client"><strong>Ana Martínez</strong> · S/ 50</div>
+</div>
+
+<div style="text-align:center; padding: 30px; color: var(--mita-text-secondary);">
+    <i class="fas fa-clipboard-check" style="font-size:40px; display:block; margin-bottom:12px;"></i>
+    <p>Aquí verás tus servicios asignados</p>
+</div>
+{% endblock %}

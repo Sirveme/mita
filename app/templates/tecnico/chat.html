@@ -1,0 +1,49 @@
+{% extends "tecnico/layout.html" %}
+
+{% block title %}Chat{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/chat_whatsapp.css">
+<style>
+    .tech-content { padding: 0; }
+    .chat-shell { display: flex; flex-direction: column; height: calc(100vh - 60px - 64px - 64px); min-height: 360px; background: #0b141a; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-shell">
+    <div class="conversation-header">
+        <div class="avatar"></div>
+        <div class="contact-info">
+            <div class="contact-name">Juan Pérez</div>
+            <div class="contact-status">Servicio #1234 · en línea</div>
+        </div>
+    </div>
+
+    <div class="conversation-messages chat-bg-pattern" id="chat-messages"></div>
+
+    <div class="conversation-input">
+        <button class="icon-btn" id="btn-emoji" title="Emojis"><i class="far fa-smile"></i></button>
+        <button class="icon-btn" id="btn-adjuntar" title="Adjuntar"><i class="fas fa-paperclip"></i></button>
+        <div class="input-wrapper">
+            <textarea id="chat-input" placeholder="Escribe un mensaje…" rows="1"></textarea>
+        </div>
+        <button class="send-btn" id="btn-enviar" title="Enviar"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/chat.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        window.chat = new MitaChat({
+            conversacionId: 1,
+            userType: 'tecnico',
+            userId: 1,
+            userName: '{{ user.nombres if user else "Carlos López" }}',
+            demoMode: true
+        });
+    });
+</script>
+{% endblock %}

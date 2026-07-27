@@ -1,0 +1,34 @@
+{% extends "tecnico/layout.html" %}
+
+{% block title %}Ganancias{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 16px;">Mis Ganancias</h2>
+
+<div class="card-panel" style="text-align:center;">
+    <div style="font-size: 13px; color: var(--mita-text-secondary);">Saldo disponible</div>
+    <div style="font-size: 36px; font-weight: 800; color: var(--mita-success); margin: 6px 0;">S/ 245.00</div>
+    <div style="font-size: 12px; color: var(--mita-text-secondary);">Próxima liquidación: quincenal</div>
+</div>
+
+<div class="stat-grid" style="margin-bottom: 16px;">
+    <div class="stat"><div class="v">7</div><div class="l">Servicios esta semana</div></div>
+    <div class="stat"><div class="v">S/ 245</div><div class="l">Ganado esta semana</div></div>
+    <div class="stat"><div class="v">S/ 1,820</div><div class="l">Total del mes</div></div>
+    <div class="stat"><div class="v">4.9 ★</div><div class="l">Calificación</div></div>
+</div>
+
+<h3 style="margin: 20px 0 12px; color: var(--mita-text-secondary); font-size: 14px; text-transform: uppercase;">Movimientos recientes</h3>
+<div class="card-panel" style="display:flex; justify-content:space-between;">
+    <div><strong>Gasfitería</strong><br><span style="color:var(--mita-text-secondary); font-size:13px;">Ana Martínez · hoy</span></div>
+    <div style="color: var(--mita-success); font-weight:700;">+ S/ 35</div>
+</div>
+<div class="card-panel" style="display:flex; justify-content:space-between;">
+    <div><strong>Electricidad</strong><br><span style="color:var(--mita-text-secondary); font-size:13px;">Jorge Castillo · ayer</span></div>
+    <div style="color: var(--mita-success); font-weight:700;">+ S/ 35</div>
+</div>
+
+<p style="font-size:12px; color:var(--mita-text-secondary); text-align:center; margin-top:16px;">
+    Cada visita paga S/ 35 al técnico (de S/ 50). Los trabajos adicionales se cobran aparte.
+</p>
+{% endblock %}
