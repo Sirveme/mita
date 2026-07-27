@@ -1,0 +1,360 @@
+{% extends "base_pwa.html" %}
+
+{% block title %}Solicitar Servicio - MITA{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root { --mita-primary: #FFCD11; --mita-dark: #0a0a0f; --mita-card: #111118; --mita-border: #2a2a3a; --mita-text: #ffffff; --mita-text-secondary: #888; }
+    body { background: var(--mita-dark); color: var(--mita-text); }
+    .solicitar-container { max-width: 900px; margin: 0 auto; padding: 24px; min-height: 100vh; }
+    .solicitar-header { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
+    .btn-back { width: 40px; height: 40px; border-radius: 50%; background: var(--mita-card); border: 1px solid var(--mita-border); color: var(--mita-text); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .solicitar-title { font-size: 24px; font-weight: 700; }
+    .stepper { display: flex; justify-content: center; gap: 8px; margin-bottom: 32px; }
+    .step-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--mita-border); transition: all 0.3s; }
+    .step-dot.active { background: var(--mita-primary); width: 32px; border-radius: 6px; }
+    .step-dot.completed { background: var(--mita-primary); }
+    .solicitar-section { display: none; animation: fadeIn 0.3s ease; }
+    .solicitar-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .problema-card { background: var(--mita-card); border-radius: 16px; padding: 24px; border: 1px solid var(--mita-border); margin-bottom: 24px; }
+    .problema-label { font-size: 14px; color: var(--mita-text-secondary); margin-bottom: 8px; }
+    .problema-texto { font-size: 18px; line-height: 1.5; }
+    .problema-editar { margin-top: 16px; }
+    .problema-editar textarea { width: 100%; padding: 12px; background: var(--mita-dark); border: 1px solid var(--mita-border); border-radius: 8px; color: var(--mita-text); font-size: 16px; resize: none; min-height: 80px; }
+    .problema-editar textarea:focus { outline: none; border-color: var(--mita-primary); }
+    .section-subtitle { font-size: 16px; color: var(--mita-text-secondary); margin-bottom: 20px; }
+    .categorias-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .categoria-card { background: var(--mita-card); border: 2px solid var(--mita-border); border-radius: 12px; padding: 20px 16px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .categoria-card:hover { border-color: var(--mita-primary); transform: translateY(-2px); }
+    .categoria-card.selected { border-color: var(--mita-primary); background: rgba(255, 205, 17, 0.1); }
+    .categoria-icon { width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .categoria-nombre { font-size: 14px; font-weight: 500; }
+    .tecnicos-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .tecnicos-count { font-size: 14px; color: var(--mita-text-secondary); }
+    .tecnicos-list { display: flex; flex-direction: column; gap: 16px; }
+    .tecnico-card { background: var(--mita-card); border: 2px solid var(--mita-border); border-radius: 16px; padding: 20px; display: flex; gap: 16px; cursor: pointer; transition: all 0.2s; }
+    .tecnico-card:hover { border-color: var(--mita-primary); }
+    .tecnico-card.selected { border-color: var(--mita-primary); background: rgba(255, 205, 17, 0.05); }
+    .tecnico-foto { width: 80px; height: 80px; border-radius: 12px; background: var(--mita-dark); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+    .tecnico-foto img { width: 100%; height: 100%; object-fit: cover; }
+    .tecnico-foto i { font-size: 32px; color: var(--mita-text-secondary); }
+    .tecnico-info { flex: 1; }
+    .tecnico-nombre { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+    .tecnico-especialidad { font-size: 13px; color: var(--mita-primary); margin-bottom: 8px; }
+    .tecnico-stats { display: flex; gap: 16px; font-size: 13px; color: var(--mita-text-secondary); flex-wrap: wrap; }
+    .tecnico-stat { display: flex; align-items: center; gap: 4px; }
+    .tecnico-stat i { color: var(--mita-primary); }
+    .tecnico-disponibilidad { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .disponible-badge { padding: 4px 10px; background: rgba(34, 197, 94, 0.1); color: #22c55e; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .tiempo-llegada { font-size: 13px; color: var(--mita-text-secondary); }
+    .tiempo-llegada strong { color: var(--mita-text); }
+    .direccion-card, .resumen-card { background: var(--mita-card); border-radius: 16px; padding: 24px; border: 1px solid var(--mita-border); margin-bottom: 24px; }
+    .direccion-card h3 { font-size: 16px; margin-bottom: 16px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; color: var(--mita-text-secondary); margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; background: var(--mita-dark); border: 1px solid var(--mita-border); border-radius: 8px; color: var(--mita-text); font-size: 15px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--mita-primary); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .ubicacion-actual { display: flex; align-items: center; gap: 8px; padding: 12px; background: rgba(255, 205, 17, 0.1); border-radius: 8px; cursor: pointer; margin-bottom: 16px; }
+    .ubicacion-actual i { color: var(--mita-primary); }
+    .resumen-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--mita-border); }
+    .resumen-item:last-child { border-bottom: none; }
+    .resumen-label { color: var(--mita-text-secondary); }
+    .resumen-valor { font-weight: 500; text-align: right; }
+    .resumen-total { font-size: 20px; color: var(--mita-primary); font-weight: 700; }
+    .solicitar-actions { display: flex; gap: 12px; margin-top: 32px; }
+    .btn { flex: 1; padding: 16px 24px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
+    .btn-secondary { background: var(--mita-card); color: var(--mita-text); border: 1px solid var(--mita-border); }
+    .btn-primary { background: var(--mita-primary); color: #000; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255, 205, 17, 0.3); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+    .loading-tecnicos { text-align: center; padding: 60px 20px; color: var(--mita-text-secondary); }
+    .loading-spinner { width: 40px; height: 40px; border: 3px solid var(--mita-border); border-top-color: var(--mita-primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .no-tecnicos { text-align: center; padding: 60px 20px; }
+    .no-tecnicos i { font-size: 48px; color: var(--mita-text-secondary); margin-bottom: 16px; }
+    .no-tecnicos h3 { margin-bottom: 8px; }
+    .no-tecnicos p { color: var(--mita-text-secondary); margin-bottom: 20px; }
+    @media (max-width: 600px) {
+        .categorias-grid { grid-template-columns: repeat(2, 1fr); }
+        .tecnico-card { flex-direction: column; }
+        .tecnico-foto { width: 100%; height: 120px; }
+        .tecnico-disponibilidad { flex-direction: row; justify-content: space-between; align-items: center; margin-top: 12px; }
+        .form-row { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="solicitar-container">
+    <div class="solicitar-header">
+        <button class="btn-back" onclick="history.back()"><i class="fas fa-arrow-left"></i></button>
+        <h1 class="solicitar-title">Solicitar Servicio</h1>
+    </div>
+
+    <div class="stepper">
+        <div class="step-dot active" id="dot-1"></div>
+        <div class="step-dot" id="dot-2"></div>
+        <div class="step-dot" id="dot-3"></div>
+        <div class="step-dot" id="dot-4"></div>
+    </div>
+
+    <!-- PASO 1 -->
+    <div class="solicitar-section active" id="section-1">
+        <div class="problema-card">
+            <div class="problema-label">Tu problema:</div>
+            <div class="problema-texto" id="problema-display"></div>
+            <div class="problema-editar">
+                <textarea id="problema-input" placeholder="Describe tu problema con más detalle..."></textarea>
+            </div>
+        </div>
+        <h3>Selecciona el tipo de servicio</h3>
+        <p class="section-subtitle">Te sugerimos opciones basadas en tu descripción</p>
+        <div class="categorias-grid" id="categorias-grid"></div>
+        <div class="solicitar-actions">
+            <button class="btn btn-primary" onclick="irAPaso(2)" id="btn-paso1">Continuar <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- PASO 2 -->
+    <div class="solicitar-section" id="section-2">
+        <div class="tecnicos-header">
+            <h3>Técnicos disponibles</h3>
+            <span class="tecnicos-count" id="tecnicos-count">Buscando...</span>
+        </div>
+        <div class="tecnicos-list" id="tecnicos-list">
+            <div class="loading-tecnicos"><div class="loading-spinner"></div><p>Buscando técnicos cerca de ti...</p></div>
+        </div>
+        <div class="solicitar-actions">
+            <button class="btn btn-secondary" onclick="irAPaso(1)"><i class="fas fa-arrow-left"></i> Atrás</button>
+            <button class="btn btn-primary" onclick="irAPaso(3)" id="btn-paso2" disabled>Continuar <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- PASO 3 -->
+    <div class="solicitar-section" id="section-3">
+        <div class="direccion-card">
+            <h3><i class="fas fa-map-marker-alt"></i> ¿Dónde necesitas el servicio?</h3>
+            <div class="ubicacion-actual" onclick="obtenerUbicacion()"><i class="fas fa-crosshairs"></i><span>Usar mi ubicación actual</span></div>
+            <div class="form-group"><label>Dirección</label><input type="text" id="direccion" placeholder="Av. Principal 123"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Distrito</label><select id="distrito"><option value="">Seleccionar...</option></select></div>
+                <div class="form-group"><label>Referencia</label><input type="text" id="referencia" placeholder="Cerca de..."></div>
+            </div>
+            <div class="form-group"><label>Número de contacto</label><input type="tel" id="telefono" placeholder="999 999 999"></div>
+        </div>
+        <div class="solicitar-actions">
+            <button class="btn btn-secondary" onclick="irAPaso(2)"><i class="fas fa-arrow-left"></i> Atrás</button>
+            <button class="btn btn-primary" onclick="irAPaso(4)" id="btn-paso3">Continuar <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- PASO 4 -->
+    <div class="solicitar-section" id="section-4">
+        <h3 style="margin-bottom: 20px;">Confirma tu solicitud</h3>
+        <div class="resumen-card">
+            <div class="resumen-item"><span class="resumen-label">Servicio</span><span class="resumen-valor" id="resumen-servicio">-</span></div>
+            <div class="resumen-item"><span class="resumen-label">Técnico</span><span class="resumen-valor" id="resumen-tecnico">-</span></div>
+            <div class="resumen-item"><span class="resumen-label">Dirección</span><span class="resumen-valor" id="resumen-direccion">-</span></div>
+            <div class="resumen-item"><span class="resumen-label">Tiempo estimado</span><span class="resumen-valor" id="resumen-tiempo">~30 min</span></div>
+            <div class="resumen-item"><span class="resumen-label">Costo de visita</span><span class="resumen-valor resumen-total">S/ 50.00</span></div>
+        </div>
+        <p style="font-size: 13px; color: var(--mita-text-secondary); text-align: center; margin-bottom: 24px;">
+            El costo de la visita incluye diagnóstico. El precio final del servicio será informado por el técnico antes de realizar el trabajo.
+        </p>
+        <div class="solicitar-actions">
+            <button class="btn btn-secondary" onclick="irAPaso(3)"><i class="fas fa-arrow-left"></i> Atrás</button>
+            <button class="btn btn-primary" onclick="confirmarSolicitud()" id="btn-confirmar"><i class="fas fa-check"></i> Confirmar Solicitud</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/mita_alerts.js"></script>
+<script>
+let estado = { problema: '', categoriaId: null, categoriaNombre: '', tecnicoId: null, tecnicoNombre: '', direccion: '', distrito: '', referencia: '', telefono: '', lat: null, lng: null };
+let pasoActual = 1;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    estado.problema = urlParams.get('problema') || sessionStorage.getItem('mita_problema') || '';
+    document.getElementById('problema-display').textContent = estado.problema || 'No especificado';
+    document.getElementById('problema-input').value = estado.problema;
+    await cargarCategorias();
+    await cargarDistritos();
+    if (estado.problema) sugerirCategoria(estado.problema);
+});
+
+async function cargarCategorias() {
+    const grid = document.getElementById('categorias-grid');
+    try {
+        const response = await fetch('/api/v1/admin/categorias');
+        if (!response.ok) throw new Error('sin API');
+        const data = await response.json();
+        const categorias = data.items || data;
+        if (!categorias.length) throw new Error('vacío');
+        grid.innerHTML = categorias.map(cat => `
+            <div class="categoria-card" data-id="${cat.id}" onclick="selectCategoria(this, ${cat.id}, '${(cat.nombre||'').replace(/'/g,"\\'")}')">
+                <div class="categoria-icon" style="background: ${cat.color}20; color: ${cat.color};"><i class="${cat.icono || 'fas fa-tools'}"></i></div>
+                <div class="categoria-nombre">${cat.nombre}</div>
+            </div>`).join('');
+    } catch (e) {
+        grid.innerHTML = `
+            <div class="categoria-card" data-id="1" onclick="selectCategoria(this, 1, 'Electricidad')"><div class="categoria-icon" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;"><i class="fas fa-bolt"></i></div><div class="categoria-nombre">Electricidad</div></div>
+            <div class="categoria-card" data-id="2" onclick="selectCategoria(this, 2, 'Gasfitería')"><div class="categoria-icon" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;"><i class="fas fa-faucet"></i></div><div class="categoria-nombre">Gasfitería</div></div>
+            <div class="categoria-card" data-id="3" onclick="selectCategoria(this, 3, 'Electrodomésticos')"><div class="categoria-icon" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6;"><i class="fas fa-tv"></i></div><div class="categoria-nombre">Electrodomésticos</div></div>
+            <div class="categoria-card" data-id="4" onclick="selectCategoria(this, 4, 'Muebles')"><div class="categoria-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;"><i class="fas fa-couch"></i></div><div class="categoria-nombre">Muebles</div></div>
+            <div class="categoria-card" data-id="5" onclick="selectCategoria(this, 5, 'Albañilería')"><div class="categoria-icon" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;"><i class="fas fa-hard-hat"></i></div><div class="categoria-nombre">Albañilería</div></div>
+            <div class="categoria-card" data-id="6" onclick="selectCategoria(this, 6, 'Otros')"><div class="categoria-icon" style="background: rgba(255, 205, 17, 0.2); color: #FFCD11;"><i class="fas fa-tools"></i></div><div class="categoria-nombre">Otros</div></div>`;
+    }
+}
+
+function sugerirCategoria(texto) {
+    const lower = texto.toLowerCase();
+    let categoriaId = null;
+    if (/electric|tomacorriente|luz|lámpara|araña|foco/.test(lower)) categoriaId = 1;
+    else if (/agua|caño|fuga|baño|inodoro|tubería/.test(lower)) categoriaId = 2;
+    else if (/refrigerador|lavadora|licuadora|microondas|aire acondicionado|nevera/.test(lower)) categoriaId = 3;
+    else if (/mueble|cama|closet|armar|persiana|tendedero/.test(lower)) categoriaId = 4;
+    else if (/pared|pintura|rajadura|enchape|albañil/.test(lower)) categoriaId = 5;
+    if (categoriaId) { const card = document.querySelector(`.categoria-card[data-id="${categoriaId}"]`); if (card) card.click(); }
+}
+
+function selectCategoria(el, id, nombre) {
+    document.querySelectorAll('.categoria-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    estado.categoriaId = id; estado.categoriaNombre = nombre;
+    document.getElementById('btn-paso1').disabled = false;
+}
+
+async function cargarDistritos() {
+    const select = document.getElementById('distrito');
+    try {
+        const response = await fetch('/api/v1/admin/distritos');
+        if (!response.ok) throw new Error('sin API');
+        const data = await response.json();
+        const distritos = data.items || data;
+        if (!distritos.length) throw new Error('vacío');
+        select.innerHTML = '<option value="">Seleccionar...</option>' + distritos.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
+    } catch (e) {
+        const demo = ['Miraflores', 'San Isidro', 'Surco', 'La Molina', 'San Borja', 'Barranco'];
+        select.innerHTML = '<option value="">Seleccionar...</option>' + demo.map((d, i) => `<option value="${i+1}">${d}</option>`).join('');
+    }
+}
+
+async function cargarTecnicos() {
+    const list = document.getElementById('tecnicos-list');
+    list.innerHTML = `<div class="loading-tecnicos"><div class="loading-spinner"></div><p>Buscando técnicos cerca de ti...</p></div>`;
+    await new Promise(r => setTimeout(r, 1200));
+    try {
+        const response = await fetch(`/api/v1/tecnicos/disponibles?categoria_id=${estado.categoriaId}`);
+        if (!response.ok) throw new Error('API no disponible');
+        const tecnicos = await response.json();
+        if (!tecnicos.length) throw new Error('vacío');
+        renderTecnicos(tecnicos);
+    } catch (e) {
+        renderTecnicos([
+            { id: 1, nombre: 'Carlos López', especialidad: estado.categoriaNombre, foto: null, rating: 4.8, servicios: 127, experiencia: '5 años', tiempo_llegada: 25 },
+            { id: 2, nombre: 'Juan Pérez', especialidad: estado.categoriaNombre, foto: null, rating: 4.6, servicios: 89, experiencia: '3 años', tiempo_llegada: 35 },
+            { id: 3, nombre: 'Miguel Sánchez', especialidad: estado.categoriaNombre, foto: null, rating: 4.9, servicios: 215, experiencia: '8 años', tiempo_llegada: 45 }
+        ]);
+    }
+}
+
+function renderTecnicos(tecnicos) {
+    const list = document.getElementById('tecnicos-list');
+    const count = document.getElementById('tecnicos-count');
+    if (!tecnicos || tecnicos.length === 0) {
+        list.innerHTML = `<div class="no-tecnicos"><i class="fas fa-user-clock"></i><h3>No hay técnicos disponibles</h3><p>En este momento no hay técnicos de ${estado.categoriaNombre} disponibles en tu zona.</p><button class="btn btn-primary" onclick="irAPaso(1)">Elegir otra categoría</button></div>`;
+        count.textContent = '0 disponibles'; return;
+    }
+    count.textContent = `${tecnicos.length} disponible${tecnicos.length > 1 ? 's' : ''}`;
+    list.innerHTML = tecnicos.map(t => `
+        <div class="tecnico-card" data-id="${t.id}" onclick="selectTecnico(this, ${t.id}, '${(t.nombre||'').replace(/'/g,"\\'")}', ${t.tiempo_llegada})">
+            <div class="tecnico-foto">${t.foto ? `<img src="${t.foto}" alt="${t.nombre}">` : '<i class="fas fa-user"></i>'}</div>
+            <div class="tecnico-info">
+                <div class="tecnico-nombre">${t.nombre}</div>
+                <div class="tecnico-especialidad">${t.especialidad}</div>
+                <div class="tecnico-stats">
+                    <span class="tecnico-stat"><i class="fas fa-star"></i> ${t.rating}</span>
+                    <span class="tecnico-stat"><i class="fas fa-tools"></i> ${t.servicios} servicios</span>
+                    <span class="tecnico-stat"><i class="fas fa-clock"></i> ${t.experiencia}</span>
+                </div>
+            </div>
+            <div class="tecnico-disponibilidad">
+                <span class="disponible-badge"><i class="fas fa-circle" style="font-size: 8px;"></i> Disponible</span>
+                <span class="tiempo-llegada"><strong>~${t.tiempo_llegada} min</strong></span>
+            </div>
+        </div>`).join('');
+}
+
+function selectTecnico(el, id, nombre, tiempo) {
+    document.querySelectorAll('.tecnico-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    estado.tecnicoId = id; estado.tecnicoNombre = nombre; estado.tiempoLlegada = tiempo;
+    document.getElementById('btn-paso2').disabled = false;
+}
+
+async function obtenerUbicacion() {
+    if (!navigator.geolocation) { MitaAlert.error('Error', 'Tu navegador no soporta geolocalización'); return; }
+    try {
+        const pos = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 }));
+        estado.lat = pos.coords.latitude; estado.lng = pos.coords.longitude;
+        MitaAlert.success('Ubicación obtenida', 'Ahora completa los detalles de la dirección');
+    } catch (e) {
+        MitaAlert.error('Error', 'No se pudo obtener tu ubicación. Ingresa la dirección manualmente.');
+    }
+}
+
+function irAPaso(paso) {
+    if (paso === 2 && !estado.categoriaId) { MitaAlert.error('Selecciona una categoría', 'Elige el tipo de servicio que necesitas'); return; }
+    if (paso === 3 && !estado.tecnicoId) { MitaAlert.error('Selecciona un técnico', 'Elige el técnico de tu preferencia'); return; }
+    if (paso === 4) {
+        estado.direccion = document.getElementById('direccion').value;
+        const selDist = document.getElementById('distrito');
+        estado.distrito = selDist.options[selDist.selectedIndex]?.text?.replace('Seleccionar...', '') || '';
+        estado.referencia = document.getElementById('referencia').value;
+        estado.telefono = document.getElementById('telefono').value;
+        if (!estado.direccion || !estado.distrito) { MitaAlert.error('Completa la dirección', 'Ingresa tu dirección y distrito'); return; }
+        document.getElementById('resumen-servicio').textContent = estado.categoriaNombre;
+        document.getElementById('resumen-tecnico').textContent = estado.tecnicoNombre;
+        document.getElementById('resumen-direccion').textContent = `${estado.direccion}, ${estado.distrito}`;
+        if (estado.tiempoLlegada) document.getElementById('resumen-tiempo').textContent = `~${estado.tiempoLlegada} min`;
+    }
+    pasoActual = paso;
+    document.querySelectorAll('.solicitar-section').forEach(s => s.classList.remove('active'));
+    document.getElementById(`section-${paso}`).classList.add('active');
+    document.querySelectorAll('.step-dot').forEach((d, i) => {
+        d.classList.remove('active', 'completed');
+        if (i + 1 < paso) d.classList.add('completed');
+        if (i + 1 === paso) d.classList.add('active');
+    });
+    if (paso === 2) cargarTecnicos();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function confirmarSolicitud() {
+    const btn = document.getElementById('btn-confirmar');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+    estado.problema = document.getElementById('problema-input').value || estado.problema;
+    const guardarYChat = (id) => {
+        sessionStorage.setItem('mita_solicitud', JSON.stringify({ id: id, problema: estado.problema, tecnico: estado.tecnicoNombre, direccion: `${estado.direccion}, ${estado.distrito}` }));
+        window.location.href = `/cliente/chat?solicitud=${id}`;
+    };
+    try {
+        const response = await fetch('/api/v1/solicitudes', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ problema: estado.problema, categoria_id: estado.categoriaId, tecnico_id: estado.tecnicoId, direccion: estado.direccion, distrito: estado.distrito, referencia: estado.referencia, telefono: estado.telefono, lat: estado.lat, lng: estado.lng })
+        });
+        if (!response.ok) throw new Error('Error al crear solicitud');
+        const data = await response.json();
+        guardarYChat(data.id || 1);
+    } catch (e) {
+        console.log('Modo demo - simulando solicitud');
+        guardarYChat('demo');
+    }
+}
+</script>
+{% endblock %}

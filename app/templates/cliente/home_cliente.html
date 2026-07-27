@@ -750,6 +750,66 @@
         </div>
     </div>
 
+    <!-- Botón flotante de chat (WhatsApp-style) -->
+    <a href="/cliente/chat-demo" class="chat-fab" title="Chatea con nosotros">
+        <i class="fas fa-comments"></i>
+    </a>
+    <style>
+    .chat-fab {
+        position: fixed;
+        bottom: 90px;   /* por encima de la barra de navegación inferior */
+        right: 24px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--wa-accent, #00a884);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 1000;
+        transition: transform 0.2s, box-shadow 0.2s;
+        text-decoration: none;
+    }
+    .chat-fab:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    }
+    </style>
+
+    <!-- Botón de acceso (login) — sobre el FAB de chat para no solaparse -->
+    <a href="/login" class="login-fab" title="Ingresar">
+        <i class="fas fa-user"></i>
+    </a>
+    <style>
+    .login-fab {
+        position: fixed;
+        bottom: 160px;   /* por encima del chat-fab (90px) */
+        right: 24px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--mita-card, #111118);
+        border: 1px solid var(--mita-border, #2a2a3a);
+        color: var(--mita-text, #fff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 999;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .login-fab:hover {
+        background: var(--mita-primary, #FFCD11);
+        color: #000;
+        transform: scale(1.1);
+    }
+    </style>
+
     <!-- JS Modular -->
     <script src="/static/js/utils.js"></script>
     <script src="/static/js/home_cliente_hero.js"></script>

@@ -1,0 +1,199 @@
+{% extends "base_pwa.html" %}
+
+{% block title %}Chat - MITA{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/chat_whatsapp.css">
+<style>
+    body { background: var(--wa-bg-app, #111b21); overflow: hidden; }
+    .content-wrapper { padding: 0 !important; max-width: none !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="whatsapp-container">
+    <!-- Panel izquierdo - Lista de chats -->
+    <div class="chat-list-panel">
+        <div class="chat-list-header">
+            <div class="user-avatar"><i class="fas fa-user"></i></div>
+            <div class="header-actions">
+                <button title="Nuevo chat"><i class="fas fa-comment-alt"></i></button>
+                <button title="Opciones"><i class="fas fa-ellipsis-v"></i></button>
+            </div>
+        </div>
+
+        <div class="chat-search">
+            <input type="text" placeholder="Buscar o iniciar chat" id="search-chats">
+        </div>
+
+        <div class="chat-list" id="chat-list">
+            <div class="chat-list-item active" data-chat-id="1">
+                <div class="avatar"><i class="fas fa-tools"></i></div>
+                <div class="chat-info">
+                    <div class="chat-info-top">
+                        <span class="chat-name">Servicio #1234</span>
+                        <span class="chat-time">10:30</span>
+                    </div>
+                    <div class="chat-preview">
+                        <i class="fas fa-check-double" style="color: #53bdeb;"></i>
+                        Perfecto, llego en 10 minutos...
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-list-item" data-chat-id="2">
+                <div class="avatar" style="background: #f59e0b;"><i class="fas fa-bolt"></i></div>
+                <div class="chat-info">
+                    <div class="chat-info-top">
+                        <span class="chat-name">Servicio #1198</span>
+                        <span class="chat-time">Ayer</span>
+                    </div>
+                    <div class="chat-preview">Gracias por su atención</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel derecho - Conversación -->
+    <div class="chat-conversation-panel">
+        <div class="conversation-header">
+            <div class="avatar" id="chat-avatar"><i class="fas fa-tools"></i></div>
+            <div class="contact-info">
+                <div class="contact-name" id="chat-contact-name">Servicio de Gasfitería</div>
+                <div class="contact-status" id="chat-contact-status">Carlos López - Técnico asignado</div>
+            </div>
+            <div class="header-actions">
+                <button title="Llamar" id="btn-call"><i class="fas fa-phone"></i></button>
+                <button title="Videollamada" id="btn-video"><i class="fas fa-video"></i></button>
+                <button title="Buscar"><i class="fas fa-search"></i></button>
+                <button title="Opciones"><i class="fas fa-ellipsis-v"></i></button>
+            </div>
+        </div>
+
+        <!-- Info del servicio (colapsable) -->
+        <div class="service-info-bar" id="service-info">
+            <div class="service-info-content">
+                <div class="service-problem"><strong>Problema:</strong> <span id="problema-descripcion">Fuga de agua en la cocina</span></div>
+                <div class="service-address"><strong>Dirección:</strong> <span id="cliente-direccion">Av. Arequipa 1234, San Isidro</span></div>
+            </div>
+            <button class="toggle-info" onclick="toggleServiceInfo()"><i class="fas fa-chevron-up"></i></button>
+        </div>
+
+        <div class="conversation-messages chat-bg-pattern" id="chat-messages"></div>
+
+        <div class="conversation-input">
+            <button class="icon-btn" id="btn-emoji" title="Emojis"><i class="fas fa-smile"></i></button>
+            <button class="icon-btn" id="btn-adjuntar" title="Adjuntar"><i class="fas fa-paperclip"></i></button>
+            <button class="icon-btn" id="btn-camera" title="Cámara"><i class="fas fa-camera"></i></button>
+            <div class="input-wrapper">
+                <textarea id="chat-input" placeholder="Escribe un mensaje..." rows="1"></textarea>
+            </div>
+            <button class="icon-btn" id="btn-voice" title="Nota de voz"><i class="fas fa-microphone"></i></button>
+            <button class="send-btn" id="btn-enviar" title="Enviar"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+</div>
+
+<input type="file" id="file-input" accept="image/*,.pdf,.doc,.docx" multiple style="display:none;">
+<input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;">
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/chat.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Cargar datos de la solicitud (viene desde /cliente/solicitar)
+    try {
+        const raw = sessionStorage.getItem('mita_solicitud');
+        if (raw) {
+            const s = JSON.parse(raw);
+            if (s.problema) document.getElementById('problema-descripcion').textContent = s.problema;
+            if (s.direccion) document.getElementById('cliente-direccion').textContent = s.direccion;
+            if (s.tecnico) document.getElementById('chat-contact-status').textContent = `${s.tecnico} - En camino`;
+        }
+    } catch (e) { /* ignore */ }
+
+    window.chat = new MitaChat({
+        conversacionId: 1,
+        userType: 'cliente',
+        userId: 1,
+        userName: 'Juan Pérez',
+        demoMode: true
+    });
+
+    document.getElementById('btn-camera')?.addEventListener('click', () => {
+        document.getElementById('camera-input').click();
+    });
+    document.getElementById('camera-input')?.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) window.chat.procesarArchivos(e.target.files);
+    });
+    document.getElementById('btn-voice')?.addEventListener('click', () => iniciarGrabacionVoz());
+});
+
+function toggleServiceInfo() {
+    document.getElementById('service-info').classList.toggle('collapsed');
+}
+
+let mediaRecorder = null;
+let audioChunks = [];
+
+async function iniciarGrabacionVoz() {
+    const btn = document.getElementById('btn-voice');
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        btn.innerHTML = '<i class="fas fa-microphone"></i>';
+        btn.classList.remove('recording');
+        return;
+    }
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            enviarNotaVoz(audioBlob);
+            stream.getTracks().forEach(track => track.stop());
+        };
+        mediaRecorder.start();
+        btn.innerHTML = '<i class="fas fa-stop"></i>';
+        btn.classList.add('recording');
+        setTimeout(() => { if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop(); }, 60000);
+    } catch (err) {
+        console.error('Error accediendo al micrófono:', err);
+        if (window.MitaAlert) MitaAlert.error('Micrófono no disponible', 'Permite el acceso al micrófono para enviar notas de voz');
+    }
+}
+
+function enviarNotaVoz(blob) {
+    const audioUrl = URL.createObjectURL(blob);
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'wa-message sent';
+    div.innerHTML = `
+        <div class="bubble audio-bubble">
+            <audio controls src="${audioUrl}"></audio>
+            <div class="meta">
+                <span class="time">${new Date().toLocaleTimeString('es-PE', {hour: '2-digit', minute: '2-digit'})}</span>
+                <span class="status">✓</span>
+            </div>
+        </div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+</script>
+
+<style>
+.service-info-bar { background: rgba(255, 205, 17, 0.1); border-bottom: 1px solid var(--wa-border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s; }
+.service-info-bar.collapsed { padding: 8px 16px; }
+.service-info-bar.collapsed .service-info-content { display: none; }
+.service-info-bar.collapsed .toggle-info i { transform: rotate(180deg); }
+.service-info-content { flex: 1; }
+.service-problem, .service-address { font-size: 13px; color: var(--wa-text-primary); margin-bottom: 4px; }
+.service-problem strong, .service-address strong { color: var(--wa-text-secondary); margin-right: 8px; }
+.toggle-info { background: transparent; border: none; color: var(--wa-text-secondary); cursor: pointer; padding: 8px; }
+.icon-btn.recording { color: #ef4444 !important; animation: pulse 1s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.audio-bubble audio { max-width: 250px; height: 40px; }
+</style>
+{% endblock %}
