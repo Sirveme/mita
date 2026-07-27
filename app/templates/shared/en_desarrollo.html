@@ -1,0 +1,50 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}{{ titulo | default('En Desarrollo') }}{% endblock %}
+{% block page_title %}{{ titulo | default('En Desarrollo') }}{% endblock %}
+
+{% block content %}
+<div class="dev-card">
+    <div class="dev-icon">
+        <i class="fas fa-hard-hat"></i>
+    </div>
+    <h2>Módulo en Desarrollo</h2>
+    <p class="dev-route">Ruta: <code>{{ ruta }}</code></p>
+    <p class="dev-message">
+        Estamos trabajando en esta funcionalidad para brindarte la mejor experiencia.
+    </p>
+    <div class="dev-contact">
+        <p>¿Tienes sugerencias para este módulo?</p>
+        <a href="https://wa.me/51999999999?text=Sugerencia para {{ ruta }}: "
+           class="btn-whatsapp" target="_blank">
+            <i class="fab fa-whatsapp"></i> Enviar sugerencia a Duilio
+        </a>
+    </div>
+</div>
+
+<style>
+.dev-card {
+    max-width: 500px; margin: 60px auto; text-align: center;
+    background: var(--mita-card, #111118); border-radius: 16px; padding: 48px 32px;
+    border: 1px solid var(--mita-border, #2a2a3a);
+}
+.dev-icon {
+    width: 80px; height: 80px; margin: 0 auto 24px;
+    background: rgba(255, 205, 17, 0.1); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+}
+.dev-icon i { font-size: 36px; color: var(--mita-primary, #FFCD11); }
+.dev-card h2 { color: var(--mita-text, #fff); margin-bottom: 16px; }
+.dev-route { color: var(--mita-text-secondary, #888); margin-bottom: 8px; }
+.dev-route code { background: var(--mita-dark, #0a0a0f); padding: 4px 8px; border-radius: 4px; color: var(--mita-primary, #FFCD11); }
+.dev-message { color: var(--mita-text-secondary, #888); margin-bottom: 32px; }
+.dev-contact { padding-top: 24px; border-top: 1px solid var(--mita-border, #2a2a3a); }
+.dev-contact p { color: var(--mita-text-secondary, #888); margin-bottom: 16px; }
+.btn-whatsapp {
+    display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px;
+    background: #25D366; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600;
+    transition: transform 0.2s;
+}
+.btn-whatsapp:hover { transform: translateY(-2px); color: #fff; }
+</style>
+{% endblock %}

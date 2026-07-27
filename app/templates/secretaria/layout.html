@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MITA - Secretaria{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/admin_mita.css">
+    <style>
+        :root { --mita-primary: #FFCD11; --mita-dark: #0a0a0f; --mita-card: #111118; --mita-border: #2a2a3a; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--mita-dark); color: #e0e0e0; min-height: 100vh; }
+        .sec-layout { display: flex; min-height: 100vh; }
+        .sec-sidebar { width: 240px; background: var(--mita-card); border-right: 1px solid var(--mita-border); display: flex; flex-direction: column; }
+        .sec-logo { padding: 20px; font-size: 24px; font-weight: 800; color: var(--mita-primary); border-bottom: 1px solid var(--mita-border); }
+        .sec-user { padding: 16px 20px; border-bottom: 1px solid var(--mita-border); display: flex; align-items: center; gap: 12px; }
+        .sec-user-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--mita-primary); color: #000; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+        .sec-user-info { flex: 1; }
+        .sec-user-name { font-weight: 600; font-size: 14px; }
+        .sec-user-role { font-size: 12px; color: #888; }
+        .sec-nav { flex: 1; padding: 16px 0; }
+        .sec-nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #888; text-decoration: none; transition: all 0.2s; position: relative; }
+        .sec-nav-item:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+        .sec-nav-item.active { color: var(--mita-primary); background: rgba(255, 205, 17, 0.1); border-right: 3px solid var(--mita-primary); }
+        .sec-nav-item i { width: 20px; text-align: center; }
+        .sec-nav-badge { position: absolute; right: 16px; background: #ef4444; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+        .sec-status { padding: 16px 20px; border-top: 1px solid var(--mita-border); }
+        .sec-status-toggle { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--mita-dark); border-radius: 8px; cursor: pointer; }
+        .sec-status-toggle.online { background: rgba(34, 197, 94, 0.1); }
+        .sec-status-toggle.online .status-dot { background: #22c55e; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #888; }
+        .sec-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .sec-header { padding: 16px 24px; background: var(--mita-card); border-bottom: 1px solid var(--mita-border); display: flex; align-items: center; justify-content: space-between; }
+        .sec-header-title { font-size: 20px; font-weight: 600; }
+        .sec-header-actions { display: flex; gap: 12px; }
+        .sec-content { flex: 1; padding: 24px; overflow-y: auto; }
+        @media (max-width: 768px) { .sec-sidebar { position: fixed; left: -240px; z-index: 100; height: 100vh; transition: left 0.3s; } .sec-sidebar.open { left: 0; } }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="sec-layout">
+        <aside class="sec-sidebar">
+            <div class="sec-logo">MITA</div>
+            <div class="sec-user">
+                <div class="sec-user-avatar">{{ user.nombres[0] if user and user.nombres else 'S' }}</div>
+                <div class="sec-user-info">
+                    <div class="sec-user-name">{{ user.nombres if user else 'Secretaria' }}</div>
+                    <div class="sec-user-role">Secretaria</div>
+                </div>
+            </div>
+            <nav class="sec-nav">
+                <a href="/secretaria" class="sec-nav-item {{ 'active' if active == 'dashboard' else '' }}"><i class="fas fa-home"></i><span>Inicio</span></a>
+                <a href="/secretaria/solicitudes" class="sec-nav-item {{ 'active' if active == 'solicitudes' else '' }}"><i class="fas fa-bell"></i><span>Solicitudes</span><span class="sec-nav-badge" id="badge-solicitudes">0</span></a>
+                <a href="/secretaria/activos" class="sec-nav-item {{ 'active' if active == 'activos' else '' }}"><i class="fas fa-route"></i><span>Servicios Activos</span></a>
+                <a href="/secretaria/tecnicos" class="sec-nav-item {{ 'active' if active == 'tecnicos' else '' }}"><i class="fas fa-users"></i><span>Técnicos</span></a>
+                <a href="/secretaria/historial" class="sec-nav-item {{ 'active' if active == 'historial' else '' }}"><i class="fas fa-history"></i><span>Historial</span></a>
+                <a href="/cliente/chat" class="sec-nav-item"><i class="fas fa-comments"></i><span>Chats</span></a>
+            </nav>
+            <div class="sec-status">
+                <div class="sec-status-toggle online" id="status-toggle" onclick="toggleStatus()">
+                    <span>En línea</span><div class="status-dot"></div>
+                </div>
+                <a href="/logout" style="display:block; margin-top:12px; color:#ef4444; text-decoration:none; font-size:13px;"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
+            </div>
+        </aside>
+
+        <main class="sec-main">
+            <header class="sec-header">
+                <h1 class="sec-header-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                <div class="sec-header-actions">{% block header_actions %}{% endblock %}</div>
+            </header>
+            <div class="sec-content">{% block content %}{% endblock %}</div>
+        </main>
+    </div>
+
+    <script src="/static/js/mita_alerts.js"></script>
+    <script>
+        let notifSocket = null;
+        function conectarNotificaciones() {
+            const wsUrl = `ws://${window.location.host}/ws/secretaria/notificaciones`;
+            notifSocket = new WebSocket(wsUrl);
+            notifSocket.onopen = () => console.log('Conectado a notificaciones');
+            notifSocket.onmessage = (event) => manejarNotificacion(JSON.parse(event.data));
+            notifSocket.onclose = () => setTimeout(conectarNotificaciones, 3000);
+        }
+        function manejarNotificacion(data) {
+            if (data.tipo === 'nueva_solicitud') {
+                const badge = document.getElementById('badge-solicitudes');
+                badge.textContent = parseInt(badge.textContent || '0') + 1;
+                playNotificationSound();
+                if (window.MitaAlert) MitaAlert.info('Nueva solicitud', data.mensaje || 'Hay una nueva solicitud de servicio');
+                if (window.recargarSolicitudes) window.recargarSolicitudes();
+            }
+        }
+        function playNotificationSound() { try { const a = new Audio('/static/sounds/notification.mp3'); a.volume = 0.5; a.play(); } catch (e) {} }
+        function toggleStatus() { document.getElementById('status-toggle').classList.toggle('online'); }
+        document.addEventListener('DOMContentLoaded', () => { /* conectarNotificaciones(); // WS en zMita-11 */ });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

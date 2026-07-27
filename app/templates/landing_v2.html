@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MITA - Servicios Técnicos a Domicilio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --mita-primary: #FFCD11; --mita-dark: #0a0a0f; --mita-card: #111118; --mita-border: #2a2a3a; --mita-text: #ffffff; --mita-text-secondary: #888; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--mita-dark); color: var(--mita-text); min-height: 100vh; overflow-x: hidden; }
+
+        .navbar { position: fixed; top: 0; left: 0; right: 0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 100; background: rgba(10, 10, 15, 0.9); backdrop-filter: blur(10px); }
+        .logo { font-size: 28px; font-weight: 800; color: var(--mita-primary); }
+        .nav-links { display: flex; gap: 24px; }
+        .nav-links a { color: var(--mita-text-secondary); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--mita-primary); }
+        .btn-login { padding: 10px 24px; background: transparent; border: 1px solid var(--mita-border); color: var(--mita-text); border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .btn-login:hover { border-color: var(--mita-primary); color: var(--mita-primary); }
+
+        .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 120px 24px 60px; position: relative; }
+        .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(255, 205, 17, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(255, 205, 17, 0.05) 0%, transparent 40%); animation: pulse-bg 8s ease-in-out infinite; }
+        @keyframes pulse-bg { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .hero-content { position: relative; z-index: 1; max-width: 800px; text-align: center; }
+        .hero-badge { display: inline-block; padding: 8px 16px; background: rgba(255, 205, 17, 0.1); border: 1px solid rgba(255, 205, 17, 0.3); border-radius: 20px; color: var(--mita-primary); font-size: 13px; margin-bottom: 24px; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        .hero-title { font-size: clamp(32px, 6vw, 56px); font-weight: 800; line-height: 1.2; margin-bottom: 24px; }
+        .hero-title span { color: var(--mita-primary); }
+        .hero-subtitle { font-size: 18px; color: var(--mita-text-secondary); margin-bottom: 48px; line-height: 1.6; }
+
+        .problem-box { background: var(--mita-card); border-radius: 16px; padding: 32px; border: 1px solid var(--mita-border); text-align: left; animation: glow 4s ease-in-out infinite; }
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(255, 205, 17, 0.1); } 50% { box-shadow: 0 0 40px rgba(255, 205, 17, 0.2); } }
+        .problem-box label { display: block; font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--mita-text); }
+        .problem-examples { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .problem-example { padding: 8px 16px; background: var(--mita-dark); border: 1px solid var(--mita-border); border-radius: 20px; font-size: 13px; color: var(--mita-text-secondary); cursor: pointer; transition: all 0.2s; }
+        .problem-example:hover { border-color: var(--mita-primary); color: var(--mita-primary); }
+        .problem-input { width: 100%; padding: 16px; background: var(--mita-dark); border: 2px solid var(--mita-border); border-radius: 12px; color: var(--mita-text); font-size: 16px; resize: none; min-height: 100px; transition: border-color 0.2s; }
+        .problem-input:focus { outline: none; border-color: var(--mita-primary); }
+        .problem-input::placeholder { color: var(--mita-text-secondary); }
+        .problem-submit { width: 100%; margin-top: 16px; padding: 16px; background: var(--mita-primary); color: #000; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.2s, box-shadow 0.2s; }
+        .problem-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255, 205, 17, 0.3); }
+
+        .services { padding: 80px 24px; background: var(--mita-card); }
+        .section-title { text-align: center; font-size: 32px; font-weight: 700; margin-bottom: 16px; }
+        .section-subtitle { text-align: center; color: var(--mita-text-secondary); margin-bottom: 48px; }
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 1200px; margin: 0 auto; }
+        .service-card { background: var(--mita-dark); border-radius: 16px; padding: 32px 24px; text-align: center; border: 1px solid var(--mita-border); transition: transform 0.3s, border-color 0.3s; cursor: pointer; }
+        .service-card:hover { transform: translateY(-8px); border-color: var(--mita-primary); }
+        .service-icon { width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+        .service-name { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+        .service-examples { font-size: 14px; color: var(--mita-text-secondary); line-height: 1.6; }
+
+        .how-it-works { padding: 80px 24px; }
+        .steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; max-width: 1000px; margin: 0 auto; }
+        .step { flex: 1; min-width: 250px; max-width: 300px; text-align: center; position: relative; }
+        .step-number { width: 60px; height: 60px; margin: 0 auto 20px; background: var(--mita-primary); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
+        .step-title { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+        .step-desc { font-size: 14px; color: var(--mita-text-secondary); line-height: 1.6; }
+
+        .cta-final { padding: 80px 24px; background: linear-gradient(180deg, var(--mita-card) 0%, var(--mita-dark) 100%); text-align: center; }
+        .cta-title { font-size: 36px; font-weight: 700; margin-bottom: 16px; }
+        .cta-subtitle { color: var(--mita-text-secondary); margin-bottom: 32px; }
+        .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+        .btn-primary { padding: 16px 32px; background: var(--mita-primary); color: #000; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.2s; }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-secondary { padding: 16px 32px; background: transparent; color: var(--mita-text); border: 1px solid var(--mita-border); border-radius: 12px; font-size: 16px; cursor: pointer; transition: all 0.2s; }
+        .btn-secondary:hover { border-color: var(--mita-primary); }
+
+        .footer { padding: 40px 24px; text-align: center; border-top: 1px solid var(--mita-border); }
+        .footer-logo { font-size: 24px; font-weight: 800; color: var(--mita-primary); margin-bottom: 16px; }
+        .footer-links { display: flex; gap: 24px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap; }
+        .footer-links a { color: var(--mita-text-secondary); text-decoration: none; font-size: 14px; }
+        .footer-copy { font-size: 13px; color: var(--mita-text-secondary); }
+
+        @media (max-width: 768px) { .nav-links { display: none; } .hero { padding-top: 100px; } .problem-examples { justify-content: center; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">MITA</div>
+        <div class="nav-links">
+            <a href="#servicios">Servicios</a>
+            <a href="#como-funciona">¿Cómo funciona?</a>
+            <a href="#contacto">Contacto</a>
+        </div>
+        <button class="btn-login" onclick="location.href='/login'">Ingresar</button>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge"><i class="fas fa-bolt"></i> Técnicos verificados en Lima</div>
+            <h1 class="hero-title">Cuéntanos tu <span>problema</span><br>y lo resolvemos hoy</h1>
+            <p class="hero-subtitle">Electricistas, gasfiteros, técnicos en electrodomésticos y más.<br>Servicio rápido, seguro y con garantía.</p>
+
+            <div class="problem-box">
+                <label><i class="fas fa-comment-dots"></i> Describe tu problema y te ayudamos</label>
+                <div class="problem-examples">
+                    <span class="problem-example" onclick="setExample(this)">Mi refrigeradora no enfría</span>
+                    <span class="problem-example" onclick="setExample(this)">Fuga de agua en el baño</span>
+                    <span class="problem-example" onclick="setExample(this)">Necesito armar un mueble</span>
+                    <span class="problem-example" onclick="setExample(this)">Instalar lámpara/araña</span>
+                    <span class="problem-example" onclick="setExample(this)">El tomacorriente no funciona</span>
+                </div>
+                <textarea class="problem-input" id="problem-input" placeholder="Ejemplo: Mi lavadora hace ruido extraño cuando centrifuga y a veces se detiene..."></textarea>
+                <button class="problem-submit" onclick="enviarProblema()"><i class="fas fa-paper-plane"></i> Solicitar ayuda ahora</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="services" id="servicios">
+        <h2 class="section-title">Nuestros Servicios</h2>
+        <p class="section-subtitle">Técnicos especializados para cada necesidad</p>
+        <div class="services-grid">
+            <div class="service-card" onclick="selectService('electricidad')">
+                <div class="service-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;"><i class="fas fa-bolt"></i></div>
+                <div class="service-name">Electricidad</div>
+                <div class="service-examples">Instalación de luminarias, arañas, tomacorrientes, tableros, reparaciones eléctricas</div>
+            </div>
+            <div class="service-card" onclick="selectService('gasfiteria')">
+                <div class="service-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;"><i class="fas fa-faucet"></i></div>
+                <div class="service-name">Gasfitería</div>
+                <div class="service-examples">Fugas de agua, caños, tanques, tuberías, instalación de sanitarios</div>
+            </div>
+            <div class="service-card" onclick="selectService('electrodomesticos')">
+                <div class="service-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;"><i class="fas fa-tv"></i></div>
+                <div class="service-name">Electrodomésticos</div>
+                <div class="service-examples">Refrigeradoras, lavadoras, licuadoras, microondas, aires acondicionados</div>
+            </div>
+            <div class="service-card" onclick="selectService('muebles')">
+                <div class="service-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="fas fa-couch"></i></div>
+                <div class="service-name">Muebles e Instalaciones</div>
+                <div class="service-examples">Armado de muebles, persianas, tendederos, desmontaje, camas, closets</div>
+            </div>
+            <div class="service-card" onclick="selectService('albanileria')">
+                <div class="service-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;"><i class="fas fa-hard-hat"></i></div>
+                <div class="service-name">Albañilería Menor</div>
+                <div class="service-examples">Reparaciones menores, pintura de interiores, resanes, enchapes pequeños</div>
+            </div>
+            <div class="service-card" onclick="selectService('otros')">
+                <div class="service-icon" style="background: rgba(255, 205, 17, 0.1); color: #FFCD11;"><i class="fas fa-tools"></i></div>
+                <div class="service-name">Otros Servicios</div>
+                <div class="service-examples">¿No encuentras lo que buscas? Cuéntanos y te conseguimos un técnico</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-it-works" id="como-funciona">
+        <h2 class="section-title">¿Cómo funciona?</h2>
+        <p class="section-subtitle">En 3 simples pasos</p>
+        <div class="steps">
+            <div class="step"><div class="step-number">1</div><div class="step-title">Describe tu problema</div><div class="step-desc">Cuéntanos qué necesitas reparar o instalar. Puedes enviar fotos si es necesario.</div></div>
+            <div class="step"><div class="step-number">2</div><div class="step-title">Elige tu técnico</div><div class="step-desc">Te mostramos técnicos disponibles con su perfil, experiencia y calificaciones.</div></div>
+            <div class="step"><div class="step-number">3</div><div class="step-title">Recibe el servicio</div><div class="step-desc">El técnico llega a tu domicilio. Pagas solo si quedas satisfecho con el servicio.</div></div>
+        </div>
+    </section>
+
+    <section class="cta-final" id="contacto">
+        <h2 class="cta-title">¿Listo para resolver tu problema?</h2>
+        <p class="cta-subtitle">Solicita ayuda ahora y un técnico puede estar en tu casa hoy mismo</p>
+        <div class="cta-buttons">
+            <button class="btn-primary" onclick="scrollToTop()"><i class="fas fa-paper-plane"></i> Solicitar servicio</button>
+            <button class="btn-secondary" onclick="location.href='https://wa.me/51999999999'"><i class="fab fa-whatsapp"></i> Escribir por WhatsApp</button>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-logo">MITA</div>
+        <div class="footer-links">
+            <a href="/terminos">Términos y Condiciones</a>
+            <a href="#">Política de Privacidad</a>
+            <a href="/presentacion/ingreso-tecnicos">Trabaja con nosotros</a>
+        </div>
+        <div class="footer-copy">© 2026 MITA - Servicios Técnicos a Domicilio. Todos los derechos reservados.</div>
+    </footer>
+
+    <script>
+        function setExample(el) { document.getElementById('problem-input').value = el.textContent; }
+        function selectService(service) {
+            const ejemplos = {
+                'electricidad': 'Necesito un electricista para...',
+                'gasfiteria': 'Tengo un problema de agua...',
+                'electrodomesticos': 'Mi electrodoméstico tiene un problema...',
+                'muebles': 'Necesito armar/instalar...',
+                'albanileria': 'Necesito una reparación de...',
+                'otros': ''
+            };
+            document.getElementById('problem-input').value = ejemplos[service] || '';
+            document.getElementById('problem-input').focus();
+            scrollToTop();
+        }
+        function enviarProblema() {
+            const problema = document.getElementById('problem-input').value.trim();
+            if (!problema) { alert('Por favor describe tu problema'); return; }
+            sessionStorage.setItem('mita_problema', problema);
+            window.location.href = '/cliente/solicitar?problema=' + encodeURIComponent(problema);
+        }
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(() => { document.getElementById('problem-input').focus(); }, 500);
+        }
+    </script>
+</body>
+</html>

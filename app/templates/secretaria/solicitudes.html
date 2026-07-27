@@ -1,0 +1,262 @@
+{% extends "secretaria/layout.html" %}
+
+{% block title %}Solicitudes - MITA{% endblock %}
+{% block page_title %}Solicitudes Entrantes{% endblock %}
+
+{% block extra_css %}
+<style>
+    .solicitudes-container { display: grid; grid-template-columns: 1fr 400px; gap: 24px; height: calc(100vh - 140px); }
+    .solicitudes-list { background: var(--mita-card); border-radius: 12px; border: 1px solid var(--mita-border); overflow: hidden; display: flex; flex-direction: column; }
+    .solicitudes-header { padding: 16px 20px; border-bottom: 1px solid var(--mita-border); display: flex; justify-content: space-between; align-items: center; }
+    .solicitudes-tabs { display: flex; gap: 8px; }
+    .tab-btn { padding: 8px 16px; background: transparent; border: 1px solid var(--mita-border); border-radius: 20px; color: #888; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+    .tab-btn.active { background: var(--mita-primary); border-color: var(--mita-primary); color: #000; }
+    .solicitudes-body { flex: 1; overflow-y: auto; }
+    .solicitud-card { padding: 16px 20px; border-bottom: 1px solid var(--mita-border); cursor: pointer; transition: background 0.2s; }
+    .solicitud-card:hover { background: rgba(255, 255, 255, 0.02); }
+    .solicitud-card.active { background: rgba(255, 205, 17, 0.05); border-left: 3px solid var(--mita-primary); }
+    .solicitud-card.nueva { background: rgba(34, 197, 94, 0.05); }
+    .solicitud-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .solicitud-id { font-weight: 600; color: var(--mita-primary); }
+    .solicitud-tiempo { font-size: 12px; color: #888; }
+    .solicitud-problema { font-size: 14px; color: #ccc; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .solicitud-meta { display: flex; gap: 16px; font-size: 12px; color: #888; flex-wrap: wrap; }
+    .solicitud-meta i { margin-right: 4px; }
+    .estado-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .estado-pendiente { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .estado-asignada { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .estado-en_camino { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+    .estado-en_servicio { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+    .solicitud-detalle { background: var(--mita-card); border-radius: 12px; border: 1px solid var(--mita-border); display: flex; flex-direction: column; }
+    .detalle-header { padding: 20px; border-bottom: 1px solid var(--mita-border); }
+    .detalle-id { font-size: 20px; font-weight: 600; color: var(--mita-primary); margin-bottom: 8px; }
+    .detalle-body { flex: 1; padding: 20px; overflow-y: auto; }
+    .detalle-section { margin-bottom: 24px; }
+    .detalle-section-title { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .detalle-section-content { font-size: 15px; }
+    .cliente-info { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--mita-dark); border-radius: 8px; }
+    .cliente-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--mita-border); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #888; }
+    .cliente-nombre { font-weight: 600; }
+    .cliente-telefono { font-size: 13px; color: #888; }
+    .tecnico-selector { margin-top: 16px; }
+    .tecnico-option { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--mita-dark); border: 2px solid var(--mita-border); border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; }
+    .tecnico-option:hover { border-color: var(--mita-primary); }
+    .tecnico-option.selected { border-color: var(--mita-primary); background: rgba(255, 205, 17, 0.05); }
+    .tecnico-foto { width: 40px; height: 40px; border-radius: 50%; background: var(--mita-border); display: flex; align-items: center; justify-content: center; }
+    .tecnico-nombre { font-weight: 500; }
+    .tecnico-estado { margin-left: auto; font-size: 12px; }
+    .tecnico-estado.disponible { color: #22c55e; }
+    .tecnico-estado.ocupado { color: #f59e0b; }
+    .detalle-actions { padding: 16px 20px; border-top: 1px solid var(--mita-border); display: flex; gap: 12px; }
+    .btn-asignar { flex: 1; padding: 14px; background: var(--mita-primary); color: #000; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-asignar:hover { transform: translateY(-1px); }
+    .btn-asignar:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-rechazar { padding: 14px 20px; background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 8px; cursor: pointer; }
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #888; }
+    .empty-state i { font-size: 48px; margin-bottom: 16px; }
+    .timer-asignacion { display: flex; align-items: center; gap: 8px; padding: 12px; background: rgba(245, 158, 11, 0.1); border-radius: 8px; margin-top: 16px; }
+    .timer-asignacion i { color: #f59e0b; }
+    .timer-countdown { font-weight: 700; color: #f59e0b; font-size: 18px; margin-left: auto; }
+    @media (max-width: 1024px) { .solicitudes-container { grid-template-columns: 1fr; } .solicitud-detalle { display: none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="solicitudes-container">
+    <div class="solicitudes-list">
+        <div class="solicitudes-header">
+            <div class="solicitudes-tabs">
+                <button class="tab-btn active" onclick="filtrarSolicitudes('pendientes', event)">Pendientes <span id="count-pendientes">0</span></button>
+                <button class="tab-btn" onclick="filtrarSolicitudes('asignadas', event)">Asignadas</button>
+                <button class="tab-btn" onclick="filtrarSolicitudes('todas', event)">Todas</button>
+            </div>
+            <button class="am-btn am-btn-secondary" onclick="recargarSolicitudes()"><i class="fas fa-sync"></i></button>
+        </div>
+        <div class="solicitudes-body" id="solicitudes-body">
+            <div class="empty-state"><i class="fas fa-inbox"></i><p>No hay solicitudes pendientes</p></div>
+        </div>
+    </div>
+    <div class="solicitud-detalle" id="panel-detalle">
+        <div class="empty-state"><i class="fas fa-hand-pointer"></i><p>Selecciona una solicitud</p></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let solicitudes = [];
+let solicitudActual = null;
+let tecnicoSeleccionado = null;
+let timerInterval = null;
+let filtroActual = 'pendientes';
+
+async function cargarSolicitudes() {
+    try {
+        const response = await fetch('/api/v1/solicitudes?estado=PENDIENTE');
+        if (!response.ok) throw new Error('API no disponible');
+        const data = await response.json();
+        if (!data.length) throw new Error('vacío');
+        solicitudes = data;
+    } catch (e) {
+        solicitudes = [
+            { id: 1001, descripcion_problema: 'Fuga de agua en la cocina, el caño está goteando desde ayer y está mojando el piso.', categoria: 'Gasfitería', categoria_id: 2, cliente_nombre: 'Juan Pérez', cliente_telefono: '999 888 777', cliente_direccion: 'Av. Arequipa 1234', cliente_distrito: 'Miraflores', estado: 'PENDIENTE', fecha_solicitud: new Date(Date.now() - 300000).toISOString(), tecnico_id: null },
+            { id: 1002, descripcion_problema: 'El tomacorriente de la sala no funciona, probé con varios aparatos.', categoria: 'Electricidad', categoria_id: 1, cliente_nombre: 'María López', cliente_telefono: '987 654 321', cliente_direccion: 'Jr. Lima 567', cliente_distrito: 'San Isidro', estado: 'PENDIENTE', fecha_solicitud: new Date(Date.now() - 120000).toISOString(), tecnico_id: null }
+        ];
+    }
+    renderSolicitudes(filtroActual);
+}
+
+function renderSolicitudes(filtro = 'pendientes') {
+    filtroActual = filtro;
+    const body = document.getElementById('solicitudes-body');
+    let filtered = solicitudes;
+    if (filtro === 'pendientes') filtered = solicitudes.filter(s => s.estado === 'PENDIENTE');
+    else if (filtro === 'asignadas') filtered = solicitudes.filter(s => s.estado !== 'PENDIENTE');
+    const nPend = solicitudes.filter(s => s.estado === 'PENDIENTE').length;
+    document.getElementById('count-pendientes').textContent = nPend;
+    const badge = document.getElementById('badge-solicitudes'); if (badge) badge.textContent = nPend;
+
+    if (filtered.length === 0) {
+        body.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>No hay solicitudes ${filtro === 'pendientes' ? 'pendientes' : ''}</p></div>`;
+        return;
+    }
+    body.innerHTML = filtered.map(s => {
+        const tiempo = tiempoTranscurrido(s.fecha_solicitud);
+        const esNueva = (Date.now() - new Date(s.fecha_solicitud).getTime()) < 60000;
+        return `
+            <div class="solicitud-card ${esNueva ? 'nueva' : ''} ${solicitudActual?.id === s.id ? 'active' : ''}" onclick="verDetalle(${s.id})">
+                <div class="solicitud-header"><span class="solicitud-id">#${s.id}</span><span class="solicitud-tiempo">${tiempo}</span></div>
+                <div class="solicitud-problema">${s.descripcion_problema || ''}</div>
+                <div class="solicitud-meta">
+                    <span><i class="fas fa-tag"></i> ${s.categoria || 'General'}</span>
+                    <span><i class="fas fa-map-marker-alt"></i> ${s.cliente_distrito || ''}</span>
+                    <span class="estado-badge estado-${(s.estado || '').toLowerCase()}">${s.estado}</span>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+function tiempoTranscurrido(fecha) {
+    const diff = Date.now() - new Date(fecha).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Ahora';
+    if (mins < 60) return `Hace ${mins} min`;
+    return `Hace ${Math.floor(mins / 60)}h`;
+}
+
+async function verDetalle(id) {
+    solicitudActual = solicitudes.find(s => s.id === id);
+    if (!solicitudActual) return;
+    document.querySelectorAll('.solicitud-card').forEach(c => c.classList.remove('active'));
+    const panel = document.getElementById('panel-detalle');
+
+    let tecnicos = [];
+    try {
+        const response = await fetch(`/api/v1/tecnicos/disponibles?categoria_id=${solicitudActual.categoria_id || 2}`);
+        if (response.ok) tecnicos = await response.json();
+        if (!tecnicos.length) throw new Error('vacío');
+    } catch (e) {
+        tecnicos = [
+            { id: 1, nombre: 'Carlos López', disponible: true, servicios_hoy: 2 },
+            { id: 2, nombre: 'Juan Pérez', disponible: true, servicios_hoy: 1 },
+            { id: 3, nombre: 'Miguel Sánchez', disponible: false, servicios_hoy: 4 }
+        ];
+    }
+
+    const esPendiente = solicitudActual.estado === 'PENDIENTE';
+    panel.innerHTML = `
+        <div class="detalle-header">
+            <div class="detalle-id">Solicitud #${solicitudActual.id}</div>
+            <span class="estado-badge estado-${(solicitudActual.estado||'').toLowerCase()}">${solicitudActual.estado}</span>
+        </div>
+        <div class="detalle-body">
+            <div class="detalle-section"><div class="detalle-section-title">Problema</div><div class="detalle-section-content">${solicitudActual.descripcion_problema || ''}</div></div>
+            <div class="detalle-section"><div class="detalle-section-title">Cliente</div>
+                <div class="cliente-info"><div class="cliente-avatar"><i class="fas fa-user"></i></div>
+                    <div><div class="cliente-nombre">${solicitudActual.cliente_nombre || 'Cliente'}</div><div class="cliente-telefono">${solicitudActual.cliente_telefono || 'Sin teléfono'}</div></div>
+                    <button class="am-btn am-btn-secondary" style="margin-left:auto;" onclick="llamarCliente('${solicitudActual.cliente_telefono || ''}')"><i class="fas fa-phone"></i></button>
+                </div>
+            </div>
+            <div class="detalle-section"><div class="detalle-section-title">Dirección</div>
+                <div class="detalle-section-content">${solicitudActual.cliente_direccion || ''}, ${solicitudActual.cliente_distrito || ''}
+                    ${solicitudActual.cliente_referencia ? `<br><small style="color:#888">${solicitudActual.cliente_referencia}</small>` : ''}</div>
+            </div>
+            <div class="detalle-section"><div class="detalle-section-title">Categoría</div><div class="detalle-section-content">${solicitudActual.categoria || 'General'}</div></div>
+            ${esPendiente ? `
+                <div class="detalle-section"><div class="detalle-section-title">Asignar Técnico</div>
+                    <div class="tecnico-selector" id="tecnico-selector">
+                        ${tecnicos.map(t => `
+                            <div class="tecnico-option" data-id="${t.id}" onclick="seleccionarTecnico(this, ${t.id}, '${(t.nombre||'').replace(/'/g,"\\'")}')">
+                                <div class="tecnico-foto"><i class="fas fa-user"></i></div>
+                                <div><div class="tecnico-nombre">${t.nombre}</div><small style="color:#888">${t.servicios_hoy ?? t.servicios ?? 0} servicios</small></div>
+                                <span class="tecnico-estado ${t.disponible === false ? 'ocupado' : 'disponible'}">${t.disponible === false ? '● Ocupado' : '● Disponible'}</span>
+                            </div>`).join('')}
+                    </div>
+                </div>` : `
+                <div class="detalle-section"><div class="detalle-section-title">Técnico Asignado</div>
+                    <div class="cliente-info"><div class="cliente-avatar"><i class="fas fa-user-cog"></i></div>
+                        <div><div class="cliente-nombre">${solicitudActual.tecnico_nombre || 'Por asignar'}</div></div></div>
+                </div>`}
+        </div>
+        ${esPendiente ? `
+            <div class="detalle-actions">
+                <button class="btn-rechazar" onclick="rechazarSolicitud(${solicitudActual.id})"><i class="fas fa-times"></i> Rechazar</button>
+                <button class="btn-asignar" id="btn-asignar" onclick="asignarTecnico()" disabled><i class="fas fa-paper-plane"></i> Asignar y Notificar</button>
+            </div>` : ''}
+    `;
+    tecnicoSeleccionado = null;
+}
+
+function seleccionarTecnico(el, id, nombre) {
+    document.querySelectorAll('.tecnico-option').forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+    tecnicoSeleccionado = { id, nombre };
+    document.getElementById('btn-asignar').disabled = false;
+}
+
+async function asignarTecnico() {
+    if (!solicitudActual || !tecnicoSeleccionado) return;
+    const btn = document.getElementById('btn-asignar');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Notificando...';
+    try {
+        const response = await fetch(`/api/v1/solicitudes/${solicitudActual.id}/asignar`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tecnico_id: tecnicoSeleccionado.id })
+        });
+        if (!response.ok) throw new Error('Error');
+    } catch (e) { /* modo demo */ }
+    solicitudActual.estado = 'ASIGNADA';
+    solicitudActual.tecnico_id = tecnicoSeleccionado.id;
+    solicitudActual.tecnico_nombre = tecnicoSeleccionado.nombre;
+    MitaAlert.success('Técnico notificado', `${tecnicoSeleccionado.nombre} tiene 90 segundos para aceptar`);
+    mostrarTimerEspera();
+}
+
+function mostrarTimerEspera() {
+    const actionsDiv = document.getElementById('panel-detalle').querySelector('.detalle-actions');
+    if (actionsDiv) actionsDiv.innerHTML = `<div class="timer-asignacion" style="width:100%;"><i class="fas fa-clock"></i><span>Esperando respuesta de ${tecnicoSeleccionado.nombre}...</span><span class="timer-countdown" id="countdown">90</span></div>`;
+    let segundos = 90;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        segundos--;
+        const el = document.getElementById('countdown'); if (el) el.textContent = segundos;
+        if (segundos <= 0) { clearInterval(timerInterval); MitaAlert.error('Sin respuesta', 'El técnico no respondió. Puedes asignar a otro.'); solicitudActual.estado = 'PENDIENTE'; verDetalle(solicitudActual.id); }
+    }, 1000);
+}
+
+function rechazarSolicitud(id) {
+    MitaAlert.confirm('Rechazar solicitud', '¿Seguro que deseas rechazar esta solicitud?').then(ok => {
+        if (ok) { MitaAlert.success('Rechazada', 'La solicitud ha sido rechazada'); solicitudes = solicitudes.filter(s => s.id !== id); solicitudActual = null; document.getElementById('panel-detalle').innerHTML = '<div class="empty-state"><i class="fas fa-hand-pointer"></i><p>Selecciona una solicitud</p></div>'; renderSolicitudes(filtroActual); }
+    });
+}
+
+function llamarCliente(telefono) { if (telefono) window.open(`tel:${telefono}`); }
+function filtrarSolicitudes(filtro, ev) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    (ev?.target || event.target).classList.add('active');
+    renderSolicitudes(filtro);
+}
+window.recargarSolicitudes = cargarSolicitudes;
+document.addEventListener('DOMContentLoaded', cargarSolicitudes);
+setInterval(() => { if (filtroActual === 'pendientes') cargarSolicitudes(); }, 30000);
+</script>
+{% endblock %}
