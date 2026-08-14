@@ -1,0 +1,146 @@
+<!-- Modal de calificación MITA (incluir con el tag include de Jinja apuntando a este archivo) -->
+<div class="modal-calificacion" id="modal-calificacion" style="display:none;">
+    <div class="modal-content">
+        <h2>¿Cómo estuvo el servicio?</h2>
+
+        <div class="tecnico-mini">
+            <img src="" alt="" id="cal-tecnico-foto" style="display:none;">
+            <span id="cal-tecnico-nombre">Técnico</span>
+        </div>
+
+        <div class="estrellas-container">
+            <div class="estrellas" id="estrellas-principales">
+                <i class="far fa-star" data-value="1"></i>
+                <i class="far fa-star" data-value="2"></i>
+                <i class="far fa-star" data-value="3"></i>
+                <i class="far fa-star" data-value="4"></i>
+                <i class="far fa-star" data-value="5"></i>
+            </div>
+            <span class="estrellas-texto" id="estrellas-texto">Toca para calificar</span>
+        </div>
+
+        <div class="aspectos-detalle" id="aspectos-detalle" style="display:none;">
+            <p>¿Quieres dar más detalle? (opcional)</p>
+            <div class="aspecto-row"><span>Puntualidad</span>
+                <div class="mini-estrellas" data-aspecto="puntualidad">
+                    <i class="far fa-star" data-value="1"></i><i class="far fa-star" data-value="2"></i><i class="far fa-star" data-value="3"></i><i class="far fa-star" data-value="4"></i><i class="far fa-star" data-value="5"></i>
+                </div>
+            </div>
+            <div class="aspecto-row"><span>Calidad del trabajo</span>
+                <div class="mini-estrellas" data-aspecto="calidad_trabajo">
+                    <i class="far fa-star" data-value="1"></i><i class="far fa-star" data-value="2"></i><i class="far fa-star" data-value="3"></i><i class="far fa-star" data-value="4"></i><i class="far fa-star" data-value="5"></i>
+                </div>
+            </div>
+            <div class="aspecto-row"><span>Precio justo</span>
+                <div class="mini-estrellas" data-aspecto="precio_justo">
+                    <i class="far fa-star" data-value="1"></i><i class="far fa-star" data-value="2"></i><i class="far fa-star" data-value="3"></i><i class="far fa-star" data-value="4"></i><i class="far fa-star" data-value="5"></i>
+                </div>
+            </div>
+            <div class="aspecto-row"><span>Amabilidad</span>
+                <div class="mini-estrellas" data-aspecto="amabilidad">
+                    <i class="far fa-star" data-value="1"></i><i class="far fa-star" data-value="2"></i><i class="far fa-star" data-value="3"></i><i class="far fa-star" data-value="4"></i><i class="far fa-star" data-value="5"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="comentario-container">
+            <textarea id="cal-comentario" placeholder="Cuéntanos más sobre tu experiencia (opcional)"></textarea>
+        </div>
+
+        <button class="btn-enviar-calificacion" onclick="enviarCalificacion()">Enviar calificación</button>
+        <button class="btn-omitir" onclick="cerrarCalificacion()">Omitir por ahora</button>
+    </div>
+</div>
+
+<script>
+let calificacionData = { solicitud_id: null, estrellas: 0, puntualidad: null, calidad_trabajo: null, precio_justo: null, amabilidad: null, comentario: null };
+
+document.querySelectorAll('#estrellas-principales i').forEach(star => {
+    star.addEventListener('click', function() {
+        const value = parseInt(this.dataset.value);
+        calificacionData.estrellas = value;
+        document.querySelectorAll('#estrellas-principales i').forEach((s, idx) => {
+            s.classList.toggle('fas', idx < value);
+            s.classList.toggle('far', idx >= value);
+            s.classList.toggle('active', idx < value);
+        });
+        const textos = ['', 'Muy malo', 'Malo', 'Regular', 'Bueno', '¡Excelente!'];
+        document.getElementById('estrellas-texto').textContent = textos[value];
+        document.getElementById('aspectos-detalle').style.display = 'block';
+    });
+    star.addEventListener('mouseenter', function() {
+        const value = parseInt(this.dataset.value);
+        document.querySelectorAll('#estrellas-principales i').forEach((s, idx) => s.classList.toggle('hover', idx < value));
+    });
+    star.addEventListener('mouseleave', function() {
+        document.querySelectorAll('#estrellas-principales i').forEach(s => s.classList.remove('hover'));
+    });
+});
+
+document.querySelectorAll('.mini-estrellas').forEach(container => {
+    container.querySelectorAll('i').forEach(star => {
+        star.addEventListener('click', function() {
+            const aspecto = container.dataset.aspecto;
+            const value = parseInt(this.dataset.value);
+            calificacionData[aspecto] = value;
+            container.querySelectorAll('i').forEach((s, idx) => {
+                s.classList.toggle('fas', idx < value);
+                s.classList.toggle('far', idx >= value);
+            });
+        });
+    });
+});
+
+function mostrarCalificacion(solicitudId, tecnicoNombre, tecnicoFoto) {
+    calificacionData.solicitud_id = solicitudId;
+    document.getElementById('cal-tecnico-nombre').textContent = tecnicoNombre || 'Técnico';
+    const foto = document.getElementById('cal-tecnico-foto');
+    if (tecnicoFoto) { foto.src = tecnicoFoto; foto.style.display = 'block'; }
+    document.getElementById('modal-calificacion').style.display = 'flex';
+}
+window.mostrarCalificacion = mostrarCalificacion;
+
+async function enviarCalificacion() {
+    if (calificacionData.estrellas === 0) { if (window.MitaAlert) MitaAlert.error('Error', 'Por favor selecciona una calificación'); return; }
+    calificacionData.comentario = document.getElementById('cal-comentario').value || null;
+    try {
+        const response = await fetch('/api/v1/calificaciones', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(calificacionData) });
+        if (!response.ok) throw new Error('Error al enviar');
+        if (window.MitaAlert) MitaAlert.success('¡Gracias!', 'Tu calificación nos ayuda a mejorar');
+        cerrarCalificacion();
+    } catch (e) { if (window.MitaAlert) MitaAlert.error('Error', 'No se pudo enviar la calificación'); }
+}
+
+function cerrarCalificacion() {
+    document.getElementById('modal-calificacion').style.display = 'none';
+    calificacionData = { solicitud_id: null, estrellas: 0, puntualidad: null, calidad_trabajo: null, precio_justo: null, amabilidad: null, comentario: null };
+    document.querySelectorAll('#estrellas-principales i').forEach(s => { s.classList.remove('fas', 'active'); s.classList.add('far'); });
+    document.querySelectorAll('.mini-estrellas i').forEach(s => { s.classList.remove('fas'); s.classList.add('far'); });
+    document.getElementById('aspectos-detalle').style.display = 'none';
+    document.getElementById('cal-comentario').value = '';
+}
+window.cerrarCalificacion = cerrarCalificacion;
+</script>
+
+<style>
+.modal-calificacion { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-calificacion .modal-content { background: #1a1a2e; border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; text-align: center; }
+.modal-calificacion h2 { color: #fff; margin-bottom: 16px; }
+.modal-calificacion .tecnico-mini { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 24px; }
+.modal-calificacion .tecnico-mini img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.modal-calificacion .tecnico-mini span { color: #e9edef; font-weight: 500; }
+.modal-calificacion .estrellas-container { margin-bottom: 24px; }
+.modal-calificacion .estrellas i { font-size: 36px; color: #444; cursor: pointer; transition: all 0.2s; margin: 0 4px; }
+.modal-calificacion .estrellas i.active, .modal-calificacion .estrellas i.fas { color: #FFCD11; }
+.modal-calificacion .estrellas i.hover { color: #FFCD11; opacity: 0.7; }
+.modal-calificacion .estrellas-texto { display: block; margin-top: 8px; color: #888; font-size: 14px; }
+.modal-calificacion .aspectos-detalle { margin-bottom: 20px; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px; }
+.modal-calificacion .aspectos-detalle p { color: #888; font-size: 13px; margin-bottom: 12px; }
+.modal-calificacion .aspecto-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+.modal-calificacion .aspecto-row span { color: #aaa; font-size: 13px; }
+.modal-calificacion .mini-estrellas i { font-size: 16px; color: #444; cursor: pointer; margin: 0 2px; }
+.modal-calificacion .mini-estrellas i.fas { color: #FFCD11; }
+.modal-calificacion .comentario-container textarea { width: 100%; padding: 12px; background: #2a2a3e; border: 1px solid #3a3a4e; border-radius: 8px; color: #fff; resize: none; height: 80px; font-size: 14px; }
+.modal-calificacion .btn-enviar-calificacion { width: 100%; padding: 14px; background: #FFCD11; color: #000; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+.modal-calificacion .btn-omitir { width: 100%; padding: 12px; background: transparent; color: #888; border: none; font-size: 14px; cursor: pointer; margin-top: 8px; }
+</style>
