@@ -40,6 +40,13 @@ from app.routes.solicitudes_api import router as solicitudes_api_router
 # API de billeteras electrónicas del personal
 from app.routes.billeteras_api import router as billeteras_api_router
 
+# zMita-13: calificaciones + asignación automática
+from app.routes.calificaciones_api import router as calificaciones_api_router
+from app.routes.asignacion_api import router as asignacion_api_router
+
+# zMita-14: API del cliente (pendientes de calificar)
+from app.routes.cliente_api import router as cliente_api_router
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -157,6 +164,9 @@ app.include_router(login_mita_router)
 app.include_router(tecnicos_api_router)
 app.include_router(solicitudes_api_router)
 app.include_router(billeteras_api_router)
+app.include_router(calificaciones_api_router)
+app.include_router(asignacion_api_router)
+app.include_router(cliente_api_router)
 
 # Cuando estén listos:
 # from app.routes.clientes import router as clientes_router
