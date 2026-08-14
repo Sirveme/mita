@@ -1,171 +1,136 @@
 {% extends "admin/layout.html" %}
+
 {% block title %}Configuraciones{% endblock %}
 {% block page_title %}Configuraciones del Sistema{% endblock %}
 
+{% block extra_css %}
+<style>
+    .config-container { max-width: 900px; margin: 0 auto; }
+    .config-section { background: var(--am-panel, #111b21); border: 1px solid var(--am-border, #2a373f); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+    .config-section h2 { color: #fff; font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--am-border, #2a2a3e); }
+    .config-section h2 i { color: #FFCD11; }
+    .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .config-item { display: flex; flex-direction: column; gap: 8px; }
+    .config-item label { color: #e9edef; font-size: 14px; font-weight: 500; }
+    .config-item small { color: #888; font-size: 12px; }
+    .config-input-group { display: flex; align-items: center; gap: 8px; }
+    .config-input-group .am-input { flex: 1; max-width: 140px; }
+    .config-prefix, .config-unit { color: #8696a0; font-size: 13px; }
+    .config-toggle-group { display: flex; align-items: center; gap: 12px; }
+    .toggle-switch { position: relative; width: 50px; height: 26px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; inset: 0; background-color: #3a3a4e; transition: .3s; border-radius: 26px; }
+    .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background: #fff; transition: .3s; border-radius: 50%; }
+    .toggle-switch input:checked + .toggle-slider { background: #FFCD11; }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(24px); }
+    .toggle-label { color: #8696a0; font-size: 13px; }
+    .config-actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 4px; }
+    @media (max-width: 600px) { .config-grid { grid-template-columns: 1fr; } .config-actions { flex-direction: column; } .config-actions button { width: 100%; } }
+</style>
+{% endblock %}
+
 {% block content %}
-    <div class="am-wrap" style="padding:0;">
+<div class="config-container">
+    <div class="am-note"><i class="fas fa-circle-info"></i> Parámetros del modelo de asignación automática. Requieren la tabla <b>configuracion_mita</b> (SQL 08).</div>
 
-        <div class="am-tabs">
-            <button class="am-tab active" data-tab="config" onclick="cambiarTab('config')">Parámetros generales</button>
-            <button class="am-tab" data-tab="tarifas" onclick="cambiarTab('tarifas')">Tarifas</button>
-        </div>
-
-        <!-- CONFIG GENERAL -->
-        <div id="tab-config">
-            <div class="am-toolbar">
-                <button class="btn btn-primary" onclick="abrirModalConfig()"><i class="fas fa-plus"></i> Nuevo parámetro</button>
-            </div>
-            <table class="am-table">
-                <thead><tr><th>Clave</th><th>Valor</th><th>Tipo</th><th>Categoría</th><th></th></tr></thead>
-                <tbody id="tbodyConfig"><tr><td colspan="5" class="am-empty">Cargando…</td></tr></tbody>
-            </table>
-        </div>
-
-        <!-- TARIFAS -->
-        <div id="tab-tarifas" style="display:none;">
-            <div class="am-toolbar">
-                <button class="btn btn-primary" onclick="abrirModalTarifa()"><i class="fas fa-plus"></i> Nueva tarifa</button>
-            </div>
-            <table class="am-table">
-                <thead><tr><th>Visita</th><th>Comisión MITA</th><th>Pago técnico</th><th>Recargo urgente</th><th>Estado</th><th></th></tr></thead>
-                <tbody id="tbodyTarifas"><tr><td colspan="6" class="am-empty">Cargando…</td></tr></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- MODAL CONFIG -->
-    <div class="am-modal-backdrop" id="modalConfig">
-        <div class="am-modal">
-            <div class="am-modal-head"><h3 id="tituloConfig">Parámetro</h3><button class="close" onclick="cerrar('modalConfig')">&times;</button></div>
-            <div class="am-modal-body">
-                <div class="field"><label>Clave</label><input id="c_clave" placeholder="visita_precio"></div>
-                <div class="field"><label>Valor</label><input id="c_valor"></div>
-                <div class="field-row">
-                    <div class="field"><label>Tipo</label><select id="c_tipo"><option>string</option><option>number</option><option>boolean</option><option>json</option></select></div>
-                    <div class="field"><label>Categoría</label><input id="c_categoria" placeholder="tarifas"></div>
-                </div>
-                <div class="field"><label>Descripción</label><input id="c_descripcion"></div>
-            </div>
-            <div class="am-modal-foot">
-                <button class="btn btn-secondary" onclick="cerrar('modalConfig')">Cancelar</button>
-                <button class="btn btn-primary" onclick="guardarConfig()"><i class="fas fa-save"></i> Guardar</button>
-            </div>
+    <!-- Asignación -->
+    <div class="config-section">
+        <h2><i class="fas fa-user-clock"></i> Asignación de Técnicos</h2>
+        <div class="config-grid">
+            <div class="config-item"><label>Tiempo de espera antes de ampliar búsqueda</label>
+                <div class="config-input-group"><input type="number" id="tiempo_espera_asignacion" class="am-input" min="30" max="300"><span class="config-unit">segundos</span></div>
+                <small>Si ningún técnico acepta, se amplía el radio de búsqueda</small></div>
+            <div class="config-item"><label>Tiempo para que el técnico responda</label>
+                <div class="config-input-group"><input type="number" id="tiempo_respuesta_tecnico" class="am-input" min="30" max="180"><span class="config-unit">segundos</span></div>
+                <small>Tiempo máximo para aceptar o rechazar una solicitud</small></div>
+            <div class="config-item"><label>Radio inicial de búsqueda</label>
+                <div class="config-input-group"><input type="number" id="radio_busqueda_inicial_km" class="am-input" min="1" max="50" step="0.5"><span class="config-unit">km</span></div>
+                <small>Distancia inicial para buscar técnicos cercanos</small></div>
+            <div class="config-item"><label>Radio máximo de búsqueda</label>
+                <div class="config-input-group"><input type="number" id="radio_busqueda_maximo_km" class="am-input" min="5" max="100" step="0.5"><span class="config-unit">km</span></div>
+                <small>Límite máximo de distancia para buscar</small></div>
+            <div class="config-item"><label>Técnicos a alertar por ronda</label>
+                <div class="config-input-group"><input type="number" id="tecnicos_por_alerta" class="am-input" min="1" max="10"><span class="config-unit">técnicos</span></div>
+                <small>Cantidad de técnicos que reciben la alerta simultáneamente</small></div>
+            <div class="config-item"><label>Priorizar por calificación</label>
+                <div class="config-toggle-group"><label class="toggle-switch"><input type="checkbox" id="habilitar_prioridad_rating"><span class="toggle-slider"></span></label><span class="toggle-label" id="label_prioridad_rating">Desactivado</span></div>
+                <small>Los técnicos con mejor rating reciben alertas primero</small></div>
+            <div class="config-item" id="config_rating_minimo" style="display:none;"><label>Rating mínimo para prioridad</label>
+                <div class="config-input-group"><input type="number" id="rating_minimo_prioridad" class="am-input" min="1" max="5" step="0.1"><span class="config-unit">estrellas</span></div>
+                <small>Solo técnicos con este rating o más reciben alertas prioritarias</small></div>
         </div>
     </div>
 
-    <!-- MODAL TARIFA -->
-    <div class="am-modal-backdrop" id="modalTarifa">
-        <div class="am-modal">
-            <div class="am-modal-head"><h3 id="tituloTarifa">Tarifa</h3><button class="close" onclick="cerrar('modalTarifa')">&times;</button></div>
-            <div class="am-modal-body">
-                <div class="field-row">
-                    <div class="field"><label>Precio visita</label><input id="t_precio_visita" type="number" step="0.01" value="50"></div>
-                    <div class="field"><label>Comisión MITA</label><input id="t_comision_mita" type="number" step="0.01" value="15"></div>
-                </div>
-                <div class="field-row">
-                    <div class="field"><label>Pago técnico</label><input id="t_pago_tecnico" type="number" step="0.01" value="35"></div>
-                    <div class="field"><label>Descuento máx (%)</label><input id="t_descuento_maximo" type="number" step="0.01" value="0"></div>
-                </div>
-                <div class="field-row">
-                    <div class="field"><label>Recargo urgente</label><input id="t_recargo_urgente" type="number" step="0.01" value="0"></div>
-                    <div class="field"><label>Recargo nocturno</label><input id="t_recargo_nocturno" type="number" step="0.01" value="0"></div>
-                </div>
-                <div class="field field-check"><input type="checkbox" id="t_activo" checked><label>Activo</label></div>
-            </div>
-            <div class="am-modal-foot">
-                <button class="btn btn-secondary" onclick="cerrar('modalTarifa')">Cancelar</button>
-                <button class="btn btn-primary" onclick="guardarTarifa()"><i class="fas fa-save"></i> Guardar</button>
-            </div>
+    <!-- Tarifas -->
+    <div class="config-section">
+        <h2><i class="fas fa-money-bill-wave"></i> Tarifas y Pagos</h2>
+        <div class="config-grid">
+            <div class="config-item"><label>Tarifa de visita/diagnóstico</label>
+                <div class="config-input-group"><span class="config-prefix">S/</span><input type="number" id="tarifa_visita_default" class="am-input" min="10" max="500" step="5"></div>
+                <small>Monto que paga el cliente por la visita del técnico</small></div>
+            <div class="config-item"><label>Porcentaje que retiene MITA</label>
+                <div class="config-input-group"><input type="number" id="porcentaje_mita" class="am-input" min="0" max="100"><span class="config-unit">%</span></div>
+                <small>Del total de la tarifa de visita</small></div>
+            <div class="config-item"><label>Penalidad por cancelación</label>
+                <div class="config-input-group"><input type="number" id="porcentaje_cancelacion" class="am-input" min="0" max="100"><span class="config-unit">%</span></div>
+                <small>Porcentaje de la tarifa a cobrar si el cliente cancela</small></div>
         </div>
     </div>
 
+    <div class="config-actions">
+        <button class="btn btn-secondary" onclick="cargarConfiguraciones()"><i class="fas fa-undo"></i> Descartar cambios</button>
+        <button class="btn btn-primary" onclick="guardarConfiguraciones()"><i class="fas fa-save"></i> Guardar configuraciones</button>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-    <script>
-    const API = '/api/v1/admin';
-    function esc(s){ return String(s==null?'':s).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function cerrar(id){ document.getElementById(id).classList.remove('show'); }
-    function cambiarTab(t){
-        document.querySelectorAll('.am-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===t));
-        document.getElementById('tab-config').style.display = t==='config'?'block':'none';
-        document.getElementById('tab-tarifas').style.display = t==='tarifas'?'block':'none';
-    }
+<script>
+let configActual = {};
 
-    // ---- Config general ----
-    let editClave = null;
-    async function cargarConfig(){
-        const tb = document.getElementById('tbodyConfig');
-        try {
-            const r = await fetch(API+'/config'); if(!r.ok) throw new Error('HTTP '+r.status);
-            const items = (await r.json()).items || [];
-            if(!items.length){ tb.innerHTML = '<tr><td colspan="5" class="am-empty">Sin parámetros</td></tr>'; return; }
-            tb.innerHTML = items.map(c => `
-                <tr>
-                    <td><b>${esc(c.clave)}</b></td><td>${esc(c.valor)}</td><td>${esc(c.tipo)}</td><td>${esc(c.categoria)}</td>
-                    <td><button class="btn btn-secondary btn-sm" onclick='abrirModalConfig(${JSON.stringify(c)})'><i class="fas fa-pen"></i></button></td>
-                </tr>`).join('');
-        } catch(e){ tb.innerHTML = `<tr><td colspan="5" class="am-error">Error (¿BD?): ${e.message}</td></tr>`; }
-    }
-    function abrirModalConfig(c){
-        c = c || {}; editClave = c.clave || null;
-        document.getElementById('tituloConfig').textContent = editClave?'Editar parámetro':'Nuevo parámetro';
-        document.getElementById('c_clave').value = c.clave||''; document.getElementById('c_clave').disabled = !!editClave;
-        document.getElementById('c_valor').value = c.valor||'';
-        document.getElementById('c_tipo').value = c.tipo||'string';
-        document.getElementById('c_categoria').value = c.categoria||'';
-        document.getElementById('c_descripcion').value = c.descripcion||'';
-        document.getElementById('modalConfig').classList.add('show');
-    }
-    async function guardarConfig(){
-        const clave = document.getElementById('c_clave').value.trim();
-        if(!clave){ alert('La clave es obligatoria'); return; }
-        const data = { valor:document.getElementById('c_valor').value, tipo:document.getElementById('c_tipo').value,
-            categoria:document.getElementById('c_categoria').value, descripcion:document.getElementById('c_descripcion').value };
-        try { const r = await fetch(API+'/config/'+encodeURIComponent(clave), { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
-            if(!r.ok) throw new Error('HTTP '+r.status); cerrar('modalConfig'); cargarConfig();
-        } catch(e){ alert('Error: '+e.message); }
-    }
+document.addEventListener('DOMContentLoaded', function () {
+    cargarConfiguraciones();
+    document.getElementById('habilitar_prioridad_rating').addEventListener('change', function () {
+        document.getElementById('label_prioridad_rating').textContent = this.checked ? 'Activado' : 'Desactivado';
+        document.getElementById('config_rating_minimo').style.display = this.checked ? 'block' : 'none';
+    });
+});
 
-    // ---- Tarifas ----
-    let editTarifa = null;
-    async function cargarTarifas(){
-        const tb = document.getElementById('tbodyTarifas');
-        try {
-            const r = await fetch(API+'/tarifas'); if(!r.ok) throw new Error('HTTP '+r.status);
-            const items = (await r.json()).items || [];
-            if(!items.length){ tb.innerHTML = '<tr><td colspan="6" class="am-empty">Sin tarifas</td></tr>'; return; }
-            tb.innerHTML = items.map(t => `
-                <tr>
-                    <td>S/ ${t.precio_visita ?? 50}</td><td>S/ ${t.comision_mita ?? 15}</td><td>S/ ${t.pago_tecnico ?? 35}</td>
-                    <td>S/ ${t.recargo_urgente ?? 0}</td>
-                    <td>${t.activo?'<span class="badge badge-on">Activo</span>':'<span class="badge badge-off">Inactivo</span>'}</td>
-                    <td><button class="btn btn-secondary btn-sm" onclick='abrirModalTarifa(${JSON.stringify(t)})'><i class="fas fa-pen"></i></button></td>
-                </tr>`).join('');
-        } catch(e){ tb.innerHTML = `<tr><td colspan="6" class="am-error">Error (¿BD?): ${e.message}</td></tr>`; }
+async function cargarConfiguraciones() {
+    try {
+        const response = await fetch('/api/v1/admin/config-mita');
+        if (!response.ok) throw new Error('Error cargando');
+        configActual = await response.json();
+        Object.keys(configActual).forEach(clave => {
+            const input = document.getElementById(clave);
+            if (!input) return;
+            if (input.type === 'checkbox') {
+                input.checked = configActual[clave] === true || configActual[clave] === 'true';
+                input.dispatchEvent(new Event('change'));
+            } else {
+                input.value = configActual[clave];
+            }
+        });
+    } catch (e) {
+        if (window.MitaAlert) MitaAlert.error('Error', 'No se pudieron cargar las configuraciones (¿BD / SQL 08?)');
     }
-    function abrirModalTarifa(t){
-        t = t || {}; editTarifa = t.id || null;
-        document.getElementById('tituloTarifa').textContent = editTarifa?'Editar tarifa':'Nueva tarifa';
-        document.getElementById('t_precio_visita').value = t.precio_visita ?? 50;
-        document.getElementById('t_comision_mita').value = t.comision_mita ?? 15;
-        document.getElementById('t_pago_tecnico').value = t.pago_tecnico ?? 35;
-        document.getElementById('t_descuento_maximo').value = t.descuento_maximo ?? 0;
-        document.getElementById('t_recargo_urgente').value = t.recargo_urgente ?? 0;
-        document.getElementById('t_recargo_nocturno').value = t.recargo_nocturno ?? 0;
-        document.getElementById('t_activo').checked = t.activo!==false;
-        document.getElementById('modalTarifa').classList.add('show');
-    }
-    async function guardarTarifa(){
-        const n = id => parseFloat(document.getElementById(id).value)||0;
-        const data = { precio_visita:n('t_precio_visita'), comision_mita:n('t_comision_mita'), pago_tecnico:n('t_pago_tecnico'),
-            descuento_maximo:n('t_descuento_maximo'), recargo_urgente:n('t_recargo_urgente'), recargo_nocturno:n('t_recargo_nocturno'),
-            activo: document.getElementById('t_activo').checked };
-        try { const r = await fetch(API+'/tarifas'+(editTarifa?'/'+editTarifa:''), { method: editTarifa?'PUT':'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
-            if(!r.ok) throw new Error('HTTP '+r.status); cerrar('modalTarifa'); cargarTarifas();
-        } catch(e){ alert('Error: '+e.message); }
-    }
+}
 
-    cargarConfig(); cargarTarifas();
-    </script>
+async function guardarConfiguraciones() {
+    const campos = ['tiempo_espera_asignacion','tiempo_respuesta_tecnico','radio_busqueda_inicial_km','radio_busqueda_maximo_km','tecnicos_por_alerta','habilitar_prioridad_rating','rating_minimo_prioridad','tarifa_visita_default','porcentaje_mita','porcentaje_cancelacion'];
+    const datos = {};
+    campos.forEach(clave => {
+        const input = document.getElementById(clave);
+        if (input) datos[clave] = input.type === 'checkbox' ? input.checked : input.value;
+    });
+    try {
+        const response = await fetch('/api/v1/admin/config-mita', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
+        if (!response.ok) throw new Error('Error guardando');
+        if (window.MitaAlert) MitaAlert.success('Guardado', 'Configuraciones actualizadas correctamente');
+        cargarConfiguraciones();
+    } catch (e) {
+        if (window.MitaAlert) MitaAlert.error('Error', 'No se pudieron guardar las configuraciones');
+    }
+}
+</script>
 {% endblock %}
