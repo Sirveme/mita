@@ -26,9 +26,10 @@ from app.models.personal import (
     Personal, TecnicoPersonal, Secretaria, Distrito, TiempoEntreDistritos,
     TipoPersonal, EstadoPersonal,
 )
-from app.models.configuracion import ConfiguracionGeneral, TarifaServicio
+from app.models.configuracion import ConfiguracionGeneral, TarifaServicio, ConfiguracionMita
 from app.models.auth_mita import UsuarioMita
 from app.models.ubigeo import Ubigeo
+from app.services.config_service import ConfigService
 
 router = APIRouter(prefix="/api/v1/admin", tags=["Admin"])
 
@@ -200,6 +201,44 @@ def listar_tecnicos(db: Session = Depends(get_db)):
 @router.get("/secretarias")
 def listar_secretarias(db: Session = Depends(get_db)):
     return {"success": True, "items": [_to_dict(x) for x in db.query(Secretaria).all()]}
+
+
+@router.get("/config-mita")
+def obtener_config_mita(db: Session = Depends(get_db)):
+    """Devuelve todos los parámetros como {clave: valor_tipado} (para la UI)."""
+    ConfigService.clear_cache()  # valores frescos
+    return ConfigService.get_all(db)
+
+
+@router.get("/config-mita/detalle")
+def detalle_config_mita(db: Session = Depends(get_db)):
+    """Detalle completo (clave, tipo, descripción, categoría) para listados."""
+    items = (
+        db.query(ConfiguracionMita)
+        .order_by(ConfiguracionMita.categoria, ConfiguracionMita.clave)
+        .all()
+    )
+    return {"success": True, "items": [
+        {"clave": c.clave, "valor": c.valor, "valor_tipado": c.get_valor(),
+         "tipo": c.tipo, "descripcion": c.descripcion, "categoria": c.categoria}
+        for c in items
+    ]}
+
+
+@router.put("/config-mita")
+def actualizar_config_mita(datos: dict = Body(...), db: Session = Depends(get_db)):
+    """Actualiza varios parámetros a la vez: {clave: valor, ...}."""
+    actualizadas, errores = 0, []
+    for clave, valor in datos.items():
+        try:
+            if ConfigService.set(db, clave, valor):
+                actualizadas += 1
+            else:
+                errores.append(f"{clave}: no encontrada")
+        except Exception as e:
+            errores.append(f"{clave}: {e}")
+    ConfigService.clear_cache()
+    return {"success": len(errores) == 0, "actualizadas": actualizadas, "errores": errores or None}
 
 
 @router.get("/ubigeos")

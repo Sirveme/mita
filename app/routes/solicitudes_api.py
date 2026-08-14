@@ -21,25 +21,36 @@ router = APIRouter(prefix="/api/v1/solicitudes", tags=["Solicitudes MITA"])
 class SolicitudCreate(BaseModel):
     problema: str
     categoria_id: int
-    tecnico_id: int
+    tecnico_id: Optional[int] = None          # None = asignación automática (zMita-13)
     direccion: str
     distrito: Optional[str] = None
     referencia: Optional[str] = None
     telefono: Optional[str] = None
     lat: Optional[float] = None
     lng: Optional[float] = None
+    # zMita-13: catálogo + pago adelantado
+    tipo_servicio_id: Optional[int] = None
+    precio_servicio: Optional[float] = None
+    es_precio_fijo: Optional[bool] = False
+    metodo_pago: Optional[str] = None
+    referencia_pago: Optional[str] = None
+    pago_adelantado: Optional[bool] = False
 
 
 @router.post("")
 def crear_solicitud(data: SolicitudCreate, db: Session = Depends(get_db)):
-    """Crea una solicitud y la asigna al técnico elegido."""
-    tecnico = (
-        db.query(Personal)
-        .filter(Personal.id == data.tecnico_id, Personal.estado == EstadoPersonal.ACTIVO)
-        .first()
-    )
-    if not tecnico:
-        raise HTTPException(status_code=404, detail="Técnico no disponible")
+    """Crea una solicitud. Si viene tecnico_id, se asigna directo; si no, queda
+    PENDIENTE para la asignación automática (POST /api/v1/asignacion/iniciar/{id})."""
+    asignada = False
+    if data.tecnico_id is not None:
+        tecnico = (
+            db.query(Personal)
+            .filter(Personal.id == data.tecnico_id, Personal.estado == EstadoPersonal.ACTIVO)
+            .first()
+        )
+        if not tecnico:
+            raise HTTPException(status_code=404, detail="Técnico no disponible")
+        asignada = True
 
     solicitud = Solicitud(
         descripcion_problema=data.problema,
@@ -51,25 +62,54 @@ def crear_solicitud(data: SolicitudCreate, db: Session = Depends(get_db)):
         cliente_telefono=data.telefono,
         cliente_lat=data.lat,
         cliente_lng=data.lng,
-        estado="PENDIENTE",
+        estado="ASIGNADA" if asignada else "PENDIENTE",
         fecha_solicitud=datetime.utcnow(),
         costo_visita=50.0,
+        # zMita-13
+        tipo_servicio_id=data.tipo_servicio_id,
+        precio_servicio=data.precio_servicio,
+        es_precio_fijo=bool(data.es_precio_fijo),
+        metodo_pago=data.metodo_pago,
+        referencia_pago=data.referencia_pago,
+        pago_adelantado=bool(data.pago_adelantado),
+        pago_confirmado_at=datetime.utcnow() if data.pago_adelantado else None,
     )
     db.add(solicitud)
     db.commit()
     db.refresh(solicitud)
 
-    # TODO (zMita-11): notificar al técnico vía WebSocket (90s para aceptar)
     return {
         "success": True,
         "id": solicitud.id,
-        "mensaje": "Solicitud creada. El técnico ha sido notificado.",
+        "estado": solicitud.estado,
+        "mensaje": "Solicitud creada." + (" Técnico asignado." if asignada else " Buscando técnico..."),
     }
 
 
 # ============================================
 # Lista / asignación / respuesta / estado (panel secretaria + técnico)
 # ============================================
+
+@router.get("/estado/{solicitud_id}")
+def estado_solicitud(solicitud_id: int, db: Session = Depends(get_db)):
+    """Estado de una solicitud del flujo v2 (usado por el chat para el modal de calificación)."""
+    s = db.query(Solicitud).get(solicitud_id)
+    if not s:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+    tecnico_nombre = None
+    if s.tecnico_id:
+        tec = db.query(Personal).get(s.tecnico_id)
+        if tec:
+            tecnico_nombre = f"{tec.nombres} {tec.apellido_paterno or ''}".strip()
+    return {
+        "id": s.id,
+        "estado": s.estado,
+        "calificado": bool(s.calificado),
+        "tecnico_id": s.tecnico_id,
+        "tecnico_nombre": tecnico_nombre,
+        "tecnico_foto": None,
+    }
+
 
 @router.get("")
 def listar_solicitudes(estado: Optional[str] = None, db: Session = Depends(get_db)):
