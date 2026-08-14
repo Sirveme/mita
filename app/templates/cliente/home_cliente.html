@@ -312,6 +312,13 @@
         </section>
 
         <!-- Slider de Servicios -->
+        <!-- Servicios pendientes de calificar (zMita-14) -->
+        <section class="seccion-calificaciones" id="pendientes-calificar" style="display:none;">
+            <h3><i class="fas fa-star"></i> Califica tus servicios</h3>
+            <p class="subtitulo">Tu opinión nos ayuda a mejorar</p>
+            <div class="lista-pendientes" id="lista-pendientes-calificar"></div>
+        </section>
+
         <section class="services-section">
             <div class="section-header">
                 <h2>Nuestros servicios</h2>
@@ -809,6 +816,69 @@
         transform: scale(1.1);
     }
     </style>
+
+    <!-- Modal de calificación + pendientes (zMita-14) -->
+    {% include 'components/calificacion_modal.html' %}
+    <style>
+    .seccion-calificaciones { margin: 20px 16px; padding: 20px; background: var(--mita-card, #1e1e2e); border-radius: 16px; border-left: 4px solid #FFCD11; }
+    .seccion-calificaciones h3 { color: #fff; font-size: 18px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .seccion-calificaciones h3 i { color: #FFCD11; }
+    .seccion-calificaciones .subtitulo { color: #888; font-size: 13px; margin-bottom: 16px; }
+    .lista-pendientes { display: flex; flex-direction: column; gap: 12px; }
+    .tarjeta-calificar { display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--mita-dark, #151520); border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+    .tarjeta-calificar:hover { background: rgba(255, 205, 17, 0.1); }
+    .tarjeta-icono { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .tarjeta-info { flex: 1; min-width: 0; }
+    .tarjeta-titulo { color: #fff; font-weight: 500; font-size: 15px; }
+    .tarjeta-subtitulo { color: #888; font-size: 13px; margin-top: 2px; }
+    .tarjeta-fecha { color: #666; font-size: 12px; margin-top: 2px; }
+    .tarjeta-estrellas { display: flex; gap: 2px; }
+    .tarjeta-estrellas i { color: #444; font-size: 14px; }
+    .tarjeta-arrow { color: #555; font-size: 14px; }
+    </style>
+    <script>
+    async function cargarPendientesCalificar() {
+        const container = document.getElementById('lista-pendientes-calificar');
+        const section = document.getElementById('pendientes-calificar');
+        if (!container || !section) return;
+        try {
+            const response = await fetch('/api/v1/cliente/servicios-pendientes-calificar');
+            if (!response.ok) { section.style.display = 'none'; return; }
+            const servicios = await response.json();
+            if (!servicios || servicios.length === 0) { section.style.display = 'none'; return; }
+            section.style.display = 'block';
+            container.innerHTML = servicios.map(s => `
+                <div class="tarjeta-calificar" onclick="abrirCalificacion(${s.id}, '${(s.tecnico_nombre||'').replace(/'/g,"\\'")}', '${s.tecnico_foto || ''}')">
+                    <div class="tarjeta-icono" style="background: ${s.categoria_color}20; color: ${s.categoria_color};"><i class="${s.categoria_icono || 'fas fa-tools'}"></i></div>
+                    <div class="tarjeta-info">
+                        <div class="tarjeta-titulo">${s.categoria_nombre}</div>
+                        <div class="tarjeta-subtitulo">${s.tecnico_nombre}</div>
+                        <div class="tarjeta-fecha">${formatearFecha(s.completado_at)}</div>
+                    </div>
+                    <div class="tarjeta-estrellas"><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i></div>
+                    <i class="fas fa-chevron-right tarjeta-arrow"></i>
+                </div>`).join('');
+        } catch (e) { section.style.display = 'none'; }
+    }
+    function abrirCalificacion(solicitudId, tecnicoNombre, tecnicoFoto) {
+        if (typeof mostrarCalificacion === 'function') mostrarCalificacion(solicitudId, tecnicoNombre, tecnicoFoto);
+    }
+    function formatearFecha(fechaStr) {
+        if (!fechaStr) return '';
+        const fecha = new Date(fechaStr), hoy = new Date(), ayer = new Date(hoy); ayer.setDate(ayer.getDate() - 1);
+        if (fecha.toDateString() === hoy.toDateString()) return 'Hoy';
+        if (fecha.toDateString() === ayer.toDateString()) return 'Ayer';
+        return fecha.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
+    }
+    window.abrirCalificacion = abrirCalificacion;
+    document.addEventListener('DOMContentLoaded', cargarPendientesCalificar);
+    // Al calificar, recargar la lista
+    if (typeof enviarCalificacion === 'function') {
+        const _orig = enviarCalificacion;
+        enviarCalificacion = async function () { await _orig(); cargarPendientesCalificar(); };
+        window.enviarCalificacion = enviarCalificacion;
+    }
+    </script>
 
     <!-- JS Modular -->
     <script src="/static/js/utils.js"></script>

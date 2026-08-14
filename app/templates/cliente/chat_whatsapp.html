@@ -79,6 +79,9 @@
 
 <input type="file" id="file-input" accept="image/*,.pdf,.doc,.docx" multiple style="display:none;">
 <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;">
+
+<!-- Modal de calificación (zMita-14) -->
+{% include 'components/calificacion_modal.html' %}
 {% endblock %}
 
 {% block extra_js %}
@@ -285,4 +288,23 @@ function enviarNotaVoz(blob) {
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 .audio-bubble audio { max-width: 250px; height: 40px; }
 </style>
+
+<script>
+// Calificación al completar servicio (zMita-14)
+document.addEventListener('DOMContentLoaded', function () {
+    let s = null;
+    try { s = JSON.parse(sessionStorage.getItem('mita_solicitud') || 'null'); } catch (e) {}
+    if (!s || !s.id || s.id === 'demo') return;
+    fetch(`/api/v1/solicitudes/estado/${s.id}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(sol => {
+            if (!sol) return;
+            const completada = sol.estado === 'COMPLETADA' || sol.estado === 'COMPLETADO';
+            if (completada && !sol.calificado && typeof mostrarCalificacion === 'function') {
+                setTimeout(() => mostrarCalificacion(sol.id, sol.tecnico_nombre || s.tecnico || 'Técnico', sol.tecnico_foto || null), 1000);
+            }
+        })
+        .catch(() => {});
+});
+</script>
 {% endblock %}
