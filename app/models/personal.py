@@ -91,6 +91,11 @@ class Personal(Base):
     ruc = Column(String(11))
     emite_recibo_honorarios = Column(Boolean, default=False)  # emite RxH (4ta)
 
+    # Reputación (zMita-13) — el trigger de calificaciones actualiza estos campos
+    rating_promedio = Column(Numeric(3, 2), default=0)
+    total_servicios = Column(Integer, default=0)
+    total_calificaciones = Column(Integer, default=0)
+
     # Meta
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

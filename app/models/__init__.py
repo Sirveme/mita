@@ -31,8 +31,10 @@ from app.models.liquidacion import (
 
 from app.models.configuracion import (
     ConfiguracionGeneral, TarifaServicio, HorarioAtencion,
-    Feriado, MensajeBot,
+    Feriado, MensajeBot, ConfiguracionMita,
 )
+from app.models.calificacion import Calificacion
+from app.models.cola_asignacion import ColaAsignacion, AlertaTecnico
 
 from app.models.auth_mita import UsuarioMita, SesionMita
 from app.models.ubigeo import Ubigeo

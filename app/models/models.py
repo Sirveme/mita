@@ -972,6 +972,8 @@ class CategoriaServicio(Base):
     orden = Column(Integer, default=0)
     activo = Column(Boolean, default=True)
     proximamente = Column(Boolean, default=False)        # Para sección "Próximamente"
+    codigo_unspsc = Column(String(10))                   # zMita-13: facturación SUNAT/UNSPSC
+    descripcion_unspsc = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -992,6 +994,11 @@ class TipoServicio(Base):
     duracion_estimada_min = Column(Integer, default=60)
     requiere_materiales = Column(Boolean, default=False)
     activo = Column(Boolean, default=True)
+    # zMita-13
+    codigo_unspsc = Column(String(10))
+    precio_fijo = Column(Numeric(10, 2))          # NULL = requiere cotización
+    tiempo_estimado_min = Column(Integer)
+    descripcion_cliente = Column(Text)            # lo que ve el cliente
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships

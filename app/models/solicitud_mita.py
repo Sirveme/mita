@@ -4,7 +4,7 @@ Tabla `solicitudes` (distinta de `solicitudes_servicio` del flujo anónimo previ
 El técnico se referencia contra `personal.id` (sistema de personal MITA).
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean, ForeignKey
 from datetime import datetime
 
 from app.core.database import Base
@@ -58,3 +58,18 @@ class Solicitud(Base):
 
     # Conversación
     conversacion_id = Column(Integer, ForeignKey("conversaciones.id"), nullable=True)
+
+    # --- zMita-13: catálogo, pago adelantado, cancelación, calificación ---
+    tipo_servicio_id = Column(Integer, ForeignKey("tipos_servicio.id"))
+    precio_servicio = Column(Float)               # precio fijo o cotizado
+    es_precio_fijo = Column(Boolean, default=False)
+    pago_adelantado = Column(Boolean, default=False)
+    pago_confirmado_at = Column(DateTime, nullable=True)
+    metodo_pago = Column(String(20))              # yape, plin, tarjeta, efectivo
+    referencia_pago = Column(String(100))
+    cancelado = Column(Boolean, default=False)
+    cancelado_at = Column(DateTime, nullable=True)
+    cancelado_por = Column(String(20))            # cliente, tecnico, sistema
+    motivo_cancelacion = Column(Text)
+    tarifa_cancelacion = Column(Float)
+    calificado = Column(Boolean, default=False)

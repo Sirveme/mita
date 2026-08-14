@@ -89,6 +89,32 @@ class Feriado(Base):
     hora_fin = Column(Time)
 
 
+class ConfiguracionMita(Base):
+    """Parámetros configurables del modelo de asignación automática (zMita-13)."""
+    __tablename__ = "configuracion_mita"
+
+    id = Column(Integer, primary_key=True, index=True)
+    clave = Column(String(50), unique=True, nullable=False, index=True)
+    valor = Column(Text, nullable=False)
+    tipo = Column(String(20), default="string")   # string, int, float, bool, json
+    descripcion = Column(Text)
+    categoria = Column(String(50), default="general")
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def get_valor(self):
+        """Devuelve el valor convertido al tipo indicado."""
+        if self.tipo == "int":
+            return int(self.valor)
+        if self.tipo == "float":
+            return float(self.valor)
+        if self.tipo == "bool":
+            return str(self.valor).lower() in ("true", "1", "yes", "si")
+        if self.tipo == "json":
+            import json
+            return json.loads(self.valor)
+        return self.valor
+
+
 class MensajeBot(Base):
     """Mensajes predefinidos del bot"""
     __tablename__ = "mensajes_bot"
