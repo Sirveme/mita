@@ -130,10 +130,10 @@ async function cargarConversaciones() {
     try {
         const response = await fetch('/api/v1/chat/conversaciones');
         if (!response.ok) throw new Error('API no disponible');
-        const data = await response.json();
-        if (!data.length) throw new Error('vacío');
-        conversaciones = data;
+        // Producción: usar datos reales aunque estén vacíos (el render muestra estado vacío).
+        conversaciones = await response.json();
     } catch (e) {
+        // Solo si la API falla por completo (red / 500) mostramos ejemplos para no dejar el panel roto.
         conversaciones = [
             { id: 1, titulo: 'Servicio #1234', subtitulo: 'Gasfitería - Carlos López', ultimoMensaje: 'Perfecto, llego en 10 minutos...', hora: '10:30', noLeidos: 0, icono: 'fa-tools', color: '#3b82f6', estado: 'activo' },
             { id: 2, titulo: 'Servicio #1198', subtitulo: 'Electricidad - Juan Pérez', ultimoMensaje: 'Gracias por su atención', hora: 'Ayer', noLeidos: 0, icono: 'fa-bolt', color: '#f59e0b', estado: 'completado' },

@@ -24,6 +24,13 @@
     .categoria-card.selected { border-color: var(--mita-primary); background: rgba(255,205,17,.08); }
     .categoria-icon { font-size: 26px; margin-bottom: 10px; }
     .categoria-nombre { font-size: 14px; font-weight: 500; }
+    .deteccion-banner { background: rgba(255,205,17,.1); border: 1px solid rgba(255,205,17,.4); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; }
+    .deteccion-banner .deteccion-texto { font-size: 14px; margin-bottom: 12px; }
+    .deteccion-banner .deteccion-texto i { color: var(--mita-primary); margin-right: 6px; }
+    .deteccion-banner b { color: var(--mita-primary); }
+    .deteccion-actions { display: flex; gap: 10px; }
+    .btn-deteccion-si { flex: 1; padding: 10px; background: var(--mita-primary); color: #000; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-deteccion-cambiar { flex: 0 0 auto; padding: 10px 18px; background: transparent; color: var(--mita-text); border: 1px solid var(--mita-border); border-radius: 8px; cursor: pointer; }
     .tipos-servicio-grid { display: grid; gap: 10px; margin: 12px 0 20px; }
     .tipo-card { background: var(--mita-card); border: 2px solid var(--mita-border); border-radius: 10px; padding: 12px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
     .tipo-card.selected { border-color: var(--mita-primary); background: rgba(255,205,17,.06); }
@@ -102,6 +109,13 @@
     <!-- Paso 2: Problema -->
     <div class="step-content" data-step="2">
         <h2>Describe el problema</h2>
+        <div id="deteccion-banner" class="deteccion-banner" style="display:none;">
+            <div class="deteccion-texto"><i class="fas fa-wand-magic-sparkles"></i> Detectamos: <b id="deteccion-nombre">—</b>. ¿Es correcto?</div>
+            <div class="deteccion-actions">
+                <button type="button" class="btn-deteccion-si" onclick="confirmarDeteccion()">Sí, continuar</button>
+                <button type="button" class="btn-deteccion-cambiar" onclick="cambiarCategoria()">Cambiar</button>
+            </div>
+        </div>
         <div id="tipos-servicio-container" style="display:none;">
             <label style="color:var(--mita-text-secondary); font-size:13px;">Selecciona el servicio:</label>
             <div class="tipos-servicio-grid" id="tipos-servicio-grid"></div>
@@ -117,7 +131,7 @@
             <div class="precio-card diagnostico"><span class="precio-label">Visita de diagnóstico:</span><span class="precio-valor">S/ <span id="tarifa-visita">50.00</span></span><small>El técnico evaluará y te dará el presupuesto del trabajo</small></div>
         </div>
         <div class="actions">
-            <button class="btn-secondary" onclick="irAPaso(1)"><i class="fas fa-arrow-left"></i></button>
+            <button class="btn-secondary" onclick="irAPaso(1)"><i class="fas fa-arrow-left"></i> Atrás</button>
             <button class="btn-primary" onclick="irAPaso(3)">Continuar</button>
         </div>
     </div>
@@ -131,7 +145,7 @@
         <div class="form-group"><label>Distrito</label><select id="distrito"><option value="">Selecciona...</option></select></div>
         <div class="form-group"><label>Número de contacto</label><input type="tel" id="telefono" placeholder="999 999 999"></div>
         <div class="actions">
-            <button class="btn-secondary" onclick="irAPaso(2)"><i class="fas fa-arrow-left"></i></button>
+            <button class="btn-secondary" onclick="irAPaso(2)"><i class="fas fa-arrow-left"></i> Atrás</button>
             <button class="btn-primary" onclick="irAPaso(4)">Continuar</button>
         </div>
     </div>
@@ -195,14 +209,56 @@
 <script>
 const estado = { categoria: null, tipo: null, problema: '', precio: 50, esPrecioFijo: false, direccion: '', distrito: '', referencia: '', telefono: '', lat: null, lng: null, solicitudId: null, tecnicoTel: null };
 let pasoActual = 1;
+let categoriasCargadas = [];
+let mostrarTelefonoTecnico = false;   // política configurable (config-mita)
+
+// Palabras clave -> código de categoría (detección desde el texto de la landing)
+const KEYWORDS_CATEGORIA = {
+    ELDOM: ['lavadora','refrigeradora','refrigerador','nevera','microondas','licuadora','horno','cocina','congeladora','congelador','secadora','lavavajilla','electrodomestico','electrodoméstico'],
+    GASF:  ['fuga','caño','cano','tuberia','tubería','desague','desagüe','inodoro','ducha','grifo','agua','gasfiteria','gasfitería','wc','sanitario'],
+    ELEC:  ['enchufe','tomacorriente','cortocircuito','corto circuito','luz','foco','interruptor','cable','electricidad','tablero','llave termica','térmica'],
+    MUEB:  ['mueble','armario','estante','repisa','closet','ropero','cajon','cajón','puerta','bisagra','carpinteria','carpintería']
+};
+
+function detectarCategoriaCodigo(texto) {
+    if (!texto) return null;
+    const t = texto.toLowerCase();
+    for (const [codigo, palabras] of Object.entries(KEYWORDS_CATEGORIA)) {
+        if (palabras.some(w => t.includes(w))) return codigo;
+    }
+    return null;
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Preseleccionar problema si viene de la landing
     const p = new URLSearchParams(location.search).get('problema') || sessionStorage.getItem('mita_problema') || '';
-    if (p) { estado.problema = p; }
+    if (p) {
+        estado.problema = p;
+        const ta = document.getElementById('problema-descripcion');
+        if (ta) ta.value = p;   // pre-llenar "Cuéntanos qué pasó"
+    }
+    cargarConfigTelefono();
     await cargarCategorias();
     await cargarDistritos();
+
+    // Detección inteligente: si el texto ya dice la categoría, saltar el paso 1
+    const codigo = detectarCategoriaCodigo(p);
+    if (codigo) {
+        const cat = categoriasCargadas.find(c => c.codigo === codigo);
+        if (cat) {
+            seleccionarCategoria(cat, true);   // salta a paso 2 con banner "Detectamos: ..."
+        }
+    }
 });
+
+async function cargarConfigTelefono() {
+    try {
+        const r = await fetch('/api/v1/admin/config-mita');
+        if (!r.ok) return;
+        const c = await r.json();
+        mostrarTelefonoTecnico = c.mostrar_telefono_tecnico === true || c.mostrar_telefono_tecnico === 'true';
+    } catch (e) { /* default: false (no mostrar teléfono) */ }
+}
 
 async function cargarCategorias() {
     const grid = document.getElementById('categorias-grid');
@@ -222,6 +278,7 @@ async function cargarCategorias() {
             { id: 6, codigo: 'OTRO', nombre: 'Otros', icono: 'fas fa-tools', color: '#FFCD11' }
         ];
     }
+    categoriasCargadas = cats;
     grid.innerHTML = cats.map(c => `
         <div class="categoria-card" data-id="${c.id}" onclick='seleccionarCategoria(${JSON.stringify(c)})'>
             <div class="categoria-icon" style="color:${c.color}"><i class="${c.icono || 'fas fa-tools'}"></i></div>
@@ -229,11 +286,34 @@ async function cargarCategorias() {
         </div>`).join('');
 }
 
-function seleccionarCategoria(c) {
+function seleccionarCategoria(c, detectada = false) {
     estado.categoria = c;
     document.querySelectorAll('.categoria-card').forEach(el => el.classList.toggle('selected', parseInt(el.dataset.id) === c.id));
     cargarTipos(c.codigo);
+    // Banner de detección: solo cuando la categoría vino del texto de la landing
+    const banner = document.getElementById('deteccion-banner');
+    if (banner) {
+        if (detectada) {
+            document.getElementById('deteccion-nombre').textContent = c.nombre;
+            banner.style.display = 'block';
+        } else {
+            banner.style.display = 'none';
+        }
+    }
     irAPaso(2);
+}
+
+function confirmarDeteccion() {
+    const banner = document.getElementById('deteccion-banner');
+    if (banner) banner.style.display = 'none';
+    const ta = document.getElementById('problema-descripcion');
+    if (ta) ta.focus();
+}
+
+function cambiarCategoria() {
+    const banner = document.getElementById('deteccion-banner');
+    if (banner) banner.style.display = 'none';
+    irAPaso(1);   // volver a elegir categoría manualmente
 }
 
 async function cargarTipos(codigo) {
@@ -375,6 +455,14 @@ async function mostrarTecnicoAsignado() {
     document.getElementById('tecnico-tiempo').textContent = (tec.tiempo_llegada ?? 20) + ' min';
     estado.tecnicoTel = tec.telefono || null;
 
+    // Política de privacidad: mostrar/ocultar botón "Llamar" según config-mita
+    const btnLlamar = document.querySelector('.btn-llamar');
+    const btnChat = document.querySelector('.btn-chat');
+    if (btnLlamar) {
+        btnLlamar.style.display = mostrarTelefonoTecnico ? '' : 'none';
+        if (!mostrarTelefonoTecnico && btnChat) btnChat.style.flex = '1 1 100%';
+    }
+
     sessionStorage.setItem('mita_solicitud', JSON.stringify({
         id: estado.solicitudId || 'demo', problema: estado.problema, tecnico: tec.nombre,
         direccion: `${estado.direccion}, ${estado.distrito}`
@@ -386,9 +474,14 @@ function cancelarBusqueda() {
     clearInterval(progresoTimer);
     MitaAlert.confirm('Cancelar', '¿Cancelar la solicitud?').then(ok => { if (ok) window.location.href = '/cliente/home'; });
 }
-function llamarTecnico() { if (estado.tecnicoTel) window.open('tel:' + estado.tecnicoTel); else MitaAlert.info('Teléfono', 'El número estará disponible al confirmar el técnico'); }
+function llamarTecnico() {
+    if (!mostrarTelefonoTecnico) return;   // política: teléfono deshabilitado
+    if (estado.tecnicoTel) window.open('tel:' + estado.tecnicoTel);
+    else MitaAlert.info('Teléfono', 'El número estará disponible al confirmar el técnico');
+}
 function irAlChat() { window.location.href = '/cliente/chat?solicitud=' + (estado.solicitudId || 'demo'); }
 window.seleccionarCategoria = seleccionarCategoria; window.seleccionarTipo = seleccionarTipo;
+window.confirmarDeteccion = confirmarDeteccion; window.cambiarCategoria = cambiarCategoria;
 window.irAPaso = irAPaso; window.confirmarYPagar = confirmarYPagar; window.obtenerUbicacion = obtenerUbicacion;
 window.cancelarBusqueda = cancelarBusqueda; window.llamarTecnico = llamarTecnico; window.irAlChat = irAlChat;
 </script>
