@@ -90,8 +90,25 @@ def validar_ruc(data: dict = Body(...), db: Session = Depends(get_db)):
         return {"valido": False, "mensaje": "El RUC no corresponde al DNI ingresado."}
     if db.query(Postulante).filter(Postulante.ruc == ruc).first():
         return {"valido": False, "mensaje": "Este RUC ya está registrado en una postulación."}
-    info = sunat_service.consultar_ruc(ruc) or {}
-    return {"valido": True, "mensaje": "RUC válido.", "razon_social": info.get("razon_social", "")}
+
+    info = sunat_service.consultar_ruc(ruc)
+    if info:
+        # SUNAT respondió: devolvemos los datos para pre-llenar el formulario
+        return {
+            "valido": True,
+            "sunat_disponible": True,
+            "mensaje": f"RUC válido — {info.get('razon_social', '')}".strip(" —"),
+            "razon_social": info.get("razon_social", ""),
+            "nombres": info.get("nombres", ""),
+            "apellido_paterno": info.get("apellido_paterno", ""),
+            "apellido_materno": info.get("apellido_materno", ""),
+        }
+    # SUNAT no disponible (sin token válido o sin respuesta): permitimos continuar
+    return {
+        "valido": True,
+        "sunat_disponible": False,
+        "mensaje": "RUC válido. No pudimos obtener tus datos de SUNAT automáticamente; complétalos manualmente.",
+    }
 
 
 @router.get("/tipos-documento")
@@ -132,6 +149,13 @@ async def enviar_postulacion(
     ya = _dni_registrado(db, dni)
     if ya:
         raise HTTPException(409, ya)
+
+    # RUC obligatorio para todos + anti-fraude (10 + DNI + dígito)
+    ruc = (data.get("ruc") or "").strip()
+    if not ruc:
+        raise HTTPException(400, "El RUC es obligatorio.")
+    if not sunat_service.ruc_contiene_dni(ruc, dni):
+        raise HTTPException(400, "El RUC no corresponde al DNI ingresado.")
 
     # Validaciones mínimas
     especialidades = data.get("especialidades") or []
@@ -200,6 +224,7 @@ async def enviar_postulacion(
         sol_usuario=(data.get("sol_usuario") or None),
         sol_clave_encriptada=(data.get("sol_clave") or None),  # TODO: cifrar realmente
         emision_automatica_rxh=bool(data.get("emision_automatica_rxh")),
+        acepta_facturalo_pro=bool(data.get("acepta_facturalo_pro")),
         documentos_enviados=docs_declarados,
     )
     db.add(post)
