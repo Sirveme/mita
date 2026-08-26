@@ -1,0 +1,48 @@
+{% extends "base_pwa.html" %}
+{% block title %}Postulación enviada - MITA{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root { --m1:#FFCD11; --dark:#0a0a0f; --card:#14141c; --bd:#2a2a3a; --tx:#fff; --tx2:#8b8b9a; --ok:#22c55e; }
+    body { background: var(--dark); color: var(--tx); }
+    .conf-wrap { max-width: 520px; margin: 0 auto; padding: 60px 20px; text-align:center; }
+    .conf-check { width: 90px; height: 90px; border-radius: 50%; background: rgba(34,197,94,.12); display:flex; align-items:center; justify-content:center; margin: 0 auto 24px; }
+    .conf-check i { font-size: 48px; color: var(--ok); }
+    .conf-wrap h1 { font-size: 24px; margin-bottom: 12px; }
+    .conf-wrap p { color: var(--tx2); font-size: 15px; line-height: 1.6; margin-bottom: 8px; }
+    .codigo-box { background: var(--card); border: 1px dashed var(--m1); border-radius: 12px; padding: 20px; margin: 24px 0; }
+    .codigo-box .lbl { color: var(--tx2); font-size: 13px; }
+    .codigo-box .cod { color: var(--m1); font-size: 26px; font-weight: 800; letter-spacing: 1px; margin-top: 6px; }
+    .conf-note { background: var(--card); border:1px solid var(--bd); border-radius:12px; padding:16px; font-size:14px; color:var(--tx2); margin-bottom:24px; }
+    .conf-note b { color: var(--tx); }
+    .btn-home { display:inline-block; padding: 13px 24px; background: var(--m1); color:#000; border-radius:10px; font-weight:700; text-decoration:none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="conf-wrap">
+    <div class="conf-check"><i class="fas fa-check"></i></div>
+    <h1>¡Gracias por postular!</h1>
+    <p>Recibimos tu solicitud correctamente.</p>
+
+    <div class="codigo-box">
+        <div class="lbl">Tu código de postulación</div>
+        <div class="cod" id="codigo">POST-XXXXXX-XXXX</div>
+    </div>
+
+    <div class="conf-note">
+        Revisaremos tu solicitud en las próximas <b>48 horas</b>.<br>
+        Te notificaremos al correo <b id="email">tu correo</b>.
+    </div>
+
+    <a href="/" class="btn-home">Volver al inicio</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('codigo').textContent = sessionStorage.getItem('mita_post_codigo') || 'POST-—';
+    const email = sessionStorage.getItem('mita_post_email');
+    if (email) document.getElementById('email').textContent = email;
+</script>
+{% endblock %}

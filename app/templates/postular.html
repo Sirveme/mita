@@ -1,0 +1,408 @@
+{% extends "base_pwa.html" %}
+{% block title %}Postula como técnico - MITA{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root { --m1: #FFCD11; --dark: #0a0a0f; --card: #14141c; --card2:#1b1b26; --bd: #2a2a3a; --tx:#fff; --tx2:#8b8b9a; --ok:#22c55e; --err:#ef4444; }
+    body { background: var(--dark); color: var(--tx); }
+    .post-wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 80px; }
+    .post-head { text-align:center; margin: 8px 0 24px; }
+    .post-head .logo { color: var(--m1); font-weight: 800; font-size: 26px; letter-spacing:1px; }
+    .post-head h1 { font-size: 22px; margin-top: 8px; }
+    .post-head p { color: var(--tx2); font-size: 14px; margin-top: 6px; }
+    .card { background: var(--card); border: 1px solid var(--bd); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+    .card h2 { font-size: 16px; margin-bottom: 4px; display:flex; align-items:center; gap:10px; }
+    .card h2 .num { width: 26px; height: 26px; border-radius: 50%; background: var(--m1); color:#000; font-size: 13px; display:inline-flex; align-items:center; justify-content:center; font-weight:700; }
+    .card .hint { color: var(--tx2); font-size: 13px; margin: 2px 0 16px 36px; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 14px; }
+    .fg { display:flex; flex-direction:column; gap:6px; }
+    .fg label { font-size: 13px; color: var(--tx2); }
+    .fg label .req { color: var(--m1); }
+    .fg input, .fg select, .fg textarea { padding: 11px 12px; background: var(--card2); border:1px solid var(--bd); border-radius:8px; color:var(--tx); font-size: 15px; }
+    .fg input:focus, .fg select:focus, .fg textarea:focus { outline:none; border-color: var(--m1); }
+    .fg input.invalid { border-color: var(--err); }
+    .fg textarea { resize: vertical; min-height: 70px; }
+    .row-inline { display:flex; gap:10px; align-items:flex-end; }
+    .row-inline .fg { flex:1; }
+    .btn { padding: 12px 18px; border:none; border-radius: 10px; font-weight:700; cursor:pointer; font-size:15px; }
+    .btn-primary { background: var(--m1); color:#000; }
+    .btn-ghost { background: transparent; color: var(--tx); border:1px solid var(--bd); }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .msg { font-size: 13px; margin-top: 8px; padding: 10px 12px; border-radius: 8px; display:none; }
+    .msg.show { display:block; }
+    .msg.ok { background: rgba(34,197,94,.12); color: var(--ok); }
+    .msg.err { background: rgba(239,68,68,.12); color: var(--err); }
+    #form-secciones { display:none; }
+    .esp-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
+    .chk-card { display:flex; align-items:center; gap:12px; padding:14px; background:var(--card2); border:2px solid var(--bd); border-radius:10px; cursor:pointer; }
+    .chk-card input { width:18px; height:18px; accent-color: var(--m1); }
+    .chk-card.sel { border-color: var(--m1); background: rgba(255,205,17,.06); }
+    .emp-item { border:1px dashed var(--bd); border-radius:10px; padding:14px; margin-bottom:12px; }
+    .doc-item { display:flex; flex-direction:column; gap:8px; padding:14px; background:var(--card2); border:1px solid var(--bd); border-radius:10px; margin-bottom:12px; }
+    .doc-item .doc-top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .doc-item .doc-name { font-weight:600; font-size:14px; } .doc-item .doc-desc { color:var(--tx2); font-size:12px; }
+    .doc-item .badge-req { font-size:11px; color:var(--m1); border:1px solid var(--m1); border-radius:20px; padding:2px 8px; }
+    .doc-item .file-name { font-size:12px; color:var(--ok); }
+    .terminos { display:flex; gap:10px; align-items:flex-start; font-size:14px; color: var(--tx2); }
+    .terminos a { color: var(--m1); }
+    .sol-toggle { display:flex; gap:10px; align-items:center; margin-bottom:14px; }
+    .submit-bar { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--dark) 30%); padding-top:20px; }
+    .loader { display:none; width:18px; height:18px; border:2px solid rgba(0,0,0,.3); border-top-color:#000; border-radius:50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="post-wrap">
+    <div class="post-head">
+        <div class="logo">MITA</div>
+        <h1>Únete como técnico</h1>
+        <p>Trabaja de forma independiente y recibe solicitudes de servicio cerca de ti.</p>
+    </div>
+
+    <!-- Sección 1: Validación -->
+    <div class="card" id="card-validacion">
+        <h2><span class="num">1</span> Validación de identidad</h2>
+        <div class="hint">Ingresa tu DNI para comenzar.</div>
+        <div class="grid">
+            <div class="fg">
+                <label>DNI <span class="req">*</span></label>
+                <input type="text" id="v-dni" maxlength="8" inputmode="numeric" placeholder="12345678">
+            </div>
+        </div>
+        <div class="fg" id="v-ruc-wrap" style="display:none; margin-top:14px;">
+            <label>RUC de persona natural <span class="req">*</span></label>
+            <input type="text" id="v-ruc" maxlength="11" inputmode="numeric" placeholder="10 + tu DNI + dígito">
+        </div>
+        <div style="margin-top:16px; display:flex; gap:10px;">
+            <button class="btn btn-primary" id="btn-validar" onclick="validar()">
+                <span id="btn-validar-txt">Validar y continuar</span>
+                <span class="loader" id="btn-validar-loader"></span>
+            </button>
+        </div>
+        <div class="msg" id="v-msg"></div>
+    </div>
+
+    <!-- Secciones (ocultas hasta validar) -->
+    <div id="form-secciones">
+        <!-- 2. Datos personales -->
+        <div class="card">
+            <h2><span class="num">2</span> Datos personales</h2>
+            <div class="grid">
+                <div class="fg"><label>Nombres <span class="req">*</span></label><input id="nombres" type="text"></div>
+                <div class="fg"><label>Apellido paterno</label><input id="apellido_paterno" type="text"></div>
+                <div class="fg"><label>Apellido materno</label><input id="apellido_materno" type="text"></div>
+                <div class="fg"><label>Fecha de nacimiento</label><input id="fecha_nacimiento" type="date"></div>
+                <div class="fg"><label>Sexo</label><select id="sexo"><option value="">-</option><option value="M">Masculino</option><option value="F">Femenino</option></select></div>
+            </div>
+        </div>
+
+        <!-- 3. Contacto -->
+        <div class="card">
+            <h2><span class="num">3</span> Contacto</h2>
+            <div class="grid">
+                <div class="fg"><label>Celular principal <span class="req">*</span></label><input id="celular_1" type="tel" inputmode="numeric" placeholder="999 999 999"></div>
+                <div class="fg"><label>Celular secundario</label><input id="celular_2" type="tel" inputmode="numeric"></div>
+                <div class="fg"><label>Email <span class="req">*</span></label><input id="email" type="email" placeholder="tucorreo@gmail.com"></div>
+            </div>
+        </div>
+
+        <!-- 4. Ubicación -->
+        <div class="card">
+            <h2><span class="num">4</span> Ubicación</h2>
+            <div class="grid">
+                <div class="fg"><label>Departamento</label><input id="departamento" type="text" value="Lima"></div>
+                <div class="fg"><label>Provincia</label><input id="provincia" type="text" value="Lima"></div>
+                <div class="fg"><label>Distrito</label><input id="distrito" type="text" list="distritos-list"><datalist id="distritos-list"></datalist></div>
+            </div>
+            <div class="fg" style="margin-top:14px;"><label>Dirección</label><input id="direccion" type="text" placeholder="Av. / Calle, número"></div>
+            <div class="fg" style="margin-top:14px;"><label>Referencia</label><input id="referencia" type="text"></div>
+        </div>
+
+        <!-- 5. Especialidades -->
+        <div class="card">
+            <h2><span class="num">5</span> Especialidades</h2>
+            <div class="hint">Selecciona al menos una.</div>
+            <div class="esp-grid" id="esp-grid"></div>
+        </div>
+
+        <!-- 6. Experiencia -->
+        <div class="card">
+            <h2><span class="num">6</span> Experiencia</h2>
+            <div class="fg" style="max-width:220px; margin-bottom:14px;"><label>Años de experiencia</label><input id="anios_experiencia" type="number" min="0" max="60" value="0"></div>
+            <div id="empleos"></div>
+            <button class="btn btn-ghost" type="button" onclick="agregarEmpleo()"><i class="fas fa-plus"></i> Agregar empleo</button>
+        </div>
+
+        <!-- 7. Formación -->
+        <div class="card">
+            <h2><span class="num">7</span> Formación</h2>
+            <div class="grid">
+                <div class="fg"><label>Nivel educativo</label><select id="nivel_educativo"><option value="">-</option><option>Secundaria</option><option>Técnico</option><option>Universitario</option><option>Otro</option></select></div>
+                <div class="fg"><label>Institución</label><input id="institucion" type="text"></div>
+            </div>
+            <div class="fg" style="margin-top:14px;"><label>Certificaciones (texto libre)</label><textarea id="certificaciones" placeholder="Cursos, diplomas, certificaciones..."></textarea></div>
+        </div>
+
+        <!-- 8. Pago -->
+        <div class="card">
+            <h2><span class="num">8</span> Datos de pago <span style="font-size:12px;color:var(--m1);">(obligatorio)</span></h2>
+            <div class="hint">Necesarios para pagarte por tus servicios.</div>
+            <div class="grid">
+                <div class="fg"><label>Banco <span class="req">*</span></label><input id="banco" type="text"></div>
+                <div class="fg"><label>Número de cuenta <span class="req">*</span></label><input id="numero_cuenta" type="text"></div>
+                <div class="fg"><label>CCI <span class="req">*</span></label><input id="cci" type="text"></div>
+                <div class="fg"><label>Yape <span class="req">*</span></label><input id="yape" type="tel" inputmode="numeric"></div>
+                <div class="fg"><label>Plin <span class="req">*</span></label><input id="plin" type="tel" inputmode="numeric"></div>
+            </div>
+        </div>
+
+        <!-- 9. SOL -->
+        <div class="card">
+            <h2><span class="num">9</span> Credenciales SOL <span style="font-size:12px;color:var(--tx2);">(opcional)</span></h2>
+            <div class="sol-toggle">
+                <input type="checkbox" id="tiene-sol" onchange="toggleSol()" style="width:18px;height:18px;accent-color:var(--m1);">
+                <label for="tiene-sol">Tengo cuenta para emisión de recibos (Facturalo.pro / SOL)</label>
+            </div>
+            <div id="sol-fields" style="display:none;">
+                <div class="grid">
+                    <div class="fg"><label>Usuario SOL</label><input id="sol_usuario" type="text"></div>
+                    <div class="fg"><label>Clave SOL</label><input id="sol_clave" type="password"></div>
+                </div>
+                <div class="terminos" style="margin-top:12px;">
+                    <input type="checkbox" id="emision_automatica_rxh" style="width:18px;height:18px;accent-color:var(--m1);">
+                    <label for="emision_automatica_rxh">Autorizo la emisión automática de mis Recibos por Honorarios</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- 10. Documentos -->
+        <div class="card">
+            <h2><span class="num">10</span> Documentos</h2>
+            <div class="hint">Se enviarán de forma segura a nuestro equipo. No se guardan en la app.</div>
+            <div id="docs-list"></div>
+        </div>
+
+        <!-- 11. Términos -->
+        <div class="card">
+            <div class="terminos">
+                <input type="checkbox" id="acepta" style="width:18px;height:18px;accent-color:var(--m1);">
+                <label for="acepta">Acepto los <a href="/terminos" target="_blank">Términos y Condiciones</a> y autorizo el tratamiento de mis datos para el proceso de selección.</label>
+            </div>
+        </div>
+
+        <div class="submit-bar">
+            <button class="btn btn-primary" id="btn-enviar" onclick="enviar()" style="width:100%; display:flex; align-items:center; justify-content:center; gap:10px;">
+                <span id="btn-enviar-txt">Enviar postulación</span>
+                <span class="loader" id="btn-enviar-loader"></span>
+            </button>
+            <div class="msg" id="enviar-msg"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ESPECIALIDADES = [
+    { v: 'ELECTRICIDAD', label: 'Electricidad', icon: 'fa-bolt' },
+    { v: 'GASFITERIA', label: 'Gasfitería', icon: 'fa-faucet' },
+    { v: 'ELECTRODOMESTICOS', label: 'Electrodomésticos', icon: 'fa-tv' },
+    { v: 'MUEBLES', label: 'Muebles', icon: 'fa-couch' },
+];
+let dniValidado = null;
+let rucValidado = null;
+let tiposDocumento = [];
+
+function showMsg(id, texto, tipo) {
+    const el = document.getElementById(id);
+    el.textContent = texto; el.className = 'msg show ' + (tipo || 'err');
+}
+function hideMsg(id) { document.getElementById(id).className = 'msg'; }
+function loading(btnTxt, loaderId, on) {
+    document.getElementById(loaderId).style.display = on ? 'inline-block' : 'none';
+    document.getElementById(btnTxt).style.opacity = on ? .6 : 1;
+}
+
+async function validar() {
+    const dni = document.getElementById('v-dni').value.trim();
+    if (dni.length !== 8 || !/^\d+$/.test(dni)) { showMsg('v-msg', 'El DNI debe tener 8 dígitos.'); return; }
+    const rucWrap = document.getElementById('v-ruc-wrap');
+    const btn = document.getElementById('btn-validar'); btn.disabled = true;
+    loading('btn-validar-txt', 'btn-validar-loader', true);
+
+    // Si ya se pidió RUC, validar RUC
+    if (rucWrap.style.display !== 'none') {
+        const ruc = document.getElementById('v-ruc').value.trim();
+        try {
+            const r = await fetch('/api/v1/postulacion/validar-ruc', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ dni, ruc }) });
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.detail || 'Error');
+            if (!d.valido) { showMsg('v-msg', d.mensaje); return; }
+            rucValidado = ruc; dniValidado = dni;
+            abrirFormulario();
+        } catch (e) { showMsg('v-msg', e.message); }
+        finally { btn.disabled = false; loading('btn-validar-txt','btn-validar-loader',false); }
+        return;
+    }
+
+    // Primera validación por DNI
+    try {
+        const r = await fetch('/api/v1/postulacion/validar-dni', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ dni }) });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || 'Error');
+        if (!d.disponible) { showMsg('v-msg', d.mensaje); return; }
+        dniValidado = dni;
+        if (d.encontrado) {
+            document.getElementById('nombres').value = d.nombres || '';
+            document.getElementById('apellido_paterno').value = d.apellido_paterno || '';
+            document.getElementById('apellido_materno').value = d.apellido_materno || '';
+            abrirFormulario();
+        } else {
+            // Pedir RUC
+            rucWrap.style.display = 'flex';
+            showMsg('v-msg', d.mensaje, 'ok');
+            document.getElementById('btn-validar-txt').textContent = 'Validar RUC y continuar';
+        }
+    } catch (e) { showMsg('v-msg', e.message); }
+    finally { btn.disabled = false; loading('btn-validar-txt','btn-validar-loader',false); }
+}
+
+function abrirFormulario() {
+    hideMsg('v-msg');
+    document.getElementById('v-dni').disabled = true;
+    document.getElementById('v-ruc').disabled = true;
+    document.getElementById('btn-validar').disabled = true;
+    document.getElementById('form-secciones').style.display = 'block';
+    document.getElementById('form-secciones').scrollIntoView({ behavior: 'smooth' });
+    cargarDistritos();
+    cargarDocumentos();
+}
+
+// Especialidades
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('esp-grid').innerHTML = ESPECIALIDADES.map(e => `
+        <label class="chk-card" data-esp="${e.v}">
+            <input type="checkbox" value="${e.v}" onchange="this.closest('.chk-card').classList.toggle('sel', this.checked)">
+            <span><i class="fas ${e.icon}" style="color:var(--m1);margin-right:8px;"></i>${e.label}</span>
+        </label>`).join('');
+    agregarEmpleo();
+});
+
+function toggleSol() {
+    document.getElementById('sol-fields').style.display = document.getElementById('tiene-sol').checked ? 'block' : 'none';
+}
+
+let empleoCount = 0;
+function agregarEmpleo() {
+    if (empleoCount >= 3) return;
+    empleoCount++;
+    const div = document.createElement('div');
+    div.className = 'emp-item';
+    div.innerHTML = `
+        <div class="grid">
+            <div class="fg"><label>Empresa</label><input class="emp-empresa" type="text"></div>
+            <div class="fg"><label>Cargo</label><input class="emp-cargo" type="text"></div>
+            <div class="fg"><label>Periodo</label><input class="emp-periodo" type="text" placeholder="2020 - 2023"></div>
+        </div>`;
+    document.getElementById('empleos').appendChild(div);
+}
+
+async function cargarDistritos() {
+    try {
+        const r = await fetch('/api/v1/admin/distritos');
+        if (!r.ok) return;
+        const items = (await r.json()).items || [];
+        document.getElementById('distritos-list').innerHTML = items.map(d => `<option value="${d.nombre}">`).join('');
+    } catch (e) {}
+}
+
+async function cargarDocumentos() {
+    const cont = document.getElementById('docs-list');
+    try {
+        const r = await fetch('/api/v1/postulacion/tipos-documento');
+        tiposDocumento = r.ok ? await r.json() : [];
+    } catch (e) { tiposDocumento = []; }
+    if (!tiposDocumento.length) {
+        tiposDocumento = [
+            { codigo:'dni_anverso', nombre:'DNI (anverso)', descripcion:'', obligatorio:true },
+            { codigo:'dni_reverso', nombre:'DNI (reverso)', descripcion:'', obligatorio:true },
+        ];
+    }
+    cont.innerHTML = tiposDocumento.map(t => `
+        <div class="doc-item">
+            <div class="doc-top">
+                <div><div class="doc-name">${t.nombre}</div>${t.descripcion ? `<div class="doc-desc">${t.descripcion}</div>` : ''}</div>
+                ${t.obligatorio ? '<span class="badge-req">Obligatorio</span>' : ''}
+            </div>
+            <input type="file" data-tipo="${t.codigo}" accept="image/*,.pdf" onchange="marcarArchivo(this)">
+            <div class="file-name" id="fn-${t.codigo}"></div>
+        </div>`).join('');
+}
+function marcarArchivo(input) {
+    const f = input.files[0];
+    document.getElementById('fn-' + input.dataset.tipo).textContent = f ? '✓ ' + f.name : '';
+}
+
+function recogerExperiencia() {
+    return Array.from(document.querySelectorAll('.emp-item')).map(el => ({
+        empresa: el.querySelector('.emp-empresa').value.trim(),
+        cargo: el.querySelector('.emp-cargo').value.trim(),
+        periodo: el.querySelector('.emp-periodo').value.trim(),
+    })).filter(e => e.empresa || e.cargo);
+}
+
+async function enviar() {
+    hideMsg('enviar-msg');
+    const especialidades = Array.from(document.querySelectorAll('#esp-grid input:checked')).map(i => i.value);
+    if (!especialidades.length) { showMsg('enviar-msg', 'Selecciona al menos una especialidad.'); return; }
+
+    const req = ['nombres','celular_1','email','banco','numero_cuenta','cci','yape','plin'];
+    for (const id of req) {
+        const el = document.getElementById(id);
+        if (!el.value.trim()) { el.classList.add('invalid'); showMsg('enviar-msg', 'Completa los campos obligatorios (incluyendo datos de pago).'); el.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+        el.classList.remove('invalid');
+    }
+    if (!document.getElementById('acepta').checked) { showMsg('enviar-msg', 'Debes aceptar los términos.'); return; }
+
+    const payload = {
+        dni: dniValidado, ruc: rucValidado,
+        nombres: val('nombres'), apellido_paterno: val('apellido_paterno'), apellido_materno: val('apellido_materno'),
+        fecha_nacimiento: val('fecha_nacimiento') || null, sexo: val('sexo') || null,
+        celular_1: val('celular_1'), celular_2: val('celular_2'), email: val('email'),
+        departamento: val('departamento'), provincia: val('provincia'), distrito: val('distrito'),
+        direccion: val('direccion'), referencia: val('referencia'),
+        especialidades,
+        anios_experiencia: parseInt(val('anios_experiencia')) || 0,
+        experiencia_laboral: recogerExperiencia(),
+        nivel_educativo: val('nivel_educativo'), institucion: val('institucion'), certificaciones: val('certificaciones'),
+        banco: val('banco'), numero_cuenta: val('numero_cuenta'), cci: val('cci'), yape: val('yape'), plin: val('plin'),
+        sol_usuario: val('sol_usuario'), sol_clave: val('sol_clave'),
+        emision_automatica_rxh: document.getElementById('emision_automatica_rxh').checked,
+    };
+
+    // Archivos
+    const fd = new FormData();
+    fd.append('payload', JSON.stringify(payload));
+    const metas = [];
+    document.querySelectorAll('#docs-list input[type=file]').forEach(inp => {
+        if (inp.files[0]) { fd.append('archivos', inp.files[0]); metas.push({ tipo: inp.dataset.tipo }); }
+    });
+    fd.append('documentos_meta', JSON.stringify(metas));
+
+    const btn = document.getElementById('btn-enviar'); btn.disabled = true;
+    loading('btn-enviar-txt','btn-enviar-loader', true);
+    try {
+        const r = await fetch('/api/v1/postulacion/enviar', { method:'POST', body: fd });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || 'No se pudo enviar la postulación.');
+        sessionStorage.setItem('mita_post_codigo', d.codigo);
+        sessionStorage.setItem('mita_post_email', d.email);
+        window.location.href = '/postular/confirmacion';
+    } catch (e) { showMsg('enviar-msg', e.message); btn.disabled = false; loading('btn-enviar-txt','btn-enviar-loader', false); }
+}
+
+function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+window.validar = validar; window.enviar = enviar; window.agregarEmpleo = agregarEmpleo; window.toggleSol = toggleSol; window.marcarArchivo = marcarArchivo;
+</script>
+{% endblock %}
