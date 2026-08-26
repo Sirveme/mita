@@ -64,17 +64,24 @@
     <!-- Sección 1: Validación -->
     <div class="card" id="card-validacion">
         <h2><span class="num">1</span> Validación de identidad</h2>
-        <div class="hint">Ingresa tu DNI para comenzar.</div>
+        <div class="hint">Ingresa tu DNI y tu RUC de persona natural.</div>
         <div class="grid">
             <div class="fg">
-                <label>DNI <span class="req">*</span></label>
+                <label>DNI <span class="req">*</span>
+                    <a href="javascript:void(0)" id="link-cambiar-dni" onclick="cambiarDNI()" style="display:none; margin-left:10px; color:var(--m1); font-size:12px; font-weight:400;">¿No es tu DNI? Cambiar</a>
+                </label>
                 <input type="text" id="v-dni" maxlength="8" inputmode="numeric" placeholder="12345678" oninput="onDniInput()">
             </div>
         </div>
+
+        <!-- RUC: se habilita tras validar el DNI (obligatorio para todos) -->
         <div class="fg" id="v-ruc-wrap" style="display:none; margin-top:14px;">
             <label>RUC de persona natural <span class="req">*</span></label>
-            <input type="text" id="v-ruc" maxlength="11" inputmode="numeric" placeholder="10 + tu DNI + dígito" oninput="onRucInput()">
+            <input type="text" id="v-ruc" maxlength="11" inputmode="numeric" placeholder="10 + tu DNI + dígito verificador" oninput="onRucInput()">
+            <small style="color:var(--tx2); font-size:12px;">Formato: 10 + tu DNI + 1 dígito (ej: DNI 05393776 → RUC 10053937760).</small>
+            <div id="ruc-sunat" style="display:none; margin-top:8px; padding:10px 12px; background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.35); border-radius:8px; font-size:13px; color:var(--ok);"></div>
         </div>
+
         <div style="margin-top:16px; display:flex; gap:10px; align-items:center;">
             <button class="btn btn-primary" id="btn-validar" onclick="validarManual()">
                 <span id="btn-validar-txt">Validar y continuar</span>
@@ -265,6 +272,11 @@ function validarManual() {
     if (rucVisible) validarRUC(); else validarDNI();
 }
 
+// Anti-fraude: RUC de persona natural = 10 + DNI(8) + dígito verificador
+function rucCoincideDni(ruc, dni) {
+    return ruc.length === 11 && ruc.substring(2, 10) === dni;
+}
+
 async function validarDNI() {
     const dni = document.getElementById('v-dni').value.trim();
     if (dni.length !== 8 || !/^\d+$/.test(dni)) { showMsg('v-msg', 'El DNI debe tener 8 dígitos.'); return; }
@@ -282,13 +294,18 @@ async function validarDNI() {
             document.getElementById('nombres').value = d.nombres || '';
             document.getElementById('apellido_paterno').value = d.apellido_paterno || '';
             document.getElementById('apellido_materno').value = d.apellido_materno || '';
-            abrirFormulario();
-        } else {
-            document.getElementById('v-ruc-wrap').style.display = 'flex';
-            showMsg('v-msg', d.mensaje, 'ok');
-            document.getElementById('btn-validar-txt').textContent = 'Validar RUC y continuar';
-            document.getElementById('v-ruc').focus();
         }
+        // Bloquear DNI, ofrecer cambiarlo y habilitar SIEMPRE la sección de RUC (obligatorio)
+        bloquearDNI();
+        const wrap = document.getElementById('v-ruc-wrap');
+        wrap.style.display = 'block';
+        document.getElementById('btn-validar-txt').textContent = 'Validar RUC y continuar';
+        const nombre = [d.apellido_paterno, d.apellido_materno, d.nombres].filter(Boolean).join(' ');
+        showMsg('v-msg', d.encontrado ? `DNI validado: ${nombre}. Ahora ingresa tu RUC.` : 'Ahora ingresa tu RUC de persona natural.', 'ok');
+        // Prefijar el RUC con "10" + DNI para facilitar
+        const rucEl = document.getElementById('v-ruc');
+        if (!rucEl.value) rucEl.value = '10' + dni;
+        rucEl.focus();
     } catch (e) { console.error('[postular] validar-dni error:', e); showMsg('v-msg', e.message); }
     finally { setValidando(false); }
 }
@@ -297,6 +314,8 @@ async function validarRUC() {
     const dni = document.getElementById('v-dni').value.trim();
     const ruc = document.getElementById('v-ruc').value.trim();
     if (ruc.length !== 11 || !/^\d+$/.test(ruc)) { showMsg('v-msg', 'El RUC debe tener 11 dígitos.'); return; }
+    // Anti-fraude en el front antes de llamar a la API
+    if (!rucCoincideDni(ruc, dni)) { showMsg('v-msg', 'El RUC no corresponde al DNI ingresado.'); return; }
     setValidando(true);
     try {
         console.log('[postular] validar-ruc →', { dni, ruc });
@@ -307,23 +326,49 @@ async function validarRUC() {
         if (!r.ok) throw new Error(d.detail || 'Error del servidor');
         if (!d.valido) { showMsg('v-msg', d.mensaje); return; }
         rucValidado = ruc; dniValidado = dni;
-        // Si SUNAT respondió, pre-llenar nombres/apellidos
+        // Mostrar razón social de SUNAT y (si vino) pre-llenar nombres/apellidos
+        const box = document.getElementById('ruc-sunat');
         if (d.sunat_disponible) {
             if (d.nombres) document.getElementById('nombres').value = d.nombres;
             if (d.apellido_paterno) document.getElementById('apellido_paterno').value = d.apellido_paterno;
             if (d.apellido_materno) document.getElementById('apellido_materno').value = d.apellido_materno;
-            showMsg('v-msg', d.mensaje, 'ok');
+            box.innerHTML = `<i class="fas fa-circle-check"></i> ${d.razon_social || d.mensaje}`;
+            box.style.display = 'block';
         } else {
-            showMsg('v-msg', d.mensaje, 'ok');   // SUNAT no disponible: mensaje claro, se completa manual
+            box.style.display = 'none';
         }
-        setTimeout(abrirFormulario, 400);   // deja ver el mensaje un instante
+        showMsg('v-msg', d.mensaje, 'ok');
+        setTimeout(abrirFormulario, 500);   // deja ver la razón social un instante
     } catch (e) { console.error('[postular] validar-ruc error:', e); showMsg('v-msg', e.message); }
     finally { setValidando(false); }
 }
 
+function bloquearDNI() {
+    document.getElementById('v-dni').disabled = true;
+    document.getElementById('link-cambiar-dni').style.display = 'inline';
+}
+
+// "¿No es tu DNI? Cambiar" — reinicia el paso 1 completo
+function cambiarDNI() {
+    dniValidado = null; rucValidado = null; dniAutoHecho = false;
+    const dniEl = document.getElementById('v-dni');
+    dniEl.disabled = false; dniEl.value = '';
+    document.getElementById('link-cambiar-dni').style.display = 'none';
+    // Limpiar RUC y datos autocompletados
+    const rucEl = document.getElementById('v-ruc'); rucEl.disabled = false; rucEl.value = '';
+    document.getElementById('v-ruc-wrap').style.display = 'none';
+    document.getElementById('ruc-sunat').style.display = 'none';
+    ['nombres','apellido_paterno','apellido_materno'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    // Ocultar el resto del formulario y reiniciar el botón
+    document.getElementById('form-secciones').style.display = 'none';
+    document.getElementById('btn-validar').disabled = false;
+    document.getElementById('btn-validar-txt').textContent = 'Validar y continuar';
+    hideMsg('v-msg');
+    dniEl.focus();
+}
+
 function abrirFormulario() {
     hideMsg('v-msg');
-    document.getElementById('v-dni').disabled = true;
     document.getElementById('v-ruc').disabled = true;
     document.getElementById('btn-validar').disabled = true;
     document.getElementById('form-secciones').style.display = 'block';
@@ -457,7 +502,7 @@ async function enviar() {
 }
 
 function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
-window.onDniInput = onDniInput; window.onRucInput = onRucInput; window.validarManual = validarManual; window.validarDNI = validarDNI; window.validarRUC = validarRUC;
+window.onDniInput = onDniInput; window.onRucInput = onRucInput; window.validarManual = validarManual; window.validarDNI = validarDNI; window.validarRUC = validarRUC; window.cambiarDNI = cambiarDNI;
 window.enviar = enviar; window.agregarEmpleo = agregarEmpleo; window.toggleSol = toggleSol; window.marcarArchivo = marcarArchivo;
 </script>
 {% endblock %}
