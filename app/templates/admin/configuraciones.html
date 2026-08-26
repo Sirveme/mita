@@ -77,6 +77,16 @@
         </div>
     </div>
 
+    <!-- Comunicación y Privacidad -->
+    <div class="config-section">
+        <h2><i class="fas fa-shield-halved"></i> Comunicación y Privacidad</h2>
+        <div class="config-grid">
+            <div class="config-item"><label>Mostrar teléfono del técnico al cliente</label>
+                <div class="config-toggle-group"><label class="toggle-switch"><input type="checkbox" id="mostrar_telefono_tecnico"><span class="toggle-slider"></span></label><span class="toggle-label" id="label_telefono_tecnico">Desactivado</span></div>
+                <small>Si está desactivado, el cliente nunca ve el número directo del técnico (solo chat)</small></div>
+        </div>
+    </div>
+
     <div class="config-actions">
         <button class="btn btn-secondary" onclick="cargarConfiguraciones()"><i class="fas fa-undo"></i> Descartar cambios</button>
         <button class="btn btn-primary" onclick="guardarConfiguraciones()"><i class="fas fa-save"></i> Guardar configuraciones</button>
@@ -93,6 +103,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('habilitar_prioridad_rating').addEventListener('change', function () {
         document.getElementById('label_prioridad_rating').textContent = this.checked ? 'Activado' : 'Desactivado';
         document.getElementById('config_rating_minimo').style.display = this.checked ? 'block' : 'none';
+    });
+    document.getElementById('mostrar_telefono_tecnico').addEventListener('change', function () {
+        document.getElementById('label_telefono_tecnico').textContent = this.checked ? 'Activado' : 'Desactivado';
     });
 });
 
@@ -117,7 +130,7 @@ async function cargarConfiguraciones() {
 }
 
 async function guardarConfiguraciones() {
-    const campos = ['tiempo_espera_asignacion','tiempo_respuesta_tecnico','radio_busqueda_inicial_km','radio_busqueda_maximo_km','tecnicos_por_alerta','habilitar_prioridad_rating','rating_minimo_prioridad','tarifa_visita_default','porcentaje_mita','porcentaje_cancelacion'];
+    const campos = ['tiempo_espera_asignacion','tiempo_respuesta_tecnico','radio_busqueda_inicial_km','radio_busqueda_maximo_km','tecnicos_por_alerta','habilitar_prioridad_rating','rating_minimo_prioridad','tarifa_visita_default','porcentaje_mita','porcentaje_cancelacion','mostrar_telefono_tecnico'];
     const datos = {};
     campos.forEach(clave => {
         const input = document.getElementById(clave);
