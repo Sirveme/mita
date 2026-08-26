@@ -46,6 +46,8 @@ from app.routes.asignacion_api import router as asignacion_api_router
 
 # zMita-14: API del cliente (pendientes de calificar)
 from app.routes.cliente_api import router as cliente_api_router
+from app.routes.postulacion import router as postulacion_router
+from app.routes.admin_postulantes import router as admin_postulantes_router
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -167,6 +169,8 @@ app.include_router(billeteras_api_router)
 app.include_router(calificaciones_api_router)
 app.include_router(asignacion_api_router)
 app.include_router(cliente_api_router)
+app.include_router(postulacion_router)
+app.include_router(admin_postulantes_router)
 
 # Cuando estén listos:
 # from app.routes.clientes import router as clientes_router
