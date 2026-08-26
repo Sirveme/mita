@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MITA — Demo Asistente por Voz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #fff;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            background: linear-gradient(90deg, #FFCD11, #f5b800);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        .chat-container {
+            width: 100%;
+            max-width: 500px;
+            background: #0f0f1a;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .chat-header {
+            background: linear-gradient(90deg, #FFCD11, #f5b800);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .chat-header .avatar {
+            width: 45px;
+            height: 45px;
+            background: #1a1a2e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .chat-header .info h3 {
+            color: #1a1a2e;
+            font-size: 1.1rem;
+        }
+        
+        .chat-header .info span {
+            color: #333;
+            font-size: 0.8rem;
+        }
+        
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.bot {
+            background: #2a2a3e;
+            color: #fff;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .message.user {
+            background: linear-gradient(90deg, #FFCD11, #f5b800);
+            color: #1a1a2e;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .message.typing {
+            background: #2a2a3e;
+            padding: 15px 20px;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #FFCD11;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dots span:nth-child(1) { animation-delay: 0s; }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1.2); opacity: 1; }
+        }
+        
+        .input-area {
+            padding: 15px 20px;
+            background: #1a1a2e;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border-top: 1px solid #2a2a3e;
+        }
+        
+        .input-area input {
+            flex: 1;
+            background: #2a2a3e;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 25px;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+        }
+        
+        .input-area input::placeholder {
+            color: #666;
+        }
+        
+        .btn-voice {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #FFCD11, #f5b800);
+            color: #1a1a2e;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-voice:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(255, 205, 17, 0.4);
+        }
+        
+        .btn-voice.recording {
+            background: #ff4444;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 15px rgba(255, 68, 68, 0); }
+        }
+        
+        .btn-send {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: #2a2a3e;
+            color: #FFCD11;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-send:hover {
+            background: #3a3a4e;
+        }
+        
+        .btn-speaker {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-speaker.active {
+            color: #FFCD11;
+        }
+        
+        .status-bar {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .status-bar.listening {
+            color: #ff4444;
+        }
+        
+        .status-bar.speaking {
+            color: #FFCD11;
+        }
+        
+        .note {
+            max-width: 500px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 205, 17, 0.1);
+            border: 1px solid rgba(255, 205, 17, 0.3);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+        
+        .note strong {
+            color: #FFCD11;
+        }
+        
+        .feature-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #888;
+        }
+        
+        .toggle-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #FFCD11;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 MITA Asistente</h1>
+        <p>Demo de asistencia por voz para servicios técnicos</p>
+    </div>
+    
+    <div class="feature-toggle">
+        <label class="toggle-item">
+            <input type="checkbox" id="toggleVoiceResponse" checked>
+            <span>🔊 Respuestas por voz</span>
+        </label>
+    </div>
+    
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="avatar">🤖</div>
+            <div class="info">
+                <h3>Asistente MITA</h3>
+                <span>En línea • Servicios técnicos</span>
+            </div>
+        </div>
+        
+        <div class="messages" id="messages">
+            <div class="message bot">
+                ¡Hola! Soy el asistente de MITA. 👋<br><br>
+                Cuéntame, ¿qué problema técnico tienes? Puedes escribir o usar el micrófono 🎤
+            </div>
+        </div>
+        
+        <div class="status-bar" id="statusBar">
+            Listo para ayudarte
+        </div>
+        
+        <div class="input-area">
+            <button class="btn-speaker" id="btnSpeaker" title="Activar/desactivar voz">
+                🔊
+            </button>
+            <input type="text" id="inputMessage" placeholder="Escribe tu problema..." />
+            <button class="btn-voice" id="btnVoice" title="Hablar">
+                🎤
+            </button>
+            <button class="btn-send" id="btnSend" title="Enviar">
+                ➤
+            </button>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>💡 Demo técnica:</strong> Esta demo usa Web Speech API del navegador (gratis). 
+        La versión final usará Whisper (OpenAI) para mayor precisión en español.
+        <br><br>
+        <strong>Prueba decir:</strong> "Mi refrigeradora no enfría" o "Necesito un electricista"
+    </div>
+
+    <script>
+        // ==================== CONFIGURACIÓN ====================
+        const CONOCIMIENTO_MITA = {
+            servicios: ['electricidad', 'gasfitería', 'electrodomésticos', 'muebles'],
+            precios: {
+                visita: 50,
+                diagnostico_virtual: 15
+            },
+            electrodomesticos: ['refrigeradora', 'lavadora', 'microondas', 'licuadora', 'horno', 'cocina', 'congeladora', 'aire acondicionado'],
+            sintomas: {
+                'no enfría': 'Puede ser problema de gas refrigerante, compresor o termostato.',
+                'no enciende': 'Podría ser el cable de alimentación, el fusible interno o la tarjeta electrónica.',
+                'hace ruido': 'Generalmente es el motor, ventilador o alguna pieza suelta.',
+                'gotea': 'Suele ser el drenaje tapado o el empaque de la puerta.',
+                'no lava': 'Puede ser la bomba de agua, el timer o el motor.',
+                'no centrifuga': 'Probablemente el capacitor, la correa o el motor.',
+                'no calienta': 'Resistencia quemada, termostato o tarjeta de control.',
+                'cortocircuito': 'Cables pelados, conexiones flojas o sobrecarga en el circuito.',
+                'sin luz': 'Puede ser el interruptor, el cableado o el breaker.',
+            }
+        };
+        
+        // ==================== ELEMENTOS DOM ====================
+        const messagesEl = document.getElementById('messages');
+        const inputEl = document.getElementById('inputMessage');
+        const btnVoice = document.getElementById('btnVoice');
+        const btnSend = document.getElementById('btnSend');
+        const btnSpeaker = document.getElementById('btnSpeaker');
+        const statusBar = document.getElementById('statusBar');
+        const toggleVoiceResponse = document.getElementById('toggleVoiceResponse');
+        
+        let isRecording = false;
+        let voiceEnabled = true;
+        let recognition = null;
+        let synthesis = window.speechSynthesis;
+        
+        // ==================== SPEECH RECOGNITION ====================
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'es-PE';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            recognition.onstart = () => {
+                isRecording = true;
+                btnVoice.classList.add('recording');
+                btnVoice.textContent = '⏹';
+                statusBar.textContent = '🎤 Escuchando...';
+                statusBar.className = 'status-bar listening';
+            };
+            
+            recognition.onend = () => {
+                isRecording = false;
+                btnVoice.classList.remove('recording');
+                btnVoice.textContent = '🎤';
+                statusBar.textContent = 'Listo para ayudarte';
+                statusBar.className = 'status-bar';
+            };
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                inputEl.value = transcript;
+                sendMessage(transcript);
+            };
+            
+            recognition.onerror = (event) => {
+                console.error('Error de reconocimiento:', event.error);
+                statusBar.textContent = 'Error: ' + event.error;
+                isRecording = false;
+                btnVoice.classList.remove('recording');
+                btnVoice.textContent = '🎤';
+            };
+        }
+        
+        // ==================== TEXT TO SPEECH ====================
+        function speak(text) {
+            if (!voiceEnabled || !toggleVoiceResponse.checked) return;
+            
+            // Cancelar cualquier speech anterior
+            synthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'es-ES';
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            
+            // Buscar voz en español
+            const voices = synthesis.getVoices();
+            const spanishVoice = voices.find(v => v.lang.startsWith('es'));
+            if (spanishVoice) utterance.voice = spanishVoice;
+            
+            utterance.onstart = () => {
+                statusBar.textContent = '🔊 Hablando...';
+                statusBar.className = 'status-bar speaking';
+            };
+            
+            utterance.onend = () => {
+                statusBar.textContent = 'Listo para ayudarte';
+                statusBar.className = 'status-bar';
+            };
+            
+            synthesis.speak(utterance);
+        }
+        
+        // ==================== LÓGICA DEL ASISTENTE ====================
+        function generateResponse(userMessage) {
+            const msg = userMessage.toLowerCase();
+            
+            // Detectar categoría
+            let categoria = null;
+            let aparato = null;
+            let sintoma = null;
+            
+            // Detectar electrodomésticos
+            for (const elec of CONOCIMIENTO_MITA.electrodomesticos) {
+                if (msg.includes(elec)) {
+                    categoria = 'electrodomésticos';
+                    aparato = elec;
+                    break;
+                }
+            }
+            
+            // Detectar electricidad
+            if (msg.includes('electric') || msg.includes('luz') || msg.includes('enchufe') || 
+                msg.includes('cortocircuito') || msg.includes('tomacorriente') || msg.includes('cable')) {
+                categoria = 'electricidad';
+            }
+            
+            // Detectar gasfitería
+            if (msg.includes('agua') || msg.includes('caño') || msg.includes('tuber') || 
+                msg.includes('desagüe') || msg.includes('inodoro') || msg.includes('ducha') ||
+                msg.includes('fuga') || msg.includes('grifo')) {
+                categoria = 'gasfitería';
+            }
+            
+            // Detectar muebles
+            if (msg.includes('mueble') || msg.includes('armario') || msg.includes('estante') ||
+                msg.includes('closet') || msg.includes('repisa')) {
+                categoria = 'muebles';
+            }
+            
+            // Detectar síntomas
+            for (const [sintomaKey, diagnostico] of Object.entries(CONOCIMIENTO_MITA.sintomas)) {
+                if (msg.includes(sintomaKey)) {
+                    sintoma = { texto: sintomaKey, diagnostico };
+                    break;
+                }
+            }
+            
+            // Generar respuesta
+            let respuesta = '';
+            
+            if (msg.includes('hola') || msg.includes('buenos') || msg.includes('buenas')) {
+                respuesta = '¡Hola! 👋 Cuéntame, ¿qué problema técnico tienes en casa?';
+            }
+            else if (msg.includes('precio') || msg.includes('costo') || msg.includes('cuánto')) {
+                respuesta = `Nuestros servicios son:\n\n` +
+                    `📞 Diagnóstico virtual: S/ ${CONOCIMIENTO_MITA.precios.diagnostico_virtual}\n` +
+                    `🏠 Visita a domicilio: S/ ${CONOCIMIENTO_MITA.precios.visita}\n\n` +
+                    `Si pagas diagnóstico virtual y luego necesitas visita, solo pagas S/ 35 adicionales.`;
+            }
+            else if (msg.includes('gracias')) {
+                respuesta = '¡De nada! 😊 Si necesitas ayuda con algo más, aquí estoy.';
+            }
+            else if (categoria && aparato && sintoma) {
+                respuesta = `Entiendo, tu ${aparato} ${sintoma.texto}. 🔍\n\n` +
+                    `${sintoma.diagnostico}\n\n` +
+                    `¿Hace cuánto tiempo tiene este problema? ¿El ${aparato} está conectado y enciende?`;
+            }
+            else if (categoria && aparato) {
+                respuesta = `Entendido, tienes un problema con tu ${aparato}. 🔧\n\n` +
+                    `¿Podrías describirme qué síntomas tiene? Por ejemplo:\n` +
+                    `• ¿No enciende?\n• ¿Hace ruido extraño?\n• ¿No enfría/calienta?\n• ¿Gotea agua?`;
+            }
+            else if (categoria && sintoma) {
+                respuesta = `Problema de ${categoria} detectado: ${sintoma.texto}. 🔍\n\n` +
+                    `${sintoma.diagnostico}\n\n` +
+                    `¿Quieres que te conecte con un técnico para un diagnóstico más detallado?`;
+            }
+            else if (categoria) {
+                respuesta = `Entendido, necesitas ayuda con ${categoria}. 🔧\n\n` +
+                    `¿Puedes describirme el problema con más detalle? ¿Qué es exactamente lo que no funciona?`;
+            }
+            else if (msg.includes('técnico') || msg.includes('ayuda') || msg.includes('necesito')) {
+                respuesta = '¡Claro que sí! Para ayudarte mejor, cuéntame:\n\n' +
+                    '1. ¿Qué tipo de problema es? (electricidad, gasfitería, electrodoméstico, mueble)\n' +
+                    '2. ¿Qué está fallando exactamente?';
+            }
+            else if (msg.includes('visita') || msg.includes('domicilio') || msg.includes('venga')) {
+                respuesta = `¡Perfecto! 🏠 Podemos enviar un técnico a tu domicilio.\n\n` +
+                    `El costo de la visita es S/ ${CONOCIMIENTO_MITA.precios.visita} (incluye diagnóstico).\n\n` +
+                    `¿En qué distrito te encuentras?`;
+            }
+            else {
+                respuesta = 'Hmm, no estoy seguro de haber entendido bien. 🤔\n\n' +
+                    '¿Podrías decirme qué aparato o instalación tiene problemas? Por ejemplo:\n' +
+                    '• "Mi refrigeradora no enfría"\n' +
+                    '• "Tengo una fuga de agua"\n' +
+                    '• "No tengo luz en la sala"';
+            }
+            
+            return respuesta;
+        }
+        
+        // ==================== MENSAJES ====================
+        function addMessage(text, isUser = false) {
+            const div = document.createElement('div');
+            div.className = `message ${isUser ? 'user' : 'bot'}`;
+            div.innerHTML = text.replace(/\n/g, '<br>');
+            messagesEl.appendChild(div);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+        
+        function showTyping() {
+            const div = document.createElement('div');
+            div.className = 'message bot typing';
+            div.id = 'typingIndicator';
+            div.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+            messagesEl.appendChild(div);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+        
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+        
+        function sendMessage(text) {
+            if (!text.trim()) return;
+            
+            addMessage(text, true);
+            inputEl.value = '';
+            
+            showTyping();
+            
+            // Simular delay de "pensando"
+            setTimeout(() => {
+                hideTyping();
+                const response = generateResponse(text);
+                addMessage(response);
+                speak(response.replace(/[🔧🔍👋😊🏠📞🤔]/g, '')); // Quitar emojis para TTS
+            }, 1000 + Math.random() * 1000);
+        }
+        
+        // ==================== EVENT LISTENERS ====================
+        btnVoice.addEventListener('click', () => {
+            if (!recognition) {
+                alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome para mejor experiencia.');
+                return;
+            }
+            
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        });
+        
+        btnSend.addEventListener('click', () => {
+            sendMessage(inputEl.value);
+        });
+        
+        inputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage(inputEl.value);
+            }
+        });
+        
+        btnSpeaker.addEventListener('click', () => {
+            voiceEnabled = !voiceEnabled;
+            btnSpeaker.classList.toggle('active', voiceEnabled);
+            btnSpeaker.textContent = voiceEnabled ? '🔊' : '🔇';
+        });
+        
+        toggleVoiceResponse.addEventListener('change', () => {
+            voiceEnabled = toggleVoiceResponse.checked;
+            btnSpeaker.classList.toggle('active', voiceEnabled);
+        });
+        
+        // Cargar voces
+        if (synthesis) {
+            synthesis.onvoiceschanged = () => {
+                console.log('Voces cargadas:', synthesis.getVoices().length);
+            };
+        }
+        
+        // Inicializar
+        btnSpeaker.classList.add('active');
+    </script>
+</body>
+</html>
