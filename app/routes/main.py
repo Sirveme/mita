@@ -62,6 +62,12 @@ async def postular_form(request: Request):
 async def postular_confirmacion(request: Request):
     return templates.TemplateResponse("postular_confirmacion.html", {"request": request})
 
+# ---- Demo pública del asistente por voz ----
+@router.get("/demo-asistente", response_class=HTMLResponse)
+async def demo_asistente(request: Request):
+    """Demo pública (sin login) del asistente por voz."""
+    return templates.TemplateResponse("demo_asistente.html", {"request": request})
+
 # ========================================
 # ADMIN - PANEL (zMita-4)
 # ========================================
