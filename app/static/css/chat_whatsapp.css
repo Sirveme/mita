@@ -15,6 +15,16 @@
     --wa-text-secondary: #8696a0;
     --wa-accent: #00a884;
     --wa-header: #1f2c33;
+
+    /* ==========================================================
+       COLORES DEL CHAT — AJUSTABLES (revisión con el Sr. Shipper)
+       Cambia SOLO estos 4 valores para re-tematizar el chat.
+       Cada uno alimenta la regla real vía var() más abajo.
+       ========================================================== */
+    --chat-bubble-sent: var(--wa-bg-sent);       /* burbujas enviadas (cliente)   */
+    --chat-bubble-received: var(--wa-bg-received); /* burbujas recibidas (técnico) */
+    --chat-input-bg: var(--wa-bg-input);         /* fondo del campo de texto      */
+    --chat-header-bg: var(--wa-header);          /* fondo del header del chat     */
 }
 
 /* Patrón de fondo tipo WhatsApp */
@@ -191,7 +201,7 @@
 /* Header conversación */
 .conversation-header {
     height: 60px;
-    background: var(--wa-header);
+    background: var(--chat-header-bg);
     display: flex;
     align-items: center;
     padding: 0 16px;
@@ -266,12 +276,12 @@
 }
 
 .wa-message.sent .bubble {
-    background: var(--wa-bg-sent);
+    background: var(--chat-bubble-sent);
     border-top-right-radius: 0;
 }
 
 .wa-message.received .bubble {
-    background: var(--wa-bg-received);
+    background: var(--chat-bubble-received);
     border-top-left-radius: 0;
 }
 
@@ -353,7 +363,7 @@
 
 .conversation-input .input-wrapper {
     flex: 1;
-    background: var(--wa-bg-input);
+    background: var(--chat-input-bg);
     border-radius: 8px;
     padding: 9px 12px;
     display: flex;
