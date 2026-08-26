@@ -86,13 +86,27 @@ class MitaChat {
             const response = await fetch(`/api/v1/chat/conversacion/${this.conversacionId}/mensajes`);
             if (!response.ok) throw new Error('API no disponible');
             const data = await response.json();
+            const msgs = data.mensajes || [];
             container.innerHTML = '';
-            (data.mensajes || []).forEach(msg => this.renderizarMensaje(msg, false));
+            if (!msgs.length) { this.estadoVacioMensajes(); return; }
+            msgs.forEach(msg => this.renderizarMensaje(msg, false));
             this.scrollToBottom();
         } catch (error) {
-            console.log('Usando modo demo:', error.message);
-            this.cargarMensajesDemo();
+            // Producción: NO caer a demo. Mostrar estado vacío elegante, no romperse.
+            console.log('Chat:', error.message);
+            this.estadoVacioMensajes('Aún no hay mensajes en esta conversación.');
         }
+    }
+
+    estadoVacioMensajes(texto) {
+        const container = document.getElementById('chat-messages') || document.getElementById('messagesContainer');
+        if (!container) return;
+        container.innerHTML = `
+            <div class="chat-empty-state">
+                <i class="fas fa-comments"></i>
+                <h3>Sin mensajes todavía</h3>
+                <p>${texto || 'Los mensajes de esta conversación aparecerán aquí.'}</p>
+            </div>`;
     }
 
     cargarMensajesDemo() {
@@ -181,8 +195,16 @@ class MitaChat {
         input.style.height = 'auto';
         input.focus();
 
-        if (!this.demoMode && this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({ type: 'mensaje', contenido: texto, de_nombre: this.userName, tipo_mensaje: 'texto' }));
+        if (!this.demoMode) {
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify({ type: 'mensaje', contenido: texto, de_nombre: this.userName, tipo_mensaje: 'texto' }));
+            } else {
+                // Sin WebSocket: persistir por REST (producción, sin respuestas simuladas)
+                fetch(`/api/v1/chat/conversacion/${this.conversacionId}/mensajes`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ de_tipo: this.userType, de_id: this.userId, de_nombre: this.userName, contenido: texto, tipo_mensaje: 'texto' })
+                }).catch(() => {});
+            }
         } else {
             this.simularRespuestaDemo(texto);
         }
@@ -361,6 +383,10 @@ chatStyles.textContent = `
     .file-bubble .file-info i { font-size: 32px; color: #FFCD11; }
     .file-bubble .file-name { font-weight: 500; }
     .file-bubble .file-size { font-size: 12px; color: #888; }
+    .chat-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 240px; text-align: center; color: #8696a0; padding: 40px 24px; gap: 6px; }
+    .chat-empty-state i { font-size: 48px; opacity: .35; margin-bottom: 10px; }
+    .chat-empty-state h3 { color: #e9edef; font-size: 16px; font-weight: 600; margin: 0; }
+    .chat-empty-state p { font-size: 13px; margin: 0; max-width: 280px; }
 `;
 document.head.appendChild(chatStyles);
 
