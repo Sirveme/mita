@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     # APIs Externas
     RENIEC_API_URL: str = "https://api.apis.net.pe/v2/reniec/dni"
     RENIEC_API_TOKEN: str = "token-desarrollo"
+
+    # API DNI/RUC (misma config que Facturalo.pro / QueVendi.pro) — decolecta.com
+    APIS_NET_PE_TOKEN: str = ""
+    APIS_NET_BASE: str = "https://api.decolecta.com"
+    APIS_NET_REFERER: str = "https://mita.pe"
     
     # Firebase
     FIREBASE_CREDENTIALS_PATH: Optional[str] = None
@@ -67,5 +72,6 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"   # no romper si el .env trae variables aún no declaradas (SMTP, OpenAI, etc.)
 
 settings = Settings()
