@@ -136,11 +136,12 @@ def consultar_ruc(ruc: str) -> dict | None:
 
 
 def ruc_contiene_dni(ruc: str, dni: str) -> bool:
-    """Validación anti-fraude: el RUC de persona natural (10XXXXXXXXX) contiene el DNI."""
+    """Validación anti-fraude: RUC de persona natural = 10 + DNI(8) + dígito verificador.
+    Se valida la posición exacta: ruc[2:10] == dni (no una subcadena cualquiera)."""
     ruc = (ruc or "").strip()
     dni = (dni or "").strip()
     if len(ruc) != 11 or not ruc.isdigit():
         return False
     if len(dni) != 8 or not dni.isdigit():
         return False
-    return dni in ruc
+    return ruc[2:10] == dni
