@@ -1,149 +1,252 @@
 {% extends "admin/layout.html" %}
-
 {% block title %}Configuraciones{% endblock %}
 {% block page_title %}Configuraciones del Sistema{% endblock %}
 
 {% block extra_css %}
 <style>
-    .config-container { max-width: 900px; margin: 0 auto; }
-    .config-section { background: var(--am-panel, #111b21); border: 1px solid var(--am-border, #2a373f); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
-    .config-section h2 { color: #fff; font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--am-border, #2a2a3e); }
-    .config-section h2 i { color: #FFCD11; }
-    .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-    .config-item { display: flex; flex-direction: column; gap: 8px; }
-    .config-item label { color: #e9edef; font-size: 14px; font-weight: 500; }
-    .config-item small { color: #888; font-size: 12px; }
-    .config-input-group { display: flex; align-items: center; gap: 8px; }
-    .config-input-group .am-input { flex: 1; max-width: 140px; }
-    .config-prefix, .config-unit { color: #8696a0; font-size: 13px; }
-    .config-toggle-group { display: flex; align-items: center; gap: 12px; }
-    .toggle-switch { position: relative; width: 50px; height: 26px; }
-    .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .toggle-slider { position: absolute; cursor: pointer; inset: 0; background-color: #3a3a4e; transition: .3s; border-radius: 26px; }
-    .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background: #fff; transition: .3s; border-radius: 50%; }
-    .toggle-switch input:checked + .toggle-slider { background: #FFCD11; }
-    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(24px); }
-    .toggle-label { color: #8696a0; font-size: 13px; }
-    .config-actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 4px; }
-    @media (max-width: 600px) { .config-grid { grid-template-columns: 1fr; } .config-actions { flex-direction: column; } .config-actions button { width: 100%; } }
+    :root { --xl-bd:#333a42; --xl-head:#1c2830; --xl-row:#111b21; --xl-row2:#16232b; --xl-cell:#0e171d; }
+    .cfg-tabs { display:flex; flex-wrap:wrap; gap:6px; border-bottom:1px solid var(--xl-bd); margin-bottom:18px; }
+    .cfg-tab { padding:10px 16px; background:transparent; border:none; color:#8696a0; cursor:pointer; font-size:14px; border-bottom:2px solid transparent; display:flex; align-items:center; gap:8px; }
+    .cfg-tab.active { color:#FFCD11; border-bottom-color:#FFCD11; font-weight:600; }
+    .cfg-tab i { font-size:13px; }
+    .cfg-panel { display:none; } .cfg-panel.active { display:block; }
+    /* Excel-style table */
+    .xl { width:100%; border-collapse:collapse; border:1px solid var(--xl-bd); background:var(--xl-row); font-size:14px; }
+    .xl th { background:var(--xl-head); color:#e9edef; text-align:left; padding:10px 12px; border:1px solid var(--xl-bd); font-size:13px; font-weight:600; }
+    .xl td { padding:8px 12px; border:1px solid var(--xl-bd); vertical-align:middle; }
+    .xl tr:nth-child(even) td { background:var(--xl-row2); }
+    .xl .c-param { color:#e9edef; width:32%; }
+    .xl .c-val { width:22%; background:var(--xl-cell) !important; }
+    .xl .c-tipo { width:12%; color:#8696a0; font-size:13px; }
+    .xl .c-desc { color:#8696a0; font-size:13px; }
+    .xl input[type=number], .xl input[type=text], .xl select { width:100%; background:transparent; border:1px solid transparent; border-radius:5px; color:#fff; padding:6px 8px; font-size:14px; }
+    .xl input:focus, .xl select:focus { outline:none; border-color:#FFCD11; background:#0a1015; }
+    .xl input.dirty, .xl select.dirty { border-color:#FFCD11; }
+    .xl input.err { border-color:#ef4444; }
+    .val-cell { display:flex; align-items:center; gap:6px; }
+    .val-cell .pre, .val-cell .suf { color:#8696a0; font-size:13px; }
+    .toggle { position:relative; width:46px; height:24px; display:inline-block; }
+    .toggle input { opacity:0; width:0; height:0; }
+    .toggle .sl { position:absolute; inset:0; background:#3a3a4e; border-radius:24px; transition:.25s; cursor:pointer; }
+    .toggle .sl:before { content:""; position:absolute; width:18px; height:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.25s; }
+    .toggle input:checked + .sl { background:#FFCD11; } .toggle input:checked + .sl:before { transform:translateX(22px); }
+    .cfg-actions { display:flex; align-items:center; gap:12px; margin-top:16px; }
+    .saved-ind { color:#22c55e; font-size:13px; opacity:0; transition:opacity .3s; }
+    .saved-ind.show { opacity:1; }
+    .btn { padding:10px 18px; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:14px; }
+    .btn-primary { background:#FFCD11; color:#000; } .btn-secondary { background:transparent; color:#8696a0; border:1px solid var(--xl-bd); }
+    .note { background:#16232b; border:1px solid var(--xl-bd); border-radius:8px; padding:10px 14px; font-size:13px; color:#8696a0; margin-bottom:16px; }
+    /* Docs tab */
+    .doc-row td .lock { color:#8696a0; font-size:12px; }
+    .doc-actions button { background:transparent; border:none; cursor:pointer; font-size:14px; margin:0 4px; }
+    .doc-actions .edit { color:#3b82f6; } .doc-actions .del { color:#ef4444; }
+    .placeholder { text-align:center; padding:60px 20px; color:#8696a0; }
+    .placeholder i { font-size:44px; color:#FFCD11; opacity:.4; margin-bottom:16px; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="config-container">
-    <div class="am-note"><i class="fas fa-circle-info"></i> Parámetros del modelo de asignación automática. Requieren la tabla <b>configuracion_mita</b> (SQL 08).</div>
+<div class="note"><i class="fas fa-circle-info"></i> Edita los valores como en una hoja de cálculo. Requiere la tabla <b>configuracion_mita</b> (SQL 08/09).</div>
 
-    <!-- Asignación -->
-    <div class="config-section">
-        <h2><i class="fas fa-user-clock"></i> Asignación de Técnicos</h2>
-        <div class="config-grid">
-            <div class="config-item"><label>Tiempo de espera antes de ampliar búsqueda</label>
-                <div class="config-input-group"><input type="number" id="tiempo_espera_asignacion" class="am-input" min="30" max="300"><span class="config-unit">segundos</span></div>
-                <small>Si ningún técnico acepta, se amplía el radio de búsqueda</small></div>
-            <div class="config-item"><label>Tiempo para que el técnico responda</label>
-                <div class="config-input-group"><input type="number" id="tiempo_respuesta_tecnico" class="am-input" min="30" max="180"><span class="config-unit">segundos</span></div>
-                <small>Tiempo máximo para aceptar o rechazar una solicitud</small></div>
-            <div class="config-item"><label>Radio inicial de búsqueda</label>
-                <div class="config-input-group"><input type="number" id="radio_busqueda_inicial_km" class="am-input" min="1" max="50" step="0.5"><span class="config-unit">km</span></div>
-                <small>Distancia inicial para buscar técnicos cercanos</small></div>
-            <div class="config-item"><label>Radio máximo de búsqueda</label>
-                <div class="config-input-group"><input type="number" id="radio_busqueda_maximo_km" class="am-input" min="5" max="100" step="0.5"><span class="config-unit">km</span></div>
-                <small>Límite máximo de distancia para buscar</small></div>
-            <div class="config-item"><label>Técnicos a alertar por ronda</label>
-                <div class="config-input-group"><input type="number" id="tecnicos_por_alerta" class="am-input" min="1" max="10"><span class="config-unit">técnicos</span></div>
-                <small>Cantidad de técnicos que reciben la alerta simultáneamente</small></div>
-            <div class="config-item"><label>Priorizar por calificación</label>
-                <div class="config-toggle-group"><label class="toggle-switch"><input type="checkbox" id="habilitar_prioridad_rating"><span class="toggle-slider"></span></label><span class="toggle-label" id="label_prioridad_rating">Desactivado</span></div>
-                <small>Los técnicos con mejor rating reciben alertas primero</small></div>
-            <div class="config-item" id="config_rating_minimo" style="display:none;"><label>Rating mínimo para prioridad</label>
-                <div class="config-input-group"><input type="number" id="rating_minimo_prioridad" class="am-input" min="1" max="5" step="0.1"><span class="config-unit">estrellas</span></div>
-                <small>Solo técnicos con este rating o más reciben alertas prioritarias</small></div>
-        </div>
+<div class="cfg-tabs">
+    <button class="cfg-tab active" data-tab="tarifas" onclick="tab('tarifas')"><i class="fas fa-money-bill-wave"></i> Tarifas y Comisiones</button>
+    <button class="cfg-tab" data-tab="asignacion" onclick="tab('asignacion')"><i class="fas fa-user-clock"></i> Asignación y Tiempos</button>
+    <button class="cfg-tab" data-tab="comunicacion" onclick="tab('comunicacion')"><i class="fas fa-shield-halved"></i> Comunicación y Privacidad</button>
+    <button class="cfg-tab" data-tab="liquidaciones" onclick="tab('liquidaciones')"><i class="fas fa-file-invoice-dollar"></i> Liquidaciones</button>
+    <button class="cfg-tab" data-tab="documentos" onclick="tab('documentos')"><i class="fas fa-file-lines"></i> Documentos Postulación</button>
+    <button class="cfg-tab" data-tab="proveedores" onclick="tab('proveedores')"><i class="fas fa-truck-field"></i> Proveedores</button>
+</div>
+
+<!-- Paneles generados por JS para tabs de config -->
+<div class="cfg-panel active" id="panel-tarifas"></div>
+<div class="cfg-panel" id="panel-asignacion"></div>
+<div class="cfg-panel" id="panel-comunicacion"></div>
+<div class="cfg-panel" id="panel-liquidaciones"></div>
+
+<!-- Documentos -->
+<div class="cfg-panel" id="panel-documentos">
+    <div style="overflow-x:auto;">
+    <table class="xl">
+        <thead><tr><th>Código</th><th>Nombre</th><th>Descripción</th><th style="width:90px;">Obligatorio</th><th style="width:70px;">Activo</th><th style="width:90px;"></th></tr></thead>
+        <tbody id="docs-tbody"><tr><td colspan="6" style="text-align:center;color:#8696a0;padding:20px;">Cargando...</td></tr></tbody>
+    </table>
     </div>
+    <div class="cfg-actions"><button class="btn btn-primary" onclick="nuevoDoc()"><i class="fas fa-plus"></i> Nuevo tipo de documento</button></div>
+</div>
 
-    <!-- Tarifas -->
-    <div class="config-section">
-        <h2><i class="fas fa-money-bill-wave"></i> Tarifas y Pagos</h2>
-        <div class="config-grid">
-            <div class="config-item"><label>Tarifa de visita/diagnóstico</label>
-                <div class="config-input-group"><span class="config-prefix">S/</span><input type="number" id="tarifa_visita_default" class="am-input" min="10" max="500" step="5"></div>
-                <small>Monto que paga el cliente por la visita del técnico</small></div>
-            <div class="config-item"><label>Porcentaje que retiene MITA</label>
-                <div class="config-input-group"><input type="number" id="porcentaje_mita" class="am-input" min="0" max="100"><span class="config-unit">%</span></div>
-                <small>Del total de la tarifa de visita</small></div>
-            <div class="config-item"><label>Penalidad por cancelación</label>
-                <div class="config-input-group"><input type="number" id="porcentaje_cancelacion" class="am-input" min="0" max="100"><span class="config-unit">%</span></div>
-                <small>Porcentaje de la tarifa a cobrar si el cliente cancela</small></div>
-        </div>
-    </div>
-
-    <!-- Comunicación y Privacidad -->
-    <div class="config-section">
-        <h2><i class="fas fa-shield-halved"></i> Comunicación y Privacidad</h2>
-        <div class="config-grid">
-            <div class="config-item"><label>Mostrar teléfono del técnico al cliente</label>
-                <div class="config-toggle-group"><label class="toggle-switch"><input type="checkbox" id="mostrar_telefono_tecnico"><span class="toggle-slider"></span></label><span class="toggle-label" id="label_telefono_tecnico">Desactivado</span></div>
-                <small>Si está desactivado, el cliente nunca ve el número directo del técnico (solo chat)</small></div>
-        </div>
-    </div>
-
-    <div class="config-actions">
-        <button class="btn btn-secondary" onclick="cargarConfiguraciones()"><i class="fas fa-undo"></i> Descartar cambios</button>
-        <button class="btn btn-primary" onclick="guardarConfiguraciones()"><i class="fas fa-save"></i> Guardar configuraciones</button>
+<!-- Proveedores (placeholder) -->
+<div class="cfg-panel" id="panel-proveedores">
+    <div class="placeholder">
+        <i class="fas fa-truck-field"></i>
+        <h3 style="color:#e9edef;margin-bottom:8px;">Próximamente: Gestión de Proveedores</h3>
+        <p>Proveedores de insumos y repuestos (Mantenimiento de Autos):<br>marcas, productos, códigos estándar, precios y saldos por pagar.</p>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-let configActual = {};
+// ---- Metadata de parámetros por tab ----
+const TABS = {
+    tarifas: [
+        { clave:'tarifa_visita_default', label:'Tarifa de visita / diagnóstico', tipo:'money', pre:'S/', desc:'Costo del diagnóstico que paga el cliente' },
+        { clave:'comision_mita_visita', label:'Comisión MITA (visita)', tipo:'money', pre:'S/', desc:'Lo que MITA recibe por cada visita' },
+        { clave:'comision_tecnico_visita', label:'Comisión técnico (visita)', tipo:'money', pre:'S/', desc:'Lo que el técnico recibe por cada visita' },
+        { clave:'comision_mita_reparacion_pct', label:'Comisión MITA (reparación)', tipo:'int', suf:'%', desc:'Porcentaje sobre el monto de la reparación' },
+        { clave:'usar_porcentaje_reparacion', label:'Usar porcentaje en reparación', tipo:'bool', desc:'Si se desactiva, se usa el monto fijo de abajo' },
+        { clave:'monto_fijo_reparacion', label:'Monto fijo reparación', tipo:'money', pre:'S/', desc:'Alternativa al % cuando "usar porcentaje" está apagado' },
+        { clave:'porcentaje_mita', label:'Retención MITA (servicio)', tipo:'int', suf:'%', desc:'Porcentaje que retiene MITA de cada servicio' },
+        { clave:'porcentaje_cancelacion', label:'Penalidad por cancelación', tipo:'int', suf:'%', desc:'Porcentaje de la tarifa si el cliente cancela' },
+    ],
+    asignacion: [
+        { clave:'tiempo_espera_asignacion', label:'Tiempo espera asignación', tipo:'int', suf:'seg', desc:'Antes de ampliar la búsqueda' },
+        { clave:'tiempo_respuesta_tecnico', label:'Tiempo respuesta técnico', tipo:'int', suf:'seg', desc:'Para aceptar o rechazar' },
+        { clave:'radio_busqueda_inicial_km', label:'Radio búsqueda inicial', tipo:'float', suf:'km', desc:'Primer intento' },
+        { clave:'radio_busqueda_maximo_km', label:'Radio búsqueda máximo', tipo:'float', suf:'km', desc:'Límite de expansión' },
+        { clave:'tecnicos_por_alerta', label:'Técnicos por alerta', tipo:'int', suf:'#', desc:'Cuántos notificar por ronda' },
+        { clave:'habilitar_prioridad_rating', label:'Priorizar por rating', tipo:'bool', desc:'Los mejores técnicos reciben alertas primero' },
+        { clave:'rating_minimo_prioridad', label:'Rating mínimo para prioridad', tipo:'float', suf:'★', desc:'Umbral de rating para alertas prioritarias' },
+    ],
+    comunicacion: [
+        { clave:'mostrar_telefono_tecnico', label:'Mostrar teléfono del técnico', tipo:'bool', desc:'Al cliente, después de confirmar' },
+        { clave:'mostrar_telefono_cliente', label:'Mostrar teléfono del cliente', tipo:'bool', desc:'Al técnico asignado' },
+    ],
+    liquidaciones: [
+        { clave:'liquidacion_dia_corte', label:'Día de corte', tipo:'select', opciones:['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'], desc:'Día de la semana para liquidar' },
+        { clave:'liquidacion_plazo_rxh_dias', label:'Plazo subir RxH', tipo:'int', suf:'días', desc:'Días tras el servicio para subir el recibo' },
+        { clave:'liquidacion_email', label:'Email de notificación', tipo:'text', desc:'Para avisos de liquidación' },
+    ],
+};
 
-document.addEventListener('DOMContentLoaded', function () {
-    cargarConfiguraciones();
-    document.getElementById('habilitar_prioridad_rating').addEventListener('change', function () {
-        document.getElementById('label_prioridad_rating').textContent = this.checked ? 'Activado' : 'Desactivado';
-        document.getElementById('config_rating_minimo').style.display = this.checked ? 'block' : 'none';
-    });
-    document.getElementById('mostrar_telefono_tecnico').addEventListener('change', function () {
-        document.getElementById('label_telefono_tecnico').textContent = this.checked ? 'Activado' : 'Desactivado';
-    });
-});
+let CONFIG = {};
 
-async function cargarConfiguraciones() {
-    try {
-        const response = await fetch('/api/v1/admin/config-mita');
-        if (!response.ok) throw new Error('Error cargando');
-        configActual = await response.json();
-        Object.keys(configActual).forEach(clave => {
-            const input = document.getElementById(clave);
-            if (!input) return;
-            if (input.type === 'checkbox') {
-                input.checked = configActual[clave] === true || configActual[clave] === 'true';
-                input.dispatchEvent(new Event('change'));
-            } else {
-                input.value = configActual[clave];
-            }
-        });
-    } catch (e) {
-        if (window.MitaAlert) MitaAlert.error('Error', 'No se pudieron cargar las configuraciones (¿BD / SQL 08?)');
-    }
+function tab(name) {
+    document.querySelectorAll('.cfg-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.cfg-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    if (name === 'documentos') cargarDocs();
 }
 
-async function guardarConfiguraciones() {
-    const campos = ['tiempo_espera_asignacion','tiempo_respuesta_tecnico','radio_busqueda_inicial_km','radio_busqueda_maximo_km','tecnicos_por_alerta','habilitar_prioridad_rating','rating_minimo_prioridad','tarifa_visita_default','porcentaje_mita','porcentaje_cancelacion','mostrar_telefono_tecnico'];
+function inputCel(f) {
+    const v = CONFIG[f.clave];
+    if (f.tipo === 'bool') {
+        const on = v === true || v === 'true';
+        return `<label class="toggle"><input type="checkbox" id="${f.clave}" ${on?'checked':''} onchange="marcarDirty(this)"><span class="sl"></span></label>`;
+    }
+    if (f.tipo === 'select') {
+        return `<select id="${f.clave}" onchange="marcarDirty(this)">${f.opciones.map(o=>`<option ${String(v)===o?'selected':''}>${o}</option>`).join('')}</select>`;
+    }
+    if (f.tipo === 'text') {
+        return `<div class="val-cell"><input type="text" id="${f.clave}" value="${v ?? ''}" oninput="marcarDirty(this)"></div>`;
+    }
+    const step = f.tipo === 'int' ? '1' : '0.01';
+    return `<div class="val-cell">${f.pre?`<span class="pre">${f.pre}</span>`:''}<input type="number" step="${step}" id="${f.clave}" value="${v ?? ''}" oninput="marcarDirty(this)">${f.suf?`<span class="suf">${f.suf}</span>`:''}</div>`;
+}
+
+function renderTab(name) {
+    const rows = TABS[name].map(f => `
+        <tr>
+            <td class="c-param">${f.label}</td>
+            <td class="c-val">${inputCel(f)}</td>
+            <td class="c-tipo">${f.suf || f.pre || (f.tipo==='bool'?'sí/no':(f.tipo==='select'?'opción':'texto'))}</td>
+            <td class="c-desc">${f.desc}</td>
+        </tr>`).join('');
+    document.getElementById('panel-' + name).innerHTML = `
+        <div style="overflow-x:auto;"><table class="xl">
+            <thead><tr><th>Parámetro</th><th>Valor</th><th>Tipo</th><th>Descripción</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table></div>
+        <div class="cfg-actions">
+            <button class="btn btn-primary" onclick="guardar('${name}')"><i class="fas fa-save"></i> Guardar sección</button>
+            <button class="btn btn-secondary" onclick="cargarConfig().then(()=>renderTodo())"><i class="fas fa-undo"></i> Descartar</button>
+            <span class="saved-ind" id="saved-${name}"><i class="fas fa-check"></i> Guardado</span>
+        </div>`;
+}
+
+function renderTodo() { ['tarifas','asignacion','comunicacion','liquidaciones'].forEach(renderTab); }
+function marcarDirty(el) { el.classList.add('dirty'); }
+
+async function cargarConfig() {
+    try {
+        const r = await fetch('/api/v1/admin/config-mita');
+        CONFIG = r.ok ? await r.json() : {};
+    } catch (e) { CONFIG = {}; if (window.MitaAlert) MitaAlert.error('Error','No se pudo cargar (¿BD / SQL?)'); }
+}
+
+async function guardar(name) {
     const datos = {};
-    campos.forEach(clave => {
-        const input = document.getElementById(clave);
-        if (input) datos[clave] = input.type === 'checkbox' ? input.checked : input.value;
+    TABS[name].forEach(f => {
+        const el = document.getElementById(f.clave);
+        if (!el) return;
+        datos[f.clave] = f.tipo === 'bool' ? el.checked : el.value;
     });
     try {
-        const response = await fetch('/api/v1/admin/config-mita', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
-        if (!response.ok) throw new Error('Error guardando');
-        if (window.MitaAlert) MitaAlert.success('Guardado', 'Configuraciones actualizadas correctamente');
-        cargarConfiguraciones();
-    } catch (e) {
-        if (window.MitaAlert) MitaAlert.error('Error', 'No se pudieron guardar las configuraciones');
-    }
+        const r = await fetch('/api/v1/admin/config-mita', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(datos) });
+        const d = await r.json();
+        if (!r.ok) throw new Error();
+        document.querySelectorAll('#panel-' + name + ' .dirty').forEach(e => e.classList.remove('dirty'));
+        const ind = document.getElementById('saved-' + name); ind.classList.add('show'); setTimeout(()=>ind.classList.remove('show'), 1800);
+        if (d.errores && window.MitaAlert) MitaAlert.info('Aviso', 'Algunas claves no existían: ' + d.errores.join(', '));
+    } catch (e) { if (window.MitaAlert) MitaAlert.error('Error', 'No se pudo guardar la sección'); }
 }
+
+// ---- Documentos postulación (CRUD) ----
+async function cargarDocs() {
+    const tb = document.getElementById('docs-tbody');
+    try {
+        const r = await fetch('/api/v1/admin/tipos-documento');
+        const items = (await r.json()).items || [];
+        tb.innerHTML = items.map(d => `
+            <tr class="doc-row">
+                <td>${d.codigo} ${d.fijo?'<span class="lock" title="Fijo"><i class="fas fa-lock"></i></span>':''}</td>
+                <td>${d.nombre}</td>
+                <td class="c-desc">${d.descripcion||'-'}</td>
+                <td style="text-align:center;">${d.obligatorio?'✓':'—'}</td>
+                <td style="text-align:center;">${d.activo?'✓':'—'}</td>
+                <td class="doc-actions" style="text-align:center;">
+                    ${d.fijo ? '<span class="lock">Fijo</span>' :
+                      `<button class="edit" onclick='editarDoc(${JSON.stringify(d)})' title="Editar"><i class="fas fa-pen"></i></button>
+                       <button class="del" onclick="borrarDoc(${d.id})" title="Eliminar"><i class="fas fa-trash"></i></button>`}
+                </td>
+            </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#8696a0;padding:20px;">Sin tipos de documento.</td></tr>';
+    } catch (e) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#8696a0;padding:20px;">No se pudo cargar (¿BD / SQL 09?).</td></tr>'; }
+}
+
+async function nuevoDoc() {
+    const nombre = prompt('Nombre del documento (ej: Licencia de conducir):'); if (!nombre) return;
+    const codigo = prompt('Código (sin espacios, ej: licencia_conducir):', nombre.toLowerCase().replace(/\s+/g,'_')); if (!codigo) return;
+    const obligatorio = confirm('¿Es obligatorio? (Aceptar = Sí)');
+    try {
+        const r = await fetch('/api/v1/admin/tipos-documento', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ codigo, nombre, obligatorio }) });
+        if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Error'); }
+        cargarDocs();
+    } catch (e) { alert(e.message); }
+}
+
+async function editarDoc(d) {
+    const nombre = prompt('Nombre:', d.nombre); if (nombre === null) return;
+    const descripcion = prompt('Descripción:', d.descripcion || '');
+    const obligatorio = confirm('¿Es obligatorio? (Aceptar = Sí)');
+    const activo = confirm('¿Activo? (Aceptar = Sí)');
+    try {
+        const r = await fetch('/api/v1/admin/tipos-documento/' + d.id, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ nombre, descripcion, obligatorio, activo }) });
+        if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Error'); }
+        cargarDocs();
+    } catch (e) { alert(e.message); }
+}
+
+async function borrarDoc(id) {
+    if (!confirm('¿Eliminar este tipo de documento?')) return;
+    try {
+        const r = await fetch('/api/v1/admin/tipos-documento/' + id, { method:'DELETE' });
+        if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Error'); }
+        cargarDocs();
+    } catch (e) { alert(e.message); }
+}
+
+window.tab = tab; window.guardar = guardar; window.marcarDirty = marcarDirty;
+window.nuevoDoc = nuevoDoc; window.editarDoc = editarDoc; window.borrarDoc = borrarDoc; window.cargarConfig = cargarConfig; window.renderTodo = renderTodo;
+
+document.addEventListener('DOMContentLoaded', async () => { await cargarConfig(); renderTodo(); });
 </script>
 {% endblock %}

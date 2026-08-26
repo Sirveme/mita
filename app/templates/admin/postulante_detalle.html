@@ -1,0 +1,182 @@
+{% extends "admin/layout.html" %}
+{% block title %}Detalle de postulante{% endblock %}
+{% block page_title %}Detalle de postulante{% endblock %}
+
+{% block header_actions %}
+<a href="/admin/postulantes" style="color:#8696a0;text-decoration:none;"><i class="fas fa-arrow-left"></i> Volver</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .det-wrap { max-width: 860px; }
+    .det-head { display:flex; justify-content:space-between; align-items:center; gap:16px; background:#111b21; border:1px solid #2a373f; border-radius:12px; padding:18px 20px; margin-bottom:16px; flex-wrap:wrap; }
+    .det-head h2 { font-size:20px; } .det-head .cod { color:#8696a0; font-size:13px; margin-top:4px; }
+    .badge { padding:4px 12px; border-radius:20px; font-size:13px; font-weight:600; }
+    .b-PENDIENTE { background:rgba(255,205,17,.15); color:#FFCD11; }
+    .b-APROBADO { background:rgba(34,197,94,.15); color:#22c55e; }
+    .b-RECHAZADO { background:rgba(239,68,68,.15); color:#ef4444; }
+    .b-OBSERVADO { background:rgba(59,130,246,.15); color:#3b82f6; }
+    .sec { background:#111b21; border:1px solid #2a373f; border-radius:12px; margin-bottom:12px; overflow:hidden; }
+    .sec-h { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; cursor:pointer; user-select:none; }
+    .sec-h h3 { font-size:15px; display:flex; align-items:center; gap:10px; } .sec-h h3 i.ic { color:#FFCD11; }
+    .sec-b { padding:0 18px 18px; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+    .sec.collapsed .sec-b { display:none; }
+    .kv .k { font-size:12px; color:#8696a0; } .kv .v { font-size:15px; color:#e9edef; margin-top:2px; word-break:break-word; }
+    .esp-tag { display:inline-block; background:#1e2a30; color:#e9edef; font-size:12px; padding:3px 10px; border-radius:6px; margin:2px; }
+    .doc-mail { grid-column:1/-1; background:#16232b; border:1px dashed #2a373f; border-radius:8px; padding:12px 14px; font-size:13px; color:#8696a0; }
+    .acciones { display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; }
+    .btn { padding:12px 20px; border:none; border-radius:10px; font-weight:700; cursor:pointer; font-size:14px; }
+    .btn-ok { background:#22c55e; color:#052e16; } .btn-obs { background:#3b82f6; color:#fff; } .btn-no { background:#ef4444; color:#fff; }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .obs-box { grid-column:1/-1; background:rgba(59,130,246,.08); border:1px solid rgba(59,130,246,.3); border-radius:8px; padding:12px 14px; font-size:14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="det-wrap" id="det-wrap">
+    <div class="sec"><div class="sec-h"><h3>Cargando...</h3></div></div>
+</div>
+
+<!-- Modal simple -->
+<div id="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#111b21; border:1px solid #2a373f; border-radius:14px; padding:24px; max-width:440px; width:90%;">
+        <h3 id="modal-title" style="margin-bottom:14px;">Motivo</h3>
+        <textarea id="modal-text" style="width:100%; min-height:100px; background:#1b1b26; border:1px solid #2a373f; border-radius:8px; color:#fff; padding:12px; resize:vertical;"></textarea>
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+            <button class="btn" style="background:transparent;color:#8696a0;border:1px solid #2a373f;" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn btn-ok" id="modal-confirm">Confirmar</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const POST_ID = {{ postulante_id }};
+let postulante = null;
+
+function kv(k, v) { return `<div class="kv"><div class="k">${k}</div><div class="v">${v ?? '-'}</div></div>`; }
+function seccion(titulo, icono, contenido, colapsada=false) {
+    return `<div class="sec ${colapsada?'collapsed':''}">
+        <div class="sec-h" onclick="this.parentElement.classList.toggle('collapsed')">
+            <h3><i class="fas ${icono} ic"></i> ${titulo}</h3><i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="sec-b">${contenido}</div>
+    </div>`;
+}
+
+async function cargar() {
+    try {
+        const r = await fetch('/api/v1/admin/postulantes/' + POST_ID);
+        if (!r.ok) throw new Error();
+        postulante = await r.json();
+    } catch (e) {
+        document.getElementById('det-wrap').innerHTML = '<div class="sec"><div class="sec-h"><h3>No se pudo cargar el postulante (¿BD?).</h3></div></div>';
+        return;
+    }
+    render();
+}
+
+function render() {
+    const p = postulante;
+    const esp = (p.especialidades||[]).map(e=>`<span class="esp-tag">${e}</span>`).join('') || '-';
+    const exp = (p.experiencia_laboral||[]).map(e=>`<div class="v">• ${e.empresa||''} — ${e.cargo||''} (${e.periodo||''})</div>`).join('') || '-';
+    const docs = (p.documentos_enviados||[]).map(d=>`<span class="esp-tag">${d.tipo}${d.enviado_email?' ✓':''}</span>`).join('') || 'Ninguno declarado';
+
+    let html = `
+    <div class="det-head">
+        <div><h2>${p.nombre_completo}</h2><div class="cod">${p.codigo} · DNI ${p.dni}</div></div>
+        <span class="badge b-${p.estado}">${p.estado}</span>
+    </div>`;
+
+    if (p.observaciones && (p.estado === 'OBSERVADO' || p.estado === 'RECHAZADO')) {
+        html += `<div class="sec"><div class="sec-b"><div class="obs-box"><b>Observaciones:</b> ${p.observaciones}</div></div></div>`;
+    }
+
+    html += seccion('Datos personales', 'fa-id-card',
+        kv('Nombres', p.nombres) + kv('Ap. paterno', p.apellido_paterno) + kv('Ap. materno', p.apellido_materno) +
+        kv('Nacimiento', p.fecha_nacimiento) + kv('Sexo', p.sexo) + kv('RUC', p.ruc));
+
+    html += seccion('Contacto y ubicación', 'fa-location-dot',
+        kv('Celular', p.celular_1) + kv('Celular 2', p.celular_2) + kv('Email', p.email) +
+        kv('Departamento', p.departamento) + kv('Provincia', p.provincia) + kv('Distrito', p.distrito) +
+        kv('Dirección', p.direccion) + kv('Referencia', p.referencia));
+
+    html += seccion('Especialidades y experiencia', 'fa-screwdriver-wrench',
+        `<div class="kv" style="grid-column:1/-1"><div class="k">Especialidades</div><div class="v">${esp}</div></div>` +
+        kv('Años de experiencia', p.anios_experiencia) +
+        `<div class="kv" style="grid-column:1/-1"><div class="k">Experiencia laboral</div><div class="v">${exp}</div></div>`, true);
+
+    html += seccion('Formación', 'fa-graduation-cap',
+        kv('Nivel educativo', p.nivel_educativo) + kv('Institución', p.institucion) +
+        `<div class="kv" style="grid-column:1/-1"><div class="k">Certificaciones</div><div class="v">${p.certificaciones||'-'}</div></div>`, true);
+
+    html += seccion('Datos de pago', 'fa-money-check-dollar',
+        kv('Banco', p.banco) + kv('N° cuenta', p.numero_cuenta) + kv('CCI', p.cci) + kv('Yape', p.yape) + kv('Plin', p.plin) +
+        kv('Emisión RxH', p.emision_automatica_rxh ? 'Sí' : 'No') + kv('Usuario SOL', p.sol_usuario), true);
+
+    html += seccion('Documentos', 'fa-paperclip',
+        `<div class="kv" style="grid-column:1/-1"><div class="k">Declarados</div><div class="v">${docs}</div></div>
+         <div class="doc-mail"><i class="fas fa-envelope"></i> Los archivos NO están en el sistema. Búscalos en <b>rrhh@mita.pe</b> por el código <b>${p.codigo}</b>.</div>`);
+
+    // Acciones (solo si no está aprobado)
+    if (p.estado !== 'APROBADO') {
+        html += `<div class="sec"><div class="sec-b"><div style="grid-column:1/-1">
+            <div class="acciones">
+                <button class="btn btn-ok" onclick="aprobar()"><i class="fas fa-check"></i> Aprobar</button>
+                <button class="btn btn-obs" onclick="abrirModal('observar')"><i class="fas fa-circle-question"></i> Observar</button>
+                <button class="btn btn-no" onclick="abrirModal('rechazar')"><i class="fas fa-xmark"></i> Rechazar</button>
+            </div>
+        </div></div></div>`;
+    } else {
+        html += `<div class="sec"><div class="sec-b"><div class="obs-box" style="background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.3);color:#22c55e;grid-column:1/-1">
+            <i class="fas fa-check-circle"></i> Aprobado. Se creó su cuenta de técnico (personal + usuario).</div></div></div>`;
+    }
+
+    document.getElementById('det-wrap').innerHTML = html;
+}
+
+async function aprobar() {
+    if (!confirm('¿Aprobar a ' + postulante.nombre_completo + '? Se creará su cuenta de técnico y se enviará la clave por email.')) return;
+    try {
+        const r = await fetch(`/api/v1/admin/postulantes/${POST_ID}/aprobar`, { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || 'Error');
+        let msg = 'Postulante aprobado. Cuenta creada.';
+        if (!d.email_enviado) msg += `\n\n⚠ El email no se envió (SMTP no configurado). Clave temporal: ${d.clave_temporal}`;
+        if (window.MitaAlert) MitaAlert.success('Aprobado', msg); else alert(msg);
+        cargar();
+    } catch (e) { (window.MitaAlert ? MitaAlert.error('Error', e.message) : alert(e.message)); }
+}
+
+let modalAccion = null;
+function abrirModal(accion) {
+    modalAccion = accion;
+    document.getElementById('modal-title').textContent = accion === 'rechazar' ? 'Motivo del rechazo' : 'Información faltante / observación';
+    document.getElementById('modal-text').value = '';
+    const btn = document.getElementById('modal-confirm');
+    btn.className = 'btn ' + (accion === 'rechazar' ? 'btn-no' : 'btn-obs');
+    btn.onclick = confirmarModal;
+    document.getElementById('modal').style.display = 'flex';
+}
+function cerrarModal() { document.getElementById('modal').style.display = 'none'; }
+
+async function confirmarModal() {
+    const texto = document.getElementById('modal-text').value.trim();
+    if (!texto) { alert('Escribe el motivo.'); return; }
+    const url = `/api/v1/admin/postulantes/${POST_ID}/${modalAccion}`;
+    const body = modalAccion === 'rechazar' ? { motivo: texto } : { observaciones: texto };
+    try {
+        const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || 'Error');
+        cerrarModal();
+        (window.MitaAlert ? MitaAlert.success('Listo', 'Estado actualizado' + (d.email_enviado ? ' y email enviado.' : '.')) : alert('Estado actualizado.'));
+        cargar();
+    } catch (e) { (window.MitaAlert ? MitaAlert.error('Error', e.message) : alert(e.message)); }
+}
+
+window.aprobar = aprobar; window.abrirModal = abrirModal; window.cerrarModal = cerrarModal;
+document.addEventListener('DOMContentLoaded', cargar);
+</script>
+{% endblock %}

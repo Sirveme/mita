@@ -1,0 +1,92 @@
+{% extends "admin/layout.html" %}
+{% block title %}Postulantes{% endblock %}
+{% block page_title %}Postulantes{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filtros { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:18px; align-items:end; }
+    .filtros .fg { display:flex; flex-direction:column; gap:6px; }
+    .filtros label { font-size:12px; color:#8696a0; }
+    .filtros select, .filtros input { padding:9px 12px; background:#1b1b26; border:1px solid #2a2a3a; border-radius:8px; color:#fff; }
+    .post-table { width:100%; border-collapse:collapse; background:#111b21; border:1px solid #2a373f; border-radius:12px; overflow:hidden; }
+    .post-table th { text-align:left; padding:12px 14px; background:#16232b; color:#e9edef; font-size:13px; border-bottom:1px solid #2a373f; }
+    .post-table td { padding:12px 14px; border-bottom:1px solid #1e2a30; font-size:14px; }
+    .post-table tr:hover td { background:#16232b; }
+    .badge { padding:3px 10px; border-radius:20px; font-size:12px; font-weight:600; }
+    .b-PENDIENTE { background:rgba(255,205,17,.15); color:#FFCD11; }
+    .b-APROBADO { background:rgba(34,197,94,.15); color:#22c55e; }
+    .b-RECHAZADO { background:rgba(239,68,68,.15); color:#ef4444; }
+    .b-OBSERVADO { background:rgba(59,130,246,.15); color:#3b82f6; }
+    .esp-tag { display:inline-block; background:#1e2a30; color:#8696a0; font-size:11px; padding:2px 7px; border-radius:6px; margin:1px; }
+    .btn-ver { padding:6px 12px; background:#FFCD11; color:#000; border:none; border-radius:7px; font-weight:600; cursor:pointer; text-decoration:none; font-size:13px; }
+    .empty { text-align:center; padding:50px; color:#8696a0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="filtros">
+    <div class="fg"><label>Estado</label>
+        <select id="f-estado" onchange="cargar()">
+            <option value="">Todos</option>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="APROBADO">Aprobado</option>
+            <option value="RECHAZADO">Rechazado</option>
+            <option value="OBSERVADO">Observado</option>
+        </select>
+    </div>
+    <div class="fg"><label>Especialidad</label>
+        <select id="f-esp" onchange="cargar()">
+            <option value="">Todas</option>
+            <option value="ELECTRICIDAD">Electricidad</option>
+            <option value="GASFITERIA">Gasfitería</option>
+            <option value="ELECTRODOMESTICOS">Electrodomésticos</option>
+            <option value="MUEBLES">Muebles</option>
+        </select>
+    </div>
+    <div class="fg"><label>Buscar</label><input id="f-q" placeholder="Nombre, DNI o código" oninput="debounced()"></div>
+</div>
+
+<div style="overflow-x:auto;">
+<table class="post-table">
+    <thead><tr>
+        <th>Código</th><th>Nombre</th><th>DNI</th><th>Especialidades</th><th>Fecha</th><th>Estado</th><th></th>
+    </tr></thead>
+    <tbody id="tbody"><tr><td colspan="7" class="empty">Cargando...</td></tr></tbody>
+</table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let _t = null;
+function debounced() { clearTimeout(_t); _t = setTimeout(cargar, 350); }
+
+async function cargar() {
+    const params = new URLSearchParams();
+    const est = document.getElementById('f-estado').value; if (est) params.set('estado', est);
+    const esp = document.getElementById('f-esp').value; if (esp) params.set('especialidad', esp);
+    const q = document.getElementById('f-q').value.trim(); if (q) params.set('q', q);
+    const tbody = document.getElementById('tbody');
+    try {
+        const r = await fetch('/api/v1/admin/postulantes?' + params.toString());
+        if (!r.ok) throw new Error();
+        const items = (await r.json()).items || [];
+        if (!items.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay postulantes con estos filtros.</td></tr>'; return; }
+        tbody.innerHTML = items.map(p => `
+            <tr>
+                <td><b>${p.codigo}</b></td>
+                <td>${p.nombre_completo}</td>
+                <td>${p.dni}</td>
+                <td>${(p.especialidades||[]).map(e => `<span class="esp-tag">${e}</span>`).join('')}</td>
+                <td>${fecha(p.fecha_postulacion)}</td>
+                <td><span class="badge b-${p.estado}">${p.estado}</span></td>
+                <td><a class="btn-ver" href="/admin/postulantes/${p.id}">Ver</a></td>
+            </tr>`).join('');
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">No se pudo cargar (¿BD / SQL 09?).</td></tr>';
+    }
+}
+function fecha(iso) { if (!iso) return '-'; const d = new Date(iso); return d.toLocaleDateString('es-PE', {day:'2-digit',month:'2-digit',year:'numeric'}); }
+document.addEventListener('DOMContentLoaded', cargar);
+</script>
+{% endblock %}
