@@ -97,6 +97,42 @@ async def crear_o_obtener_conversacion(payload: ConversacionCreate, db: Session 
     }
 
 
+@router.get("/conversaciones")
+async def listar_conversaciones(limite: int = 50, db: Session = Depends(get_db)):
+    """Lista de conversaciones para el sidebar del chat (datos reales de la BD).
+
+    Devuelve una lista plana con la forma que espera chat_whatsapp.html.
+    Si no hay conversaciones, devuelve [] (el front muestra estado vacío)."""
+    _ICONOS = ["fa-tools", "fa-bolt", "fa-tv", "fa-couch", "fa-wrench"]
+    _COLORES = ["#3b82f6", "#f59e0b", "#8b5cf6", "#10b981", "#ef4444"]
+
+    convs = (
+        db.query(Conversacion)
+        .order_by(Conversacion.id.desc())
+        .limit(limite)
+        .all()
+    )
+
+    out = []
+    for c in convs:
+        hora = ""
+        if c.ultimo_mensaje_at:
+            hora = c.ultimo_mensaje_at.strftime("%H:%M")
+        estado = c.estado.value if c.estado else "activo"
+        out.append({
+            "id": c.id,
+            "titulo": f"Servicio #{c.solicitud_id}" if c.solicitud_id else f"Conversación #{c.id}",
+            "subtitulo": c.cliente_nombre or "Cliente",
+            "ultimoMensaje": c.ultimo_mensaje_texto or "Sin mensajes aún",
+            "hora": hora,
+            "noLeidos": 0,
+            "icono": _ICONOS[c.id % len(_ICONOS)],
+            "color": _COLORES[c.id % len(_COLORES)],
+            "estado": "activo" if estado in ("activa", "ACTIVA", "activo") else estado,
+        })
+    return out
+
+
 @router.get("/conversacion/{conversacion_id}/mensajes")
 async def obtener_mensajes(
     conversacion_id: int,
