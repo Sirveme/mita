@@ -96,6 +96,10 @@ class Personal(Base):
     total_servicios = Column(Integer, default=0)
     total_calificaciones = Column(Integer, default=0)
 
+    # Relación laboral y vínculo con postulación (zPostulantes)
+    tipo_relacion = Column(String(20), default="PROVEEDOR")  # EMPLEADO / PROVEEDOR
+    postulante_id = Column(Integer, ForeignKey("postulantes.id"))
+
     # Meta
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
