@@ -52,6 +52,16 @@ async def chat_whatsapp(request: Request):
     """Chat MITA estilo WhatsApp Web"""
     return templates.TemplateResponse("cliente/chat_whatsapp.html", {"request": request})
 
+# ---- Postulación pública de técnicos ----
+@router.get("/postular", response_class=HTMLResponse)
+async def postular_form(request: Request):
+    """Formulario público de postulación de técnicos (proveedores)."""
+    return templates.TemplateResponse("postular.html", {"request": request})
+
+@router.get("/postular/confirmacion", response_class=HTMLResponse)
+async def postular_confirmacion(request: Request):
+    return templates.TemplateResponse("postular_confirmacion.html", {"request": request})
+
 # ========================================
 # ADMIN - PANEL (zMita-4)
 # ========================================
@@ -87,6 +97,14 @@ async def admin_distritos(request: Request):
 async def admin_configuraciones(request: Request):
     """Configuraciones del sistema"""
     return templates.TemplateResponse("admin/configuraciones.html", {"request": request, "active": "configuraciones"})
+
+@router.get("/admin/postulantes", response_class=HTMLResponse)
+async def admin_postulantes_page(request: Request):
+    return templates.TemplateResponse("admin/postulantes.html", {"request": request, "active": "postulantes"})
+
+@router.get("/admin/postulantes/{item_id}", response_class=HTMLResponse)
+async def admin_postulante_detalle_page(request: Request, item_id: int):
+    return templates.TemplateResponse("admin/postulante_detalle.html", {"request": request, "active": "postulantes", "postulante_id": item_id})
 
 @router.get("/admin/usuarios", response_class=HTMLResponse)
 async def admin_usuarios(request: Request):
