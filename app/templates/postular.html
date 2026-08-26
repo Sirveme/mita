@@ -48,6 +48,7 @@
     .sol-toggle { display:flex; gap:10px; align-items:center; margin-bottom:14px; }
     .submit-bar { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--dark) 30%); padding-top:20px; }
     .loader { display:none; width:18px; height:18px; border:2px solid rgba(0,0,0,.3); border-top-color:#000; border-radius:50%; animation: spin .7s linear infinite; }
+    #btn-validar-loader { border-color: rgba(255,255,255,.25); border-top-color: var(--m1); }
     @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 {% endblock %}
@@ -67,18 +68,19 @@
         <div class="grid">
             <div class="fg">
                 <label>DNI <span class="req">*</span></label>
-                <input type="text" id="v-dni" maxlength="8" inputmode="numeric" placeholder="12345678">
+                <input type="text" id="v-dni" maxlength="8" inputmode="numeric" placeholder="12345678" oninput="onDniInput()">
             </div>
         </div>
         <div class="fg" id="v-ruc-wrap" style="display:none; margin-top:14px;">
             <label>RUC de persona natural <span class="req">*</span></label>
-            <input type="text" id="v-ruc" maxlength="11" inputmode="numeric" placeholder="10 + tu DNI + dígito">
+            <input type="text" id="v-ruc" maxlength="11" inputmode="numeric" placeholder="10 + tu DNI + dígito" oninput="onRucInput()">
         </div>
-        <div style="margin-top:16px; display:flex; gap:10px;">
-            <button class="btn btn-primary" id="btn-validar" onclick="validar()">
+        <div style="margin-top:16px; display:flex; gap:10px; align-items:center;">
+            <button class="btn btn-primary" id="btn-validar" onclick="validarManual()">
                 <span id="btn-validar-txt">Validar y continuar</span>
-                <span class="loader" id="btn-validar-loader"></span>
             </button>
+            <span class="loader" id="btn-validar-loader"></span>
+            <span id="v-validando" style="display:none; color:#8b8b9a; font-size:13px;">Validando...</span>
         </div>
         <div class="msg" id="v-msg"></div>
     </div>
@@ -173,6 +175,10 @@
                     <input type="checkbox" id="emision_automatica_rxh" style="width:18px;height:18px;accent-color:var(--m1);">
                     <label for="emision_automatica_rxh">Autorizo la emisión automática de mis Recibos por Honorarios</label>
                 </div>
+                <div class="terminos" style="margin-top:12px; padding:12px; background:rgba(255,205,17,.06); border:1px solid var(--bd); border-radius:8px;">
+                    <input type="checkbox" id="acepta_facturalo_pro" style="width:18px;height:18px;accent-color:var(--m1);">
+                    <label for="acepta_facturalo_pro">Acepto un descuento mensual de <b style="color:var(--m1);">S/ 15</b> para la emisión ilimitada de Comprobantes Electrónicos (Boletas, Facturas y Recibos por Honorarios) usando <b>Facturalo.pro</b></label>
+                </div>
             </div>
         </div>
 
@@ -213,6 +219,8 @@ const ESPECIALIDADES = [
 let dniValidado = null;
 let rucValidado = null;
 let tiposDocumento = [];
+let validando = false;        // evita disparos duplicados
+let dniAutoHecho = false;     // ya se auto-validó este DNI
 
 function showMsg(id, texto, tipo) {
     const el = document.getElementById(id);
@@ -224,33 +232,50 @@ function loading(btnTxt, loaderId, on) {
     document.getElementById(btnTxt).style.opacity = on ? .6 : 1;
 }
 
-async function validar() {
+function setValidando(on) {
+    validando = on;
+    document.getElementById('btn-validar-loader').style.display = on ? 'inline-block' : 'none';
+    document.getElementById('v-validando').style.display = on ? 'inline' : 'none';
+    document.getElementById('btn-validar').disabled = on;
+}
+
+// --- Auto-disparo por longitud ---
+function onDniInput() {
+    const el = document.getElementById('v-dni');
+    el.value = el.value.replace(/\D/g, '').slice(0, 8);   // solo dígitos
+    hideMsg('v-msg');
+    if (el.value.length === 8 && !dniAutoHecho && !validando) {
+        dniAutoHecho = true;
+        validarDNI();
+    } else if (el.value.length < 8) {
+        dniAutoHecho = false;   // permite re-validar si corrige
+    }
+}
+
+function onRucInput() {
+    const el = document.getElementById('v-ruc');
+    el.value = el.value.replace(/\D/g, '').slice(0, 11);
+    hideMsg('v-msg');
+    if (el.value.length === 11 && !validando) validarRUC();
+}
+
+// Botón manual (fallback): decide DNI o RUC según lo visible
+function validarManual() {
+    const rucVisible = document.getElementById('v-ruc-wrap').style.display !== 'none';
+    if (rucVisible) validarRUC(); else validarDNI();
+}
+
+async function validarDNI() {
     const dni = document.getElementById('v-dni').value.trim();
     if (dni.length !== 8 || !/^\d+$/.test(dni)) { showMsg('v-msg', 'El DNI debe tener 8 dígitos.'); return; }
-    const rucWrap = document.getElementById('v-ruc-wrap');
-    const btn = document.getElementById('btn-validar'); btn.disabled = true;
-    loading('btn-validar-txt', 'btn-validar-loader', true);
-
-    // Si ya se pidió RUC, validar RUC
-    if (rucWrap.style.display !== 'none') {
-        const ruc = document.getElementById('v-ruc').value.trim();
-        try {
-            const r = await fetch('/api/v1/postulacion/validar-ruc', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ dni, ruc }) });
-            const d = await r.json();
-            if (!r.ok) throw new Error(d.detail || 'Error');
-            if (!d.valido) { showMsg('v-msg', d.mensaje); return; }
-            rucValidado = ruc; dniValidado = dni;
-            abrirFormulario();
-        } catch (e) { showMsg('v-msg', e.message); }
-        finally { btn.disabled = false; loading('btn-validar-txt','btn-validar-loader',false); }
-        return;
-    }
-
-    // Primera validación por DNI
+    setValidando(true);
     try {
+        console.log('[postular] validar-dni →', dni);
         const r = await fetch('/api/v1/postulacion/validar-dni', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ dni }) });
+        console.log('[postular] validar-dni status:', r.status);
         const d = await r.json();
-        if (!r.ok) throw new Error(d.detail || 'Error');
+        console.log('[postular] validar-dni respuesta:', d);
+        if (!r.ok) throw new Error(d.detail || 'Error del servidor');
         if (!d.disponible) { showMsg('v-msg', d.mensaje); return; }
         dniValidado = dni;
         if (d.encontrado) {
@@ -259,13 +284,41 @@ async function validar() {
             document.getElementById('apellido_materno').value = d.apellido_materno || '';
             abrirFormulario();
         } else {
-            // Pedir RUC
-            rucWrap.style.display = 'flex';
+            document.getElementById('v-ruc-wrap').style.display = 'flex';
             showMsg('v-msg', d.mensaje, 'ok');
             document.getElementById('btn-validar-txt').textContent = 'Validar RUC y continuar';
+            document.getElementById('v-ruc').focus();
         }
-    } catch (e) { showMsg('v-msg', e.message); }
-    finally { btn.disabled = false; loading('btn-validar-txt','btn-validar-loader',false); }
+    } catch (e) { console.error('[postular] validar-dni error:', e); showMsg('v-msg', e.message); }
+    finally { setValidando(false); }
+}
+
+async function validarRUC() {
+    const dni = document.getElementById('v-dni').value.trim();
+    const ruc = document.getElementById('v-ruc').value.trim();
+    if (ruc.length !== 11 || !/^\d+$/.test(ruc)) { showMsg('v-msg', 'El RUC debe tener 11 dígitos.'); return; }
+    setValidando(true);
+    try {
+        console.log('[postular] validar-ruc →', { dni, ruc });
+        const r = await fetch('/api/v1/postulacion/validar-ruc', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ dni, ruc }) });
+        console.log('[postular] validar-ruc status:', r.status);
+        const d = await r.json();
+        console.log('[postular] validar-ruc respuesta:', d);
+        if (!r.ok) throw new Error(d.detail || 'Error del servidor');
+        if (!d.valido) { showMsg('v-msg', d.mensaje); return; }
+        rucValidado = ruc; dniValidado = dni;
+        // Si SUNAT respondió, pre-llenar nombres/apellidos
+        if (d.sunat_disponible) {
+            if (d.nombres) document.getElementById('nombres').value = d.nombres;
+            if (d.apellido_paterno) document.getElementById('apellido_paterno').value = d.apellido_paterno;
+            if (d.apellido_materno) document.getElementById('apellido_materno').value = d.apellido_materno;
+            showMsg('v-msg', d.mensaje, 'ok');
+        } else {
+            showMsg('v-msg', d.mensaje, 'ok');   // SUNAT no disponible: mensaje claro, se completa manual
+        }
+        setTimeout(abrirFormulario, 400);   // deja ver el mensaje un instante
+    } catch (e) { console.error('[postular] validar-ruc error:', e); showMsg('v-msg', e.message); }
+    finally { setValidando(false); }
 }
 
 function abrirFormulario() {
@@ -379,6 +432,7 @@ async function enviar() {
         banco: val('banco'), numero_cuenta: val('numero_cuenta'), cci: val('cci'), yape: val('yape'), plin: val('plin'),
         sol_usuario: val('sol_usuario'), sol_clave: val('sol_clave'),
         emision_automatica_rxh: document.getElementById('emision_automatica_rxh').checked,
+        acepta_facturalo_pro: document.getElementById('acepta_facturalo_pro').checked,
     };
 
     // Archivos
@@ -403,6 +457,7 @@ async function enviar() {
 }
 
 function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
-window.validar = validar; window.enviar = enviar; window.agregarEmpleo = agregarEmpleo; window.toggleSol = toggleSol; window.marcarArchivo = marcarArchivo;
+window.onDniInput = onDniInput; window.onRucInput = onRucInput; window.validarManual = validarManual; window.validarDNI = validarDNI; window.validarRUC = validarRUC;
+window.enviar = enviar; window.agregarEmpleo = agregarEmpleo; window.toggleSol = toggleSol; window.marcarArchivo = marcarArchivo;
 </script>
 {% endblock %}
