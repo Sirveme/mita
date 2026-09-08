@@ -22,6 +22,8 @@
     .categoria-card { background: var(--mita-card); border: 2px solid var(--mita-border); border-radius: 12px; padding: 20px 12px; text-align: center; cursor: pointer; transition: all .2s; }
     .categoria-card:hover { border-color: var(--mita-primary); transform: translateY(-2px); }
     .categoria-card.selected { border-color: var(--mita-primary); background: rgba(255,205,17,.08); }
+    .categoria-card.sugerida { border-color: var(--mita-primary); box-shadow: 0 0 0 2px rgba(255,205,17,.25); }
+    .categoria-card.sugerida::after { content: 'sugerido'; display:block; font-size:10px; color:var(--mita-primary); margin-top:4px; text-transform:uppercase; letter-spacing:.5px; }
     .categoria-icon { font-size: 26px; margin-bottom: 10px; }
     .categoria-nombre { font-size: 14px; font-weight: 500; }
     .deteccion-banner { background: rgba(255,205,17,.1); border: 1px solid rgba(255,205,17,.4); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; }
@@ -108,7 +110,7 @@
 
     <!-- Paso 2: Problema -->
     <div class="step-content" data-step="2">
-        <h2>Describe el problema</h2>
+        <h2 id="paso2-titulo">Describe el problema</h2>
         <div id="deteccion-banner" class="deteccion-banner" style="display:none;">
             <div class="deteccion-texto"><i class="fas fa-wand-magic-sparkles"></i> Detectamos: <b id="deteccion-nombre">—</b>. ¿Es correcto?</div>
             <div class="deteccion-actions">
@@ -120,9 +122,12 @@
             <label style="color:var(--mita-text-secondary); font-size:13px;">Selecciona el servicio:</label>
             <div class="tipos-servicio-grid" id="tipos-servicio-grid"></div>
         </div>
-        <div class="form-group">
-            <label>Cuéntanos qué pasó:</label>
-            <textarea id="problema-descripcion" placeholder="Ej: No enciende el refrigerador desde ayer..."></textarea>
+        <!-- Slot de descripción (modo combinado). En modo separado, el JS mueve el grupo al paso 21 -->
+        <div id="descripcion-slot-2">
+            <div id="descripcion-group" class="form-group">
+                <label>Cuéntanos qué pasó:</label>
+                <textarea id="problema-descripcion" placeholder="Ej: No enciende el refrigerador desde ayer..."></textarea>
+            </div>
         </div>
         <div id="precio-fijo-info" style="display:none;">
             <div class="precio-card"><span class="precio-label">Precio del servicio:</span><span class="precio-valor" id="precio-servicio">S/ 0.00</span></div>
@@ -131,8 +136,18 @@
             <div class="precio-card diagnostico"><span class="precio-label">Visita de diagnóstico:</span><span class="precio-valor">S/ <span id="tarifa-visita">50.00</span></span><small>El técnico evaluará y te dará el presupuesto del trabajo</small></div>
         </div>
         <div class="actions">
-            <button class="btn-secondary" onclick="irAPaso(1)"><i class="fas fa-arrow-left"></i> Atrás</button>
-            <button class="btn-primary" onclick="irAPaso(3)">Continuar</button>
+            <button class="btn-secondary" onclick="retroceder()"><i class="fas fa-arrow-left"></i> Atrás</button>
+            <button class="btn-primary" id="btn-p2" onclick="avanzar()">Continuar</button>
+        </div>
+    </div>
+
+    <!-- Paso 2b (21): Descripción (solo si separar_artefacto_descripcion=true) -->
+    <div class="step-content" data-step="21">
+        <h2>Cuéntanos qué pasó</h2>
+        <div id="descripcion-slot-21"></div>
+        <div class="actions">
+            <button class="btn-secondary" onclick="retroceder()"><i class="fas fa-arrow-left"></i> Atrás</button>
+            <button class="btn-primary" id="btn-p21" onclick="avanzar()">Continuar</button>
         </div>
     </div>
 
@@ -145,8 +160,8 @@
         <div class="form-group"><label>Distrito</label><select id="distrito"><option value="">Selecciona...</option></select></div>
         <div class="form-group"><label>Número de contacto</label><input type="tel" id="telefono" placeholder="999 999 999"></div>
         <div class="actions">
-            <button class="btn-secondary" onclick="irAPaso(2)"><i class="fas fa-arrow-left"></i> Atrás</button>
-            <button class="btn-primary" onclick="irAPaso(4)">Continuar</button>
+            <button class="btn-secondary" onclick="retroceder()"><i class="fas fa-arrow-left"></i> Atrás</button>
+            <button class="btn-primary" id="btn-p3" onclick="avanzar()">Continuar</button>
         </div>
     </div>
 
@@ -166,9 +181,9 @@
             <label class="metodo-option"><input type="radio" name="metodo_pago" value="tarjeta"><div class="metodo-card"><i class="fas fa-credit-card"></i><span>Tarjeta</span></div></label>
         </div>
         <div class="terminos"><input type="checkbox" id="acepta-terminos"><label for="acepta-terminos">Acepto los <a href="/terminos" target="_blank">Términos</a> y la Política de Cancelación</label></div>
-        <button type="button" class="btn-pagar" onclick="confirmarYPagar()"><i class="fas fa-lock"></i> Pagar y Solicitar Técnico</button>
+        <button type="button" class="btn-pagar" id="btn-p4" onclick="avanzar()"><i class="fas fa-lock"></i> Pagar y Solicitar Técnico</button>
         <p class="nota-cancelacion"><i class="fas fa-info-circle"></i> Si cancelas después de que el técnico acepte, se cobra <span id="tarifa-cancelacion">50%</span> de la tarifa.</p>
-        <div class="actions"><button class="btn-secondary" onclick="irAPaso(3)"><i class="fas fa-arrow-left"></i> Atrás</button></div>
+        <div class="actions"><button class="btn-secondary" onclick="retroceder()"><i class="fas fa-arrow-left"></i> Atrás</button></div>
     </div>
 
     <!-- Paso 5: Buscando -->
@@ -212,6 +227,13 @@ let pasoActual = 1;
 let categoriasCargadas = [];
 let mostrarTelefonoTecnico = false;   // política configurable (config-mita)
 
+// Configuración del flujo (leída de config-mita; Schiper la cambia desde /admin/configuraciones)
+const CFG = {
+    pedir_direccion: false, pedir_pago: false, deteccion: 'sugerencia', texto_final: 'Solicitar Ayuda',
+    separar: true, momento_cobro: 'cliente_elige', tarifa_virtual: 15, descuento_virtual: true, permitir_efectivo: true,
+};
+let INTAKE = [1, 2];   // pasos activos del intake (se recalcula según CFG)
+
 // Palabras clave -> código de categoría (detección desde el texto de la landing)
 const KEYWORDS_CATEGORIA = {
     ELDOM: ['lavadora','refrigeradora','refrigerador','nevera','microondas','licuadora','horno','cocina','congeladora','congelador','secadora','lavavajilla','electrodomestico','electrodoméstico'],
@@ -237,27 +259,87 @@ document.addEventListener('DOMContentLoaded', async () => {
         const ta = document.getElementById('problema-descripcion');
         if (ta) ta.value = p;   // pre-llenar "Cuéntanos qué pasó"
     }
-    cargarConfigTelefono();
+    await cargarConfig();       // lee config-mita y aplica el flujo (pasos, botón, detección)
     await cargarCategorias();
     await cargarDistritos();
 
-    // Detección inteligente: si el texto ya dice la categoría, saltar el paso 1
-    const codigo = detectarCategoriaCodigo(p);
-    if (codigo) {
-        const cat = categoriasCargadas.find(c => c.codigo === codigo);
+    // Detección de categoría según el modo configurado
+    if (CFG.deteccion !== 'off') {
+        const codigo = detectarCategoriaCodigo(p);
+        const cat = codigo && categoriasCargadas.find(c => c.codigo === codigo);
         if (cat) {
-            seleccionarCategoria(cat, true);   // salta a paso 2 con banner "Detectamos: ..."
+            if (CFG.deteccion === 'auto') {
+                seleccionarCategoria(cat, true);   // auto: preselecciona y salta al paso 2
+            } else {
+                // sugerencia: resalta la categoría pero deja que el usuario confirme
+                document.querySelectorAll('.categoria-card').forEach(el => el.classList.toggle('sugerida', parseInt(el.dataset.id) === cat.id));
+            }
         }
     }
 });
 
-async function cargarConfigTelefono() {
+const _b = (v) => v === true || v === 'true';
+
+async function cargarConfig() {
     try {
         const r = await fetch('/api/v1/admin/config-mita');
-        if (!r.ok) return;
-        const c = await r.json();
-        mostrarTelefonoTecnico = c.mostrar_telefono_tecnico === true || c.mostrar_telefono_tecnico === 'true';
-    } catch (e) { /* default: false (no mostrar teléfono) */ }
+        if (r.ok) {
+            const c = await r.json();
+            mostrarTelefonoTecnico = _b(c.mostrar_telefono_tecnico);
+            CFG.pedir_direccion = _b(c.pedir_direccion_en_intake);
+            CFG.pedir_pago      = _b(c.pedir_pago_en_intake);
+            CFG.deteccion       = c.deteccion_inteligente || 'sugerencia';
+            CFG.separar         = c.separar_artefacto_descripcion === undefined ? true : _b(c.separar_artefacto_descripcion);
+            CFG.texto_final     = c.texto_boton_final || 'Solicitar Ayuda';
+            CFG.momento_cobro   = c.momento_cobro || 'cliente_elige';
+            CFG.tarifa_virtual  = parseFloat(c.tarifa_diagnostico_virtual) || 15;
+            CFG.descuento_virtual = _b(c.descuento_virtual_a_presencial);
+            CFG.permitir_efectivo = _b(c.permitir_pago_efectivo);
+        }
+    } catch (e) { /* usa los defaults de CFG */ }
+    aplicarFlujo();
+}
+
+function aplicarFlujo() {
+    // Pasos activos del intake según configuración
+    INTAKE = [1, 2];
+    if (CFG.separar) INTAKE.push(21);           // 21 = paso solo-descripción
+    if (CFG.pedir_direccion) INTAKE.push(3);
+    if (CFG.pedir_pago) INTAKE.push(4);
+
+    // Mueve el grupo de descripción al paso separado (21) o de vuelta al paso 2
+    const grupo = document.getElementById('descripcion-group');
+    const destino = document.getElementById(CFG.separar ? 'descripcion-slot-21' : 'descripcion-slot-2');
+    if (grupo && destino && grupo.parentElement !== destino) destino.appendChild(grupo);
+
+    // Título del paso 2 según el modo
+    const t2 = document.getElementById('paso2-titulo');
+    if (t2) t2.textContent = CFG.separar ? '¿Qué necesitas atender?' : 'Describe el problema';
+
+    // Stepper: una bolita por paso de intake
+    const stepper = document.querySelector('.stepper');
+    if (stepper) stepper.innerHTML = INTAKE.map((_, i) => `<div class="step-dot${i === 0 ? ' active' : ''}"></div>`).join('');
+
+    // Etiqueta del botón final (último paso del intake) + método efectivo
+    configurarBotones();
+}
+
+function configurarBotones() {
+    const ultimo = INTAKE[INTAKE.length - 1];
+    const b2 = document.getElementById('btn-p2');
+    if (b2) b2.textContent = (ultimo === 2) ? CFG.texto_final : 'Continuar';
+    const b21 = document.getElementById('btn-p21');
+    if (b21) b21.textContent = (ultimo === 21) ? CFG.texto_final : 'Continuar';
+    const b3 = document.getElementById('btn-p3');
+    if (b3) b3.textContent = (ultimo === 3) ? CFG.texto_final : 'Continuar';
+    const b4 = document.getElementById('btn-p4');
+    if (b4) b4.innerHTML = `<i class="fas fa-lock"></i> ${CFG.texto_final}`;
+    // Pago en efectivo como método adicional
+    if (CFG.permitir_efectivo && CFG.pedir_pago && !document.getElementById('metodo-efectivo')) {
+        const grid = document.querySelector('.metodos-grid');
+        if (grid) grid.insertAdjacentHTML('beforeend',
+            `<label class="metodo-option"><input type="radio" name="metodo_pago" value="efectivo" id="metodo-efectivo"><div class="metodo-card"><i class="fas fa-money-bill-wave" style="color:#22c55e;"></i><span>Efectivo</span></div></label>`);
+    }
 }
 
 async function cargarCategorias() {
@@ -373,64 +455,105 @@ async function obtenerUbicacion() {
     } catch (e) { MitaAlert.error('Error', 'No se pudo obtener tu ubicación'); }
 }
 
-function irAPaso(paso) {
-    if (paso === 2 && !estado.categoria) { MitaAlert.error('Falta categoría', 'Elige un tipo de servicio'); return; }
-    if (paso === 3) {
-        estado.problema = document.getElementById('problema-descripcion').value.trim() || estado.problema;
-        if (!estado.problema || estado.problema.length < 5) { MitaAlert.error('Describe el problema', 'Cuéntanos qué pasó (mín. 5 caracteres)'); return; }
+// Salto directo (usado por selección de categoría / cambiar categoría)
+function irAPaso(paso) { mostrarPaso(paso); }
+
+// Validación por paso (solo de los pasos activos)
+function validarDescripcion() {
+    estado.problema = document.getElementById('problema-descripcion').value.trim() || estado.problema;
+    if (!estado.problema || estado.problema.length < 5) { MitaAlert.error('Describe el problema', 'Cuéntanos qué pasó (mín. 5 caracteres)'); return false; }
+    return true;
+}
+
+function validarPaso(paso) {
+    if (paso === 2) {
+        if (!estado.categoria) { MitaAlert.error('Falta especialidad', 'Elige una categoría'); return false; }
+        // En modo combinado la descripción está en este paso; en modo separado se valida en el paso 21
+        if (!CFG.separar && !validarDescripcion()) return false;
     }
-    if (paso === 4) {
+    if (paso === 21) {
+        if (!validarDescripcion()) return false;
+    }
+    if (paso === 3) {
         estado.direccion = document.getElementById('direccion').value.trim();
         estado.distrito = document.getElementById('distrito').value;
         estado.referencia = document.getElementById('referencia').value.trim();
         estado.telefono = document.getElementById('telefono').value.trim();
-        if (!estado.direccion || !estado.distrito) { MitaAlert.error('Completa la dirección', 'Dirección y distrito son obligatorios'); return; }
-        document.getElementById('resumen-categoria').textContent = estado.categoria?.nombre || '-';
-        document.getElementById('resumen-problema').textContent = (estado.problema || '-').slice(0, 60);
-        document.getElementById('resumen-direccion').textContent = `${estado.direccion}, ${estado.distrito}`;
-        document.getElementById('resumen-precio').textContent = 'S/ ' + estado.precio.toFixed(2);
+        if (!estado.direccion || !estado.distrito) { MitaAlert.error('Completa la dirección', 'Dirección y distrito son obligatorios'); return false; }
     }
-    mostrarPaso(paso);
+    if (paso === 4) {
+        if (!document.querySelector('input[name="metodo_pago"]:checked')) { MitaAlert.error('Elige un método de pago', 'Selecciona una opción'); return false; }
+        if (!document.getElementById('acepta-terminos').checked) { MitaAlert.error('Términos', 'Debes aceptar los términos'); return false; }
+    }
+    return true;
+}
+
+// Avanza al siguiente paso del intake; si es el último, envía la solicitud
+function avanzar() {
+    if (!validarPaso(pasoActual)) return;
+    const i = INTAKE.indexOf(pasoActual);
+    if (i >= 0 && i < INTAKE.length - 1) mostrarPaso(INTAKE[i + 1]);
+    else enviarSolicitud();
+}
+
+function retroceder() {
+    const i = INTAKE.indexOf(pasoActual);
+    if (i > 0) mostrarPaso(INTAKE[i - 1]);
+    else irAPaso(1);
+}
+
+function construirResumen() {
+    document.getElementById('resumen-categoria').textContent = estado.categoria?.nombre || '-';
+    document.getElementById('resumen-problema').textContent = (estado.problema || '-').slice(0, 60);
+    const rd = document.getElementById('resumen-direccion');
+    if (rd) rd.textContent = (CFG.pedir_direccion && estado.direccion) ? `${estado.direccion}, ${estado.distrito}` : 'No especificada';
+    document.getElementById('resumen-precio').textContent = 'S/ ' + estado.precio.toFixed(2);
 }
 
 function mostrarPaso(paso) {
     pasoActual = paso;
     document.querySelectorAll('.step-content').forEach(s => s.classList.toggle('active', parseInt(s.dataset.step) === paso));
+    // Stepper según posición en el intake (los pasos 5/6 no tienen bolita)
+    const idx = INTAKE.indexOf(paso);
     document.querySelectorAll('.step-dot').forEach((d, i) => {
         d.classList.remove('active', 'completed');
-        const n = i + 1;
-        if (n < Math.min(paso, 4)) d.classList.add('completed');
-        if (n === Math.min(paso, 4)) d.classList.add('active');
+        if (idx >= 0) { if (i < idx) d.classList.add('completed'); if (i === idx) d.classList.add('active'); }
     });
+    if (paso === 4) construirResumen();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-async function confirmarYPagar() {
-    const metodo = document.querySelector('input[name="metodo_pago"]:checked');
-    if (!metodo) { MitaAlert.error('Elige un método de pago', 'Selecciona Yape, Plin o Tarjeta'); return; }
-    if (!document.getElementById('acepta-terminos').checked) { MitaAlert.error('Términos', 'Debes aceptar los términos'); return; }
-
+// Envía la solicitud con los datos disponibles (según los pasos activos)
+async function enviarSolicitud() {
+    estado.problema = document.getElementById('problema-descripcion').value.trim() || estado.problema;
+    let metodo = null;
+    if (CFG.pedir_pago) {
+        const m = document.querySelector('input[name="metodo_pago"]:checked');
+        metodo = m ? m.value : null;
+    }
     mostrarPaso(5);
     iniciarProgreso();
-
     try {
         const r = await fetch('/api/v1/solicitudes', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 problema: estado.problema, categoria_id: estado.categoria?.id,
                 tipo_servicio_id: estado.tipo?.id || null,
-                direccion: estado.direccion, distrito: estado.distrito, referencia: estado.referencia, telefono: estado.telefono,
+                direccion: CFG.pedir_direccion ? estado.direccion : null,
+                distrito: CFG.pedir_direccion ? estado.distrito : null,
+                referencia: estado.referencia || null, telefono: estado.telefono || null,
                 lat: estado.lat, lng: estado.lng,
                 precio_servicio: estado.precio, es_precio_fijo: estado.esPrecioFijo,
-                metodo_pago: metodo.value, pago_adelantado: true
+                metodo_pago: metodo, pago_adelantado: CFG.pedir_pago
             })
         });
         if (r.ok) { const d = await r.json(); estado.solicitudId = d.id; fetch(`/api/v1/asignacion/iniciar/${d.id}`, { method: 'POST' }).catch(() => {}); }
     } catch (e) { /* demo: continúa igual */ }
 
-    // Buscar un técnico para mostrar (real o demo)
     setTimeout(mostrarTecnicoAsignado, 4500);
 }
+// Compat: el nombre antiguo sigue disponible
+const confirmarYPagar = avanzar;
 
 let progresoTimer = null;
 function iniciarProgreso() {
@@ -482,7 +605,8 @@ function llamarTecnico() {
 function irAlChat() { window.location.href = '/cliente/chat?solicitud=' + (estado.solicitudId || 'demo'); }
 window.seleccionarCategoria = seleccionarCategoria; window.seleccionarTipo = seleccionarTipo;
 window.confirmarDeteccion = confirmarDeteccion; window.cambiarCategoria = cambiarCategoria;
-window.irAPaso = irAPaso; window.confirmarYPagar = confirmarYPagar; window.obtenerUbicacion = obtenerUbicacion;
+window.irAPaso = irAPaso; window.avanzar = avanzar; window.retroceder = retroceder;
+window.enviarSolicitud = enviarSolicitud; window.confirmarYPagar = confirmarYPagar; window.obtenerUbicacion = obtenerUbicacion;
 window.cancelarBusqueda = cancelarBusqueda; window.llamarTecnico = llamarTecnico; window.irAlChat = irAlChat;
 </script>
 {% endblock %}
