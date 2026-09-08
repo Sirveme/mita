@@ -133,6 +133,13 @@ async def admin_postulante_detalle_page(request: Request, item_id: int, db: Sess
         return redir
     return templates.TemplateResponse("admin/postulante_detalle.html", {"request": request, "active": "postulantes", "postulante_id": item_id})
 
+@router.get("/admin/waitlist", response_class=HTMLResponse)
+async def admin_waitlist_page(request: Request, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir:
+        return redir
+    return templates.TemplateResponse("admin/waitlist.html", {"request": request, "active": "waitlist"})
+
 @router.get("/admin/usuarios", response_class=HTMLResponse)
 async def admin_usuarios(request: Request):
     """Lista de usuarios del panel + reset de clave"""
