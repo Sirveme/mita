@@ -246,6 +246,7 @@ class Distrito(Base):
     zona = Column(String(50))  # Lima Centro, Lima Norte, etc.
     codigo_ubigeo = Column(String(10))
     activo = Column(Boolean, default=True)
+    habilitado = Column(Boolean, default=False)  # cobertura de servicio (flujo cliente)
 
     # Centro geográfico aproximado
     centro_lat = Column(Numeric(10, 8))

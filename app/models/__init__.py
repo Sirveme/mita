@@ -42,3 +42,5 @@ from app.models.solicitud_mita import Solicitud
 from app.models.billetera import BilleteraPersonal
 from app.models.postulante import Postulante, EstadoPostulante, TipoRelacion
 from app.models.tipo_documento import TipoDocumentoPostulacion
+from app.models.integracion import Integracion, IntegracionLog
+from app.models.waitlist import WaitlistDistrito

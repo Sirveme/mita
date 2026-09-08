@@ -30,6 +30,7 @@ class UsuarioMita(Base):
     activo = Column(Boolean, default=True)
     verificado = Column(Boolean, default=False)
     requiere_cambio_clave = Column(Boolean, default=False)  # fuerza cambio en 1er login
+    es_soporte = Column(Boolean, default=False)             # acceso al panel /soporte
 
     intentos_fallidos = Column(Integer, default=0)
     bloqueado_hasta = Column(DateTime)
