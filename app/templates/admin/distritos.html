@@ -12,7 +12,7 @@
                 <option>Lima Este</option><option>Callao</option></select>
         </div>
         <table class="am-table">
-            <thead><tr><th>Nombre</th><th>Zona</th><th>Ubigeo</th><th>Centro (lat, lng)</th><th>Cobertura</th><th></th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Zona</th><th>Ubigeo</th><th>Centro (lat, lng)</th><th>Cobertura</th><th>Habilitado</th><th></th></tr></thead>
             <tbody id="tbody"><tr><td colspan="6" class="am-empty">Cargando…</td></tr></tbody>
         </table>
     </div>
@@ -93,14 +93,19 @@
 
     async function cargar(){
         try { const d = await api(''); items = d.items || []; render(); }
-        catch(e){ document.getElementById('tbody').innerHTML = `<tr><td colspan="6" class="am-error">Error al cargar (¿BD?): ${e.message}</td></tr>`; }
+        catch(e){ document.getElementById('tbody').innerHTML = `<tr><td colspan="7" class="am-error">Error al cargar (¿BD?): ${e.message}</td></tr>`; }
     }
+    async function toggleHabilitado(id, actual){
+        try { await api('/'+id, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ habilitado: !actual }) }); cargar(); }
+        catch(e){ alert('Error: '+e.message); }
+    }
+    window.toggleHabilitado = toggleHabilitado;
     function render(){
         const q = (document.getElementById('buscar').value||'').toLowerCase();
         const z = document.getElementById('filtroZona').value;
         let lista = items.filter(d => (d.nombre||'').toLowerCase().includes(q) && (!z || d.zona===z));
         const tb = document.getElementById('tbody');
-        if(!lista.length){ tb.innerHTML = '<tr><td colspan="6" class="am-empty">Sin distritos</td></tr>'; return; }
+        if(!lista.length){ tb.innerHTML = '<tr><td colspan="7" class="am-empty">Sin distritos</td></tr>'; return; }
         tb.innerHTML = lista.map(d => `
             <tr>
                 <td><b>${esc(d.nombre)}</b></td>
@@ -108,6 +113,8 @@
                 <td>${esc(d.codigo_ubigeo)}</td>
                 <td>${d.centro_lat ?? '—'}, ${d.centro_lng ?? '—'}</td>
                 <td>${d.activo?'<span class="badge badge-on">Activa</span>':'<span class="badge badge-off">Inactiva</span>'}</td>
+                <td><button class="btn btn-sm ${d.habilitado?'btn-primary':'btn-secondary'}" onclick="toggleHabilitado(${d.id}, ${d.habilitado?true:false})" title="Cobertura de servicio al cliente">
+                    <i class="fas ${d.habilitado?'fa-check':'fa-xmark'}"></i> ${d.habilitado?'Sí':'No'}</button></td>
                 <td><div class="acts">
                     <button class="btn btn-secondary btn-sm" onclick='abrirModal(${JSON.stringify(d)})'><i class="fas fa-pen"></i></button>
                     <button class="btn btn-danger btn-sm" onclick="eliminar(${d.id})"><i class="fas fa-trash"></i></button>

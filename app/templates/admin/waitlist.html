@@ -1,0 +1,79 @@
+{% extends "admin/layout.html" %}
+{% block title %}Lista de espera{% endblock %}
+{% block page_title %}Lista de espera por distrito{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filtros { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:18px; align-items:end; }
+    .filtros .fg { display:flex; flex-direction:column; gap:6px; }
+    .filtros label { font-size:12px; color:#8696a0; }
+    .filtros select { padding:9px 12px; background:#1b1b26; border:1px solid #2a2a3a; border-radius:8px; color:#fff; }
+    .wl-table { width:100%; border-collapse:collapse; background:#111b21; border:1px solid #2a373f; border-radius:12px; overflow:hidden; }
+    .wl-table th { text-align:left; padding:11px 14px; background:#16232b; font-size:13px; border-bottom:1px solid #2a373f; }
+    .wl-table td { padding:11px 14px; border-bottom:1px solid #1e2a30; font-size:14px; }
+    .badge { padding:3px 10px; border-radius:20px; font-size:12px; }
+    .b-si { background:rgba(34,197,94,.15); color:#22c55e; } .b-no { background:rgba(255,205,17,.15); color:#FFCD11; }
+    .btn { padding:7px 12px; border:none; border-radius:7px; font-weight:600; cursor:pointer; font-size:13px; text-decoration:none; display:inline-block; }
+    .btn-primary { background:#FFCD11; color:#000; } .btn-ghost { background:transparent; color:#e9edef; border:1px solid #2a373f; }
+    .empty { text-align:center; padding:40px; color:#8696a0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="filtros">
+    <div class="fg"><label>Distrito</label><select id="f-distrito" onchange="cargar()"><option value="">Todos</option></select></div>
+    <div class="fg"><label>Notificado</label>
+        <select id="f-notif" onchange="cargar()"><option value="">Todos</option><option value="false">Pendientes</option><option value="true">Notificados</option></select></div>
+    <div class="fg"><label>&nbsp;</label><a class="btn btn-ghost" id="btn-csv" href="#" onclick="exportar(event)"><i class="fas fa-file-csv"></i> Exportar CSV</a></div>
+</div>
+
+<div style="overflow-x:auto;">
+<table class="wl-table">
+    <thead><tr><th>Fecha</th><th>Email</th><th>Teléfono</th><th>Distrito</th><th>Interés</th><th>Estado</th><th></th></tr></thead>
+    <tbody id="tbody"><tr><td colspan="7" class="empty">Cargando...</td></tr></tbody>
+</table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function _params(){
+    const p = new URLSearchParams();
+    const d = document.getElementById('f-distrito').value; if(d) p.set('distrito_id', d);
+    const n = document.getElementById('f-notif').value; if(n) p.set('notificado', n);
+    return p;
+}
+async function cargarDistritos(){
+    try {
+        const items = (await (await fetch('/api/v1/admin/distritos')).json()).items || [];
+        document.getElementById('f-distrito').innerHTML = '<option value="">Todos</option>' +
+            items.map(d=>`<option value="${d.id}">${d.nombre}</option>`).join('');
+    } catch(e){}
+}
+async function cargar(){
+    const tb = document.getElementById('tbody');
+    try {
+        const r = await fetch('/api/v1/admin/waitlist?' + _params().toString());
+        if(r.status===401){ location.href='/login'; return; }
+        const items = (await r.json()).items || [];
+        if(!items.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Sin interesados</td></tr>'; return; }
+        tb.innerHTML = items.map(w=>`<tr>
+            <td>${w.creado_en?new Date(w.creado_en).toLocaleDateString('es-PE'):'-'}</td>
+            <td>${w.email}</td><td>${w.telefono||'—'}</td>
+            <td>${w.distrito_nombre||('#'+(w.distrito_id||''))}</td>
+            <td>${w.categoria_interes||'—'}</td>
+            <td><span class="badge ${w.notificado?'b-si':'b-no'}">${w.notificado?'Notificado':'Pendiente'}</span></td>
+            <td>${w.notificado?'':`<button class="btn btn-primary" onclick="notificar(${w.id})"><i class="fas fa-bell"></i> Marcar notificado</button>`}</td>
+        </tr>`).join('');
+    } catch(e){ tb.innerHTML='<tr><td colspan="7" class="empty">No se pudo cargar</td></tr>'; }
+}
+async function notificar(id){
+    if(!confirm('¿Marcar como notificado?')) return;
+    const r = await fetch(`/api/v1/admin/waitlist/${id}/notificar`, {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
+    if(r.ok) cargar(); else alert('Error');
+}
+function exportar(e){ e.preventDefault(); window.location = '/api/v1/admin/waitlist/export.csv?' + _params().toString(); }
+window.cargar=cargar; window.notificar=notificar; window.exportar=exportar;
+document.addEventListener('DOMContentLoaded', ()=>{ cargarDistritos(); cargar(); });
+</script>
+{% endblock %}
