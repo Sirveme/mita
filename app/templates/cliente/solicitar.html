@@ -143,7 +143,7 @@
 
     <!-- Paso 2b (21): Descripción (solo si separar_artefacto_descripcion=true) -->
     <div class="step-content" data-step="21">
-        <h2>Cuéntanos qué pasó</h2>
+        <h2>Describe tu problema para poder ayudarte</h2>
         <div id="descripcion-slot-21"></div>
         <div class="actions">
             <button class="btn-secondary" onclick="retroceder()"><i class="fas fa-arrow-left"></i> Atrás</button>
@@ -157,7 +157,18 @@
         <button type="button" class="btn-ubicacion" onclick="obtenerUbicacion()"><i class="fas fa-map-marker-alt"></i> Usar mi ubicación actual</button>
         <div class="form-group"><label>Dirección completa</label><input type="text" id="direccion" placeholder="Av. Principal 123, Dpto 456"></div>
         <div class="form-group"><label>Referencia</label><input type="text" id="referencia" placeholder="Frente al parque, edificio azul"></div>
-        <div class="form-group"><label>Distrito</label><select id="distrito"><option value="">Selecciona...</option></select></div>
+        <div class="form-group"><label>Distrito</label><select id="distrito" onchange="onDistritoChange()"><option value="">Selecciona...</option></select></div>
+        <div id="distrito-alerta" style="display:none;">
+            <div class="precio-card" style="border-color:rgba(239,68,68,.5); background:rgba(239,68,68,.06);">
+                <span class="precio-label" style="color:#ef4444;" id="distrito-alerta-msg">Distrito fuera de alcance</span>
+                <small>Aún no llegamos a tu distrito. Déjanos tu email y te avisamos cuando lo habilitemos.</small>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+                    <input type="email" id="waitlist-email" placeholder="tu@email.com (obligatorio)" style="padding:10px; background:var(--mita-card); border:1px solid var(--mita-border); border-radius:8px; color:var(--mita-text);">
+                    <input type="tel" id="waitlist-telefono" inputmode="numeric" placeholder="Teléfono (opcional)" style="padding:10px; background:var(--mita-card); border:1px solid var(--mita-border); border-radius:8px; color:var(--mita-text);">
+                    <button type="button" class="btn-primary" onclick="avisarme()">Avísame cuando lleguen a mi zona</button>
+                </div>
+            </div>
+        </div>
         <div class="form-group"><label>Número de contacto</label><input type="tel" id="telefono" placeholder="999 999 999"></div>
         <div class="actions">
             <button class="btn-secondary" onclick="retroceder()"><i class="fas fa-arrow-left"></i> Atrás</button>
@@ -183,6 +194,18 @@
         <div class="terminos"><input type="checkbox" id="acepta-terminos"><label for="acepta-terminos">Acepto los <a href="/terminos" target="_blank">Términos</a> y la Política de Cancelación</label></div>
         <button type="button" class="btn-pagar" id="btn-p4" onclick="avanzar()"><i class="fas fa-lock"></i> Pagar y Solicitar Técnico</button>
         <p class="nota-cancelacion"><i class="fas fa-info-circle"></i> Si cancelas después de que el técnico acepte, se cobra <span id="tarifa-cancelacion">50%</span> de la tarifa.</p>
+        <div class="actions"><button class="btn-secondary" onclick="retroceder()"><i class="fas fa-arrow-left"></i> Atrás</button></div>
+    </div>
+
+    <!-- Paso final (40): Solicitar (sin pago) -->
+    <div class="step-content" data-step="40">
+        <h2>Confirma tu solicitud</h2>
+        <div class="resumen-card">
+            <div class="resumen-item"><span class="label">Servicio</span><span class="value" id="r40-cat">-</span></div>
+            <div class="resumen-item"><span class="label">Necesidad</span><span class="value" id="r40-tipo">-</span></div>
+            <div class="resumen-item"><span class="label">Problema</span><span class="value" id="r40-prob">-</span></div>
+        </div>
+        <button type="button" class="btn-pagar" id="btn-p40" onclick="avanzar()"><i class="fas fa-headset"></i> Solicitar Ayuda</button>
         <div class="actions"><button class="btn-secondary" onclick="retroceder()"><i class="fas fa-arrow-left"></i> Atrás</button></div>
     </div>
 
@@ -231,7 +254,9 @@ let mostrarTelefonoTecnico = false;   // política configurable (config-mita)
 const CFG = {
     pedir_direccion: false, pedir_pago: false, deteccion: 'sugerencia', texto_final: 'Solicitar Ayuda',
     separar: true, momento_cobro: 'cliente_elige', tarifa_virtual: 15, descuento_virtual: true, permitir_efectivo: true,
+    mensaje_distrito: 'Distrito fuera de alcance',
 };
+let distritosData = [];   // distritos con su flag habilitado
 let INTAKE = [1, 2];   // pasos activos del intake (se recalcula según CFG)
 
 // Palabras clave -> código de categoría (detección desde el texto de la landing)
@@ -295,6 +320,7 @@ async function cargarConfig() {
             CFG.tarifa_virtual  = parseFloat(c.tarifa_diagnostico_virtual) || 15;
             CFG.descuento_virtual = _b(c.descuento_virtual_a_presencial);
             CFG.permitir_efectivo = _b(c.permitir_pago_efectivo);
+            CFG.mensaje_distrito  = c.mensaje_distrito_fuera_alcance || CFG.mensaje_distrito;
         }
     } catch (e) { /* usa los defaults de CFG */ }
     aplicarFlujo();
@@ -305,7 +331,8 @@ function aplicarFlujo() {
     INTAKE = [1, 2];
     if (CFG.separar) INTAKE.push(21);           // 21 = paso solo-descripción
     if (CFG.pedir_direccion) INTAKE.push(3);
-    if (CFG.pedir_pago) INTAKE.push(4);
+    if (CFG.pedir_pago) INTAKE.push(4);         // 4 = confirmar + pago (paso final)
+    else INTAKE.push(40);                       // 40 = confirmar + "Solicitar Ayuda" (sin pago)
 
     // Mueve el grupo de descripción al paso separado (21) o de vuelta al paso 2
     const grupo = document.getElementById('descripcion-group');
@@ -334,6 +361,8 @@ function configurarBotones() {
     if (b3) b3.textContent = (ultimo === 3) ? CFG.texto_final : 'Continuar';
     const b4 = document.getElementById('btn-p4');
     if (b4) b4.innerHTML = `<i class="fas fa-lock"></i> ${CFG.texto_final}`;
+    const b40 = document.getElementById('btn-p40');
+    if (b40) b40.innerHTML = `<i class="fas fa-headset"></i> ${CFG.texto_final}`;
     // Pago en efectivo como método adicional
     if (CFG.permitir_efectivo && CFG.pedir_pago && !document.getElementById('metodo-efectivo')) {
         const grid = document.querySelector('.metodos-grid');
@@ -440,10 +469,52 @@ async function cargarDistritos() {
         if (!r.ok) throw new Error();
         const d = (await r.json()).items || [];
         if (!d.length) throw new Error();
+        distritosData = d;
         sel.innerHTML = '<option value="">Selecciona...</option>' + d.map(x => `<option value="${x.nombre}">${x.nombre}</option>`).join('');
     } catch (e) {
-        ['Miraflores','San Isidro','Surco','La Molina','San Borja','Barranco'].forEach(n => sel.insertAdjacentHTML('beforeend', `<option value="${n}">${n}</option>`));
+        // Fallback: sin BD tratamos los distritos como habilitados (no bloquear el demo)
+        distritosData = ['Miraflores','San Isidro','Surco','La Molina','San Borja','Barranco'].map(n => ({ nombre: n, habilitado: true }));
+        sel.innerHTML = '<option value="">Selecciona...</option>' + distritosData.map(x => `<option value="${x.nombre}">${x.nombre}</option>`).join('');
     }
+}
+
+function _distritoHabilitado(nombre) {
+    const d = distritosData.find(x => x.nombre === nombre);
+    // Si no lo conocemos, no bloqueamos; solo bloqueamos cuando SABEMOS que no está habilitado
+    return !d || d.habilitado !== false;
+}
+
+function onDistritoChange() {
+    const nombre = document.getElementById('distrito').value;
+    const alerta = document.getElementById('distrito-alerta');
+    if (nombre && !_distritoHabilitado(nombre)) {
+        document.getElementById('distrito-alerta-msg').textContent = CFG.mensaje_distrito;
+        alerta.style.display = 'block';
+    } else {
+        alerta.style.display = 'none';
+    }
+}
+
+async function avisarme() {
+    const email = (document.getElementById('waitlist-email').value || '').trim();
+    const telefono = (document.getElementById('waitlist-telefono').value || '').trim();
+    if (!email || !email.includes('@')) { MitaAlert.error('Email', 'Ingresa un email válido'); return; }
+    const nombre = document.getElementById('distrito').value;
+    const d = distritosData.find(x => x.nombre === nombre);
+    try {
+        const r = await fetch('/api/v1/waitlist', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email, telefono: telefono || null,
+                distrito_id: d ? (d.id || null) : null, distrito_nombre: nombre,
+                categoria_interes: estado.categoria?.codigo || null
+            })
+        });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.detail || 'Error');
+        MitaAlert.success('¡Gracias!', j.mensaje || 'Te avisaremos cuando lleguemos a tu distrito.');
+        document.getElementById('distrito-alerta').style.display = 'none';
+    } catch (e) { MitaAlert.error('Error', e.message); }
 }
 
 async function obtenerUbicacion() {
@@ -480,6 +551,7 @@ function validarPaso(paso) {
         estado.referencia = document.getElementById('referencia').value.trim();
         estado.telefono = document.getElementById('telefono').value.trim();
         if (!estado.direccion || !estado.distrito) { MitaAlert.error('Completa la dirección', 'Dirección y distrito son obligatorios'); return false; }
+        if (!_distritoHabilitado(estado.distrito)) { MitaAlert.error('Distrito no disponible', CFG.mensaje_distrito); onDistritoChange(); return false; }
     }
     if (paso === 4) {
         if (!document.querySelector('input[name="metodo_pago"]:checked')) { MitaAlert.error('Elige un método de pago', 'Selecciona una opción'); return false; }
@@ -520,7 +592,14 @@ function mostrarPaso(paso) {
         if (idx >= 0) { if (i < idx) d.classList.add('completed'); if (i === idx) d.classList.add('active'); }
     });
     if (paso === 4) construirResumen();
+    if (paso === 40) construirResumen40();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function construirResumen40() {
+    document.getElementById('r40-cat').textContent = estado.categoria?.nombre || '-';
+    document.getElementById('r40-tipo').textContent = estado.tipo?.nombre || '—';
+    document.getElementById('r40-prob').textContent = (estado.problema || '-').slice(0, 80);
 }
 
 // Envía la solicitud con los datos disponibles (según los pasos activos)
@@ -608,5 +687,6 @@ window.confirmarDeteccion = confirmarDeteccion; window.cambiarCategoria = cambia
 window.irAPaso = irAPaso; window.avanzar = avanzar; window.retroceder = retroceder;
 window.enviarSolicitud = enviarSolicitud; window.confirmarYPagar = confirmarYPagar; window.obtenerUbicacion = obtenerUbicacion;
 window.cancelarBusqueda = cancelarBusqueda; window.llamarTecnico = llamarTecnico; window.irAlChat = irAlChat;
+window.onDistritoChange = onDistritoChange; window.avisarme = avisarme;
 </script>
 {% endblock %}
