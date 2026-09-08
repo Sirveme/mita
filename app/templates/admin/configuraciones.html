@@ -53,6 +53,7 @@
     <button class="cfg-tab" data-tab="asignacion" onclick="tab('asignacion')"><i class="fas fa-user-clock"></i> Asignación y Tiempos</button>
     <button class="cfg-tab" data-tab="comunicacion" onclick="tab('comunicacion')"><i class="fas fa-shield-halved"></i> Comunicación y Privacidad</button>
     <button class="cfg-tab" data-tab="liquidaciones" onclick="tab('liquidaciones')"><i class="fas fa-file-invoice-dollar"></i> Liquidaciones</button>
+    <button class="cfg-tab" data-tab="flujo" onclick="tab('flujo')"><i class="fas fa-diagram-project"></i> Flujo de Solicitud</button>
     <button class="cfg-tab" data-tab="documentos" onclick="tab('documentos')"><i class="fas fa-file-lines"></i> Documentos Postulación</button>
     <button class="cfg-tab" data-tab="proveedores" onclick="tab('proveedores')"><i class="fas fa-truck-field"></i> Proveedores</button>
 </div>
@@ -62,6 +63,7 @@
 <div class="cfg-panel" id="panel-asignacion"></div>
 <div class="cfg-panel" id="panel-comunicacion"></div>
 <div class="cfg-panel" id="panel-liquidaciones"></div>
+<div class="cfg-panel" id="panel-flujo"></div>
 
 <!-- Documentos -->
 <div class="cfg-panel" id="panel-documentos">
@@ -116,6 +118,20 @@ const TABS = {
         { clave:'liquidacion_plazo_rxh_dias', label:'Plazo subir RxH', tipo:'int', suf:'días', desc:'Días tras el servicio para subir el recibo' },
         { clave:'liquidacion_email', label:'Email de notificación', tipo:'text', desc:'Para avisos de liquidación' },
     ],
+    flujo: [
+        // --- Flujo de solicitud ---
+        { clave:'flujo_pasos', label:'Pasos del flujo', tipo:'int', suf:'#', desc:'Cantidad de pasos del intake (referencial)' },
+        { clave:'pedir_direccion_en_intake', label:'Pedir dirección en el intake', tipo:'bool', desc:'Incluir el paso de dirección/ubicación al solicitar' },
+        { clave:'pedir_pago_en_intake', label:'Pedir pago en el intake', tipo:'bool', desc:'Incluir el paso de pago al solicitar' },
+        { clave:'deteccion_inteligente', label:'Detección inteligente', tipo:'select', opciones:['off','sugerencia','auto'], desc:'Detectar categoría desde el texto (off/sugerencia/auto)' },
+        { clave:'separar_artefacto_descripcion', label:'Separar artefacto y descripción', tipo:'bool', desc:'Artefacto y descripción en pasos distintos (sí) o juntos (no)' },
+        { clave:'texto_boton_final', label:'Texto del botón final', tipo:'text', desc:'Etiqueta del botón que envía la solicitud' },
+        // --- Cobro ---
+        { clave:'momento_cobro', label:'Momento de cobro', tipo:'select', opciones:['antes_asignacion','despues_visita','cliente_elige'], desc:'Cuándo se cobra el servicio' },
+        { clave:'tarifa_diagnostico_virtual', label:'Tarifa diagnóstico virtual', tipo:'money', pre:'S/', desc:'Costo del diagnóstico virtual' },
+        { clave:'descuento_virtual_a_presencial', label:'Descontar virtual a presencial', tipo:'bool', desc:'Restar la tarifa virtual si se concreta el servicio presencial' },
+        { clave:'permitir_pago_efectivo', label:'Permitir pago en efectivo', tipo:'bool', desc:'Habilitar efectivo como método de pago' },
+    ],
 };
 
 let CONFIG = {};
@@ -163,7 +179,7 @@ function renderTab(name) {
         </div>`;
 }
 
-function renderTodo() { ['tarifas','asignacion','comunicacion','liquidaciones'].forEach(renderTab); }
+function renderTodo() { ['tarifas','asignacion','comunicacion','liquidaciones','flujo'].forEach(renderTab); }
 function marcarDirty(el) { el.classList.add('dirty'); }
 
 async function cargarConfig() {
