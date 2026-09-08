@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Soporte MITA{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root { --bg:#0b141a; --panel:#111b21; --bd:#2a373f; --tx:#e9edef; --tx2:#8696a0; --am:#FFCD11; --cell:#0e171d; }
+        body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--tx); }
+        .wrap { display:flex; min-height:100vh; }
+        .sidebar { width:230px; background:var(--panel); border-right:1px solid var(--bd); display:flex; flex-direction:column; flex-shrink:0; }
+        .sb-brand { padding:20px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--bd); }
+        .sb-brand .ic { width:38px; height:38px; border-radius:10px; background:var(--am); color:#000; display:flex; align-items:center; justify-content:center; font-size:18px; }
+        .sb-brand b { font-size:15px; } .sb-brand small { color:var(--tx2); font-size:11px; display:block; }
+        .sb-menu { flex:1; padding:14px 10px; }
+        .sb-menu a { display:flex; align-items:center; gap:12px; padding:11px 14px; color:var(--tx2); text-decoration:none; border-radius:8px; font-size:14px; margin-bottom:2px; }
+        .sb-menu a.active, .sb-menu a:hover { background:#16232b; color:var(--tx); }
+        .sb-menu a.active { color:var(--am); }
+        .sb-foot { padding:14px; border-top:1px solid var(--bd); }
+        .sb-foot a { color:var(--tx2); text-decoration:none; font-size:13px; }
+        .main { flex:1; min-width:0; }
+        .topbar { padding:18px 26px; border-bottom:1px solid var(--bd); font-size:18px; font-weight:600; }
+        .content { padding:26px; max-width:900px; }
+        .card { background:var(--panel); border:1px solid var(--bd); border-radius:14px; padding:22px; margin-bottom:18px; }
+        .card h2 { font-size:16px; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+        .card h2 i { color:var(--am); }
+        .fg { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+        .fg label { font-size:13px; color:var(--tx2); }
+        .fg input, .fg select { padding:11px 12px; background:var(--cell); border:1px solid var(--bd); border-radius:8px; color:var(--tx); font-size:14px; }
+        .fg input:focus, .fg select:focus { outline:none; border-color:var(--am); }
+        .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        .toggle { display:flex; align-items:center; gap:10px; margin:6px 0 14px; }
+        .toggle input { width:44px; height:24px; }
+        .btn { padding:11px 18px; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:14px; }
+        .btn-primary { background:var(--am); color:#000; } .btn-ghost { background:transparent; color:var(--tx); border:1px solid var(--bd); }
+        .actions { display:flex; gap:12px; margin-top:6px; flex-wrap:wrap; align-items:center; }
+        .msg { font-size:13px; padding:10px 12px; border-radius:8px; margin-top:12px; display:none; }
+        .msg.show { display:block; } .msg.ok { background:rgba(34,197,94,.12); color:#22c55e; } .msg.err { background:rgba(239,68,68,.12); color:#ef4444; }
+        table { width:100%; border-collapse:collapse; font-size:14px; }
+        th { text-align:left; padding:10px 12px; background:#16232b; border:1px solid var(--bd); font-size:13px; }
+        td { padding:9px 12px; border:1px solid var(--bd); }
+        .badge { padding:2px 9px; border-radius:20px; font-size:12px; }
+        .b-on { background:rgba(34,197,94,.15); color:#22c55e; } .b-off { background:rgba(134,150,160,.15); color:var(--tx2); }
+        @media (max-width:720px){ .sidebar{ width:64px; } .sb-brand b,.sb-brand small,.sb-menu a span,.sb-foot a span{ display:none; } .grid2{ grid-template-columns:1fr; } }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+<div class="wrap">
+    <aside class="sidebar">
+        <div class="sb-brand"><div class="ic"><i class="fas fa-headset"></i></div><div><b>Soporte</b><small>Peru Sistemas Pro</small></div></div>
+        <nav class="sb-menu">
+            <a href="/soporte/facturador" class="{% if active=='facturador' %}active{% endif %}"><i class="fas fa-file-invoice"></i> <span>Facturador</span></a>
+            <a href="/soporte/pasarela" class="{% if active=='pasarela' %}active{% endif %}"><i class="fas fa-credit-card"></i> <span>Pasarela</span></a>
+            <a href="/soporte/rubros" class="{% if active=='rubros' %}active{% endif %}"><i class="fas fa-layer-group"></i> <span>Rubros</span></a>
+            <a href="/soporte/logs" class="{% if active=='logs' %}active{% endif %}"><i class="fas fa-clock-rotate-left"></i> <span>Logs</span></a>
+        </nav>
+        <div class="sb-foot"><a href="/soporte/logout"><i class="fas fa-right-from-bracket"></i> <span>Salir</span></a></div>
+    </aside>
+    <main class="main">
+        <div class="topbar">{% block page_title %}Soporte{% endblock %}</div>
+        <div class="content">{% block content %}{% endblock %}</div>
+    </main>
+</div>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

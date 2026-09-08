@@ -1,0 +1,38 @@
+{% extends "soporte/layout.html" %}
+{% block title %}Pasarela — Soporte MITA{% endblock %}
+{% block page_title %}Pasarela de pago{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2><i class="fas fa-credit-card"></i> Configurar pasarela</h2>
+    <div class="fg">
+        <label>Proveedor</label>
+        <select id="proveedor" onchange="cargarProveedor()">
+            <option value="izipay">IziPay</option>
+            <option value="culqi">Culqi</option>
+            <option value="mercadopago">Mercado Pago</option>
+            <option value="niubiz">Niubiz</option>
+        </select>
+    </div>
+    <div class="grid2">
+        <div class="fg"><label>URL producción</label><input id="url_produccion" placeholder="https://..."></div>
+        <div class="fg"><label>URL sandbox</label><input id="url_sandbox" placeholder="https://sandbox..."></div>
+        <div class="fg"><label>Webhook URL</label><input id="url_webhook" placeholder="https://mita.pe/webhook/..."></div>
+        <div class="fg"><label>Merchant ID</label><input id="merchant_id" placeholder="ID de comercio"></div>
+        <div class="fg"><label>API key</label><input id="api_key" type="password" placeholder="(sin cambios)"></div>
+        <div class="fg"><label>API secret</label><input id="api_secret" type="password" placeholder="(sin cambios)"></div>
+    </div>
+    <div class="toggle"><input type="checkbox" id="modo_sandbox"><label for="modo_sandbox">Modo sandbox (pruebas)</label></div>
+    <div class="toggle"><input type="checkbox" id="activo"><label for="activo">Activar esta pasarela (desactiva las demás)</label></div>
+    <div class="actions">
+        <button class="btn btn-ghost" onclick="probar()"><i class="fas fa-plug"></i> Probar conexión</button>
+        <button class="btn btn-primary" onclick="guardar()"><i class="fas fa-save"></i> Guardar</button>
+    </div>
+    <div class="msg" id="msg"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/soporte_integracion.js"></script>
+<script>initIntegracion('pasarela', true);</script>
+{% endblock %}

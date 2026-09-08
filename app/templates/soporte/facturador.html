@@ -1,0 +1,35 @@
+{% extends "soporte/layout.html" %}
+{% block title %}Facturador — Soporte MITA{% endblock %}
+{% block page_title %}Facturador electrónico{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2><i class="fas fa-file-invoice"></i> Configurar facturador</h2>
+    <div class="fg">
+        <label>Proveedor</label>
+        <select id="proveedor" onchange="cargarProveedor()">
+            <option value="facturalo">Facturalo.pro</option>
+            <option value="nubefact">Nubefact</option>
+            <option value="otro">Otro</option>
+        </select>
+    </div>
+    <div class="grid2">
+        <div class="fg"><label>URL producción</label><input id="url_produccion" placeholder="https://..."></div>
+        <div class="fg"><label>URL sandbox</label><input id="url_sandbox" placeholder="https://sandbox..."></div>
+        <div class="fg"><label>API key</label><input id="api_key" type="password" placeholder="(sin cambios)"></div>
+        <div class="fg"><label>API secret</label><input id="api_secret" type="password" placeholder="(sin cambios)"></div>
+    </div>
+    <div class="toggle"><input type="checkbox" id="modo_sandbox"><label for="modo_sandbox">Modo sandbox (pruebas)</label></div>
+    <div class="toggle"><input type="checkbox" id="activo"><label for="activo">Activar este proveedor (desactiva los demás)</label></div>
+    <div class="actions">
+        <button class="btn btn-ghost" onclick="probar()"><i class="fas fa-plug"></i> Probar conexión</button>
+        <button class="btn btn-primary" onclick="guardar()"><i class="fas fa-save"></i> Guardar</button>
+    </div>
+    <div class="msg" id="msg"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/soporte_integracion.js"></script>
+<script>initIntegracion('facturador', false);</script>
+{% endblock %}

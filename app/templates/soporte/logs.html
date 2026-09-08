@@ -1,0 +1,32 @@
+{% extends "soporte/layout.html" %}
+{% block title %}Logs — Soporte MITA{% endblock %}
+{% block page_title %}Logs de cambios{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2><i class="fas fa-clock-rotate-left"></i> Últimos 100 cambios en integraciones</h2>
+    <div style="overflow-x:auto;"><table>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Proveedor</th><th>Acción</th><th>Usuario</th><th>Detalle</th></tr></thead>
+        <tbody id="tbody"><tr><td colspan="6" style="text-align:center;color:var(--tx2)">Cargando...</td></tr></tbody>
+    </table></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function cargar(){
+    const tb=document.getElementById('tbody');
+    try {
+        const r=await fetch('/soporte/api/logs');
+        if(r.status===401){ location.href='/soporte/login'; return; }
+        const items=(await r.json()).items||[];
+        if(!items.length){ tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--tx2)">Sin registros aún</td></tr>'; return; }
+        tb.innerHTML=items.map(l=>`<tr>
+            <td>${l.created_at?new Date(l.created_at).toLocaleString('es-PE'):'-'}</td>
+            <td>${l.tipo||'-'}</td><td>${l.proveedor||'-'}</td><td>${l.accion||'-'}</td>
+            <td>${l.usuario||'-'}</td><td>${l.detalle||''}</td></tr>`).join('');
+    } catch(e){ tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--tx2)">No se pudo cargar</td></tr>'; }
+}
+document.addEventListener('DOMContentLoaded', cargar);
+</script>
+{% endblock %}
