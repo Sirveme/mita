@@ -463,6 +463,16 @@ async function enviar() {
     }
     if (!document.getElementById('acepta').checked) { showMsg('enviar-msg', 'Debes aceptar los términos.'); return; }
 
+    // Documentos obligatorios: cada tipo obligatorio debe tener archivo adjunto
+    const adjuntados = new Set();
+    document.querySelectorAll('#docs-list input[type=file]').forEach(inp => { if (inp.files[0]) adjuntados.add(inp.dataset.tipo); });
+    const faltanDocs = (tiposDocumento || []).filter(t => t.obligatorio && !adjuntados.has(t.codigo)).map(t => t.nombre);
+    if (faltanDocs.length) {
+        showMsg('enviar-msg', 'Faltan documentos obligatorios: ' + faltanDocs.join(', '));
+        document.getElementById('docs-list').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
     const payload = {
         dni: dniValidado, ruc: rucValidado,
         nombres: val('nombres'), apellido_paterno: val('apellido_paterno'), apellido_materno: val('apellido_materno'),
