@@ -18,6 +18,7 @@ from app.models.postulante import Postulante, EstadoPostulante
 from app.models.personal import Personal
 from app.models.tipo_documento import TipoDocumentoPostulacion
 from app.services import sunat_service
+from app.services.crypto_service import encrypt_sol
 from app.services.email_service import enviar_email, RRHH_EMAIL
 
 logger = logging.getLogger("mita.postulacion")
@@ -183,6 +184,17 @@ async def enviar_postulacion(
                          "mimetype": uf.content_type or "application/octet-stream"})
         docs_declarados.append({"tipo": tipo, "nombre_archivo": uf.filename, "enviado_email": True})
 
+    # Documentos obligatorios: todos los tipos activos con obligatorio=True deben venir
+    obligatorios = (
+        db.query(TipoDocumentoPostulacion)
+        .filter(TipoDocumentoPostulacion.obligatorio.is_(True), TipoDocumentoPostulacion.activo.is_(True))
+        .all()
+    )
+    adjuntados = {d["tipo"] for d in docs_declarados if d.get("nombre_archivo")}
+    faltantes = [t.nombre for t in obligatorios if t.codigo not in adjuntados]
+    if faltantes:
+        raise HTTPException(400, "Faltan documentos obligatorios: " + ", ".join(faltantes))
+
     # Fecha de nacimiento
     fnac = None
     if data.get("fecha_nacimiento"):
@@ -222,7 +234,7 @@ async def enviar_postulacion(
         yape=data.get("yape"),
         plin=data.get("plin"),
         sol_usuario=(data.get("sol_usuario") or None),
-        sol_clave_encriptada=(data.get("sol_clave") or None),  # TODO: cifrar realmente
+        sol_clave_encriptada=encrypt_sol(data.get("sol_clave")),  # cifrado Fernet
         emision_automatica_rxh=bool(data.get("emision_automatica_rxh")),
         acepta_facturalo_pro=bool(data.get("acepta_facturalo_pro")),
         documentos_enviados=docs_declarados,

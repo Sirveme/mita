@@ -1,9 +1,21 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.routes.login_mita import get_current_user
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+
+
+async def _guard_admin(request: Request, db: Session):
+    """Devuelve una redirección a /login si no hay sesión admin/gerente, o None si OK."""
+    user = await get_current_user(request, db)
+    if not user or (user.tipo or "").lower() not in ("admin", "gerente"):
+        return RedirectResponse(url="/login", status_code=303)
+    return None
 
 # ========================================
 # CLIENTE - VISTAS HTML
@@ -100,16 +112,25 @@ async def admin_distritos(request: Request):
     return templates.TemplateResponse("admin/distritos.html", {"request": request, "active": "distritos"})
 
 @router.get("/admin/configuraciones", response_class=HTMLResponse)
-async def admin_configuraciones(request: Request):
+async def admin_configuraciones(request: Request, db: Session = Depends(get_db)):
     """Configuraciones del sistema"""
+    redir = await _guard_admin(request, db)
+    if redir:
+        return redir
     return templates.TemplateResponse("admin/configuraciones.html", {"request": request, "active": "configuraciones"})
 
 @router.get("/admin/postulantes", response_class=HTMLResponse)
-async def admin_postulantes_page(request: Request):
+async def admin_postulantes_page(request: Request, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir:
+        return redir
     return templates.TemplateResponse("admin/postulantes.html", {"request": request, "active": "postulantes"})
 
 @router.get("/admin/postulantes/{item_id}", response_class=HTMLResponse)
-async def admin_postulante_detalle_page(request: Request, item_id: int):
+async def admin_postulante_detalle_page(request: Request, item_id: int, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir:
+        return redir
     return templates.TemplateResponse("admin/postulante_detalle.html", {"request": request, "active": "postulantes", "postulante_id": item_id})
 
 @router.get("/admin/usuarios", response_class=HTMLResponse)

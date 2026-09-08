@@ -30,6 +30,7 @@ from app.models.configuracion import ConfiguracionGeneral, TarifaServicio, Confi
 from app.models.auth_mita import UsuarioMita
 from app.models.ubigeo import Ubigeo
 from app.services.config_service import ConfigService
+from app.routes.admin_postulantes import require_admin_gerente
 
 router = APIRouter(prefix="/api/v1/admin", tags=["Admin"])
 
@@ -211,8 +212,8 @@ def obtener_config_mita(db: Session = Depends(get_db)):
 
 
 @router.get("/config-mita/detalle")
-def detalle_config_mita(db: Session = Depends(get_db)):
-    """Detalle completo (clave, tipo, descripción, categoría) para listados."""
+def detalle_config_mita(db: Session = Depends(get_db), _=Depends(require_admin_gerente)):
+    """Detalle completo (clave, tipo, descripción, categoría) para listados. Solo admin/gerente."""
     items = (
         db.query(ConfiguracionMita)
         .order_by(ConfiguracionMita.categoria, ConfiguracionMita.clave)
@@ -226,8 +227,8 @@ def detalle_config_mita(db: Session = Depends(get_db)):
 
 
 @router.put("/config-mita")
-def actualizar_config_mita(datos: dict = Body(...), db: Session = Depends(get_db)):
-    """Actualiza varios parámetros a la vez: {clave: valor, ...}."""
+def actualizar_config_mita(datos: dict = Body(...), db: Session = Depends(get_db), _=Depends(require_admin_gerente)):
+    """Actualiza varios parámetros a la vez: {clave: valor, ...}. Solo admin/gerente."""
     actualizadas, errores = 0, []
     for clave, valor in datos.items():
         try:

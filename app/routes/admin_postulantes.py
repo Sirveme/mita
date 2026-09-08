@@ -8,7 +8,7 @@ import secrets
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Body, HTTPException
+from fastapi import APIRouter, Depends, Body, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -17,8 +17,19 @@ from app.models.personal import Personal, TecnicoPersonal, TipoPersonal, EstadoP
 from app.models.models import CategoriaServicio
 from app.models.auth_mita import UsuarioMita
 from app.models.tipo_documento import TipoDocumentoPostulacion
-from app.routes.login_mita import hash_password
+from app.routes.login_mita import hash_password, get_current_user
 from app.services.email_service import enviar_email
+
+
+async def require_admin_gerente(request: Request, db: Session = Depends(get_db)):
+    """Protege el panel: exige sesión con rol admin o gerente.
+    401 si no hay sesión (con Location a /login), 403 si el rol no basta."""
+    user = await get_current_user(request, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="No autenticado", headers={"Location": "/login"})
+    if (user.tipo or "").lower() not in ("admin", "gerente"):
+        raise HTTPException(status_code=403, detail="Acceso denegado (requiere admin o gerente)")
+    return user
 
 # Especialidad del postulante (etiqueta) -> código de categoría (categorias_servicio.codigo)
 ESPECIALIDAD_A_CODIGO = {
@@ -48,7 +59,11 @@ def _mapear_especialidades(db: Session, especialidades: list) -> list:
 
 logger = logging.getLogger("mita.admin_postulantes")
 
-router = APIRouter(prefix="/api/v1/admin", tags=["Admin Postulantes"])
+router = APIRouter(
+    prefix="/api/v1/admin",
+    tags=["Admin Postulantes"],
+    dependencies=[Depends(require_admin_gerente)],   # protege TODAS las rutas del router
+)
 
 _ESTADOS = {e.value for e in EstadoPostulante}
 
