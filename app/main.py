@@ -50,6 +50,8 @@ from app.routes.postulacion import router as postulacion_router
 from app.routes.admin_postulantes import router as admin_postulantes_router
 from app.routes.soporte import router as soporte_router
 from app.routes.waitlist import router as waitlist_router
+from app.routes.comprobantes_api import router as comprobantes_router
+from app.routes.pagos_api import router as pagos_api_router
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -175,6 +177,8 @@ app.include_router(postulacion_router)
 app.include_router(admin_postulantes_router)
 app.include_router(soporte_router)
 app.include_router(waitlist_router)
+app.include_router(comprobantes_router)
+app.include_router(pagos_api_router)
 
 # Cuando estén listos:
 # from app.routes.clientes import router as clientes_router
