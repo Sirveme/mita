@@ -1,0 +1,80 @@
+{% extends "admin/layout.html" %}
+{% block title %}Pagos{% endblock %}
+{% block page_title %}Pagos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filtros { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:18px; align-items:end; }
+    .filtros .fg { display:flex; flex-direction:column; gap:6px; } .filtros label{ font-size:12px; color:#8696a0; }
+    .filtros input, .filtros select { padding:9px 12px; background:#1b1b26; border:1px solid #2a2a3a; border-radius:8px; color:#fff; }
+    .t { width:100%; border-collapse:collapse; background:#111b21; border:1px solid #2a373f; border-radius:12px; overflow:hidden; }
+    .t th { text-align:left; padding:11px 14px; background:#16232b; font-size:13px; }
+    .t td { padding:11px 14px; border-bottom:1px solid #1e2a30; font-size:14px; }
+    .badge { padding:3px 10px; border-radius:20px; font-size:12px; }
+    .e-APROBADO { background:rgba(34,197,94,.15); color:#22c55e; } .e-PENDIENTE,.e-EN_PROCESO { background:rgba(255,205,17,.15); color:#FFCD11; }
+    .e-RECHAZADO,.e-ERROR { background:rgba(239,68,68,.15); color:#ef4444; } .e-REEMBOLSADO { background:rgba(59,130,246,.15); color:#3b82f6; }
+    .empty { text-align:center; padding:40px; color:#8696a0; }
+    .btn { padding:6px 11px; border:none; border-radius:7px; cursor:pointer; font-size:13px; background:transparent; color:#e9edef; border:1px solid #2a373f; }
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; align-items:center; justify-content:center; }
+    .modal .box { background:#111b21; border:1px solid #2a373f; border-radius:12px; padding:20px; max-width:520px; width:90%; }
+    .modal pre { background:#0e171d; border:1px solid #2a373f; border-radius:8px; padding:12px; overflow:auto; max-height:340px; font-size:12px; color:#8696a0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="filtros">
+    <div class="fg"><label>Estado</label><select id="f-estado" onchange="cargar()"><option value="">Todos</option><option>PENDIENTE</option><option>EN_PROCESO</option><option>APROBADO</option><option>RECHAZADO</option><option>ERROR</option><option>REEMBOLSADO</option></select></div>
+    <div class="fg"><label>Desde</label><input type="date" id="f-desde" onchange="cargar()"></div>
+    <div class="fg"><label>Hasta</label><input type="date" id="f-hasta" onchange="cargar()"></div>
+    <div class="fg"><label>Comprobante</label><select id="f-comp" onchange="cargar()"><option value="">Todos</option><option value="false">Sin emitir</option><option value="true">Emitidos</option></select></div>
+</div>
+<div style="overflow-x:auto;">
+<table class="t">
+    <thead><tr><th>Fecha</th><th>Referencia</th><th>Cliente</th><th>Monto</th><th>Estado</th><th>Comprobante</th><th></th></tr></thead>
+    <tbody id="tbody"><tr><td colspan="7" class="empty">Cargando...</td></tr></tbody>
+</table>
+</div>
+
+<div class="modal" id="modal"><div class="box">
+    <h3 style="margin-bottom:12px;">Respuesta de la pasarela</h3>
+    <div id="modal-info" style="font-size:14px;margin-bottom:12px;"></div>
+    <pre id="modal-json">—</pre>
+    <div style="text-align:right;margin-top:12px;"><button class="btn" onclick="document.getElementById('modal').style.display='none'">Cerrar</button></div>
+</div></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let ITEMS=[];
+function params(){ const p=new URLSearchParams();
+    const e=document.getElementById('f-estado').value; if(e) p.set('estado',e);
+    ['desde','hasta'].forEach(k=>{ const v=document.getElementById('f-'+k).value; if(v) p.set(k,v); });
+    const c=document.getElementById('f-comp').value; if(c) p.set('con_comprobante',c);
+    return p; }
+async function cargar(){
+    const tb=document.getElementById('tbody');
+    try {
+        const r=await fetch('/api/v1/admin/pagos?'+params().toString());
+        if(r.status===401){ location.href='/login'; return; }
+        ITEMS=(await r.json()).items||[];
+        if(!ITEMS.length){ tb.innerHTML='<tr><td colspan="7" class="empty">Sin pagos</td></tr>'; return; }
+        tb.innerHTML=ITEMS.map(p=>`<tr>
+            <td>${p.creado_en?new Date(p.creado_en).toLocaleDateString('es-PE'):'-'}</td>
+            <td style="font-family:monospace">${p.referencia}</td>
+            <td>${p.cliente_email||'—'}</td>
+            <td>S/ ${(p.monto||0).toFixed(2)}</td>
+            <td><span class="badge e-${p.estado}">${p.estado}</span></td>
+            <td>${p.comprobante_emitido?`${p.comprobante_serie}-${p.comprobante_numero}`:'—'}</td>
+            <td><button class="btn" onclick="ver('${p.referencia}')">Detalle</button></td></tr>`).join('');
+    } catch(e){ tb.innerHTML='<tr><td colspan="7" class="empty">No se pudo cargar</td></tr>'; }
+}
+function ver(ref){
+    const p=ITEMS.find(x=>x.referencia===ref); if(!p) return;
+    document.getElementById('modal-info').innerHTML=`<b>${p.referencia}</b> · ${p.pasarela||'—'} · ${p.estado}<br>Código: ${p.respuesta_codigo||'—'} · ${p.respuesta_mensaje||''}`;
+    document.getElementById('modal-json').textContent=JSON.stringify(p, null, 2);
+    document.getElementById('modal').style.display='flex';
+}
+window.cargar=cargar; window.ver=ver;
+document.addEventListener('DOMContentLoaded', cargar);
+</script>
+{% endblock %}
