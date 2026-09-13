@@ -17,6 +17,14 @@ async def _guard_admin(request: Request, db: Session):
         return RedirectResponse(url="/login", status_code=303)
     return None
 
+
+async def _guard_tecnico(request: Request, db: Session):
+    """Redirección a /login si no hay sesión de técnico, o None si OK."""
+    user = await get_current_user(request, db)
+    if not user or (user.tipo or "").lower() != "tecnico":
+        return RedirectResponse(url="/login", status_code=303)
+    return None
+
 # ========================================
 # CLIENTE - VISTAS HTML
 # ========================================
@@ -158,9 +166,54 @@ async def admin_ingresos(request: Request):
 async def admin_egresos(request: Request):
     return templates.TemplateResponse("shared/en_desarrollo.html", {"request": request, "active": "egresos", "titulo": "Egresos", "ruta": "/admin/egresos"})
 
+@router.get("/admin/servicios", response_class=HTMLResponse)
+async def admin_servicios(request: Request, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir:
+        return redir
+    return templates.TemplateResponse("admin/servicios.html", {"request": request, "active": "servicios"})
+
+@router.get("/admin/servicios/{item_id}", response_class=HTMLResponse)
+async def admin_servicio_detalle(request: Request, item_id: int, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir:
+        return redir
+    return templates.TemplateResponse("admin/servicio_detalle.html", {"request": request, "active": "servicios", "servicio_id": item_id})
+
+@router.get("/admin/pagos", response_class=HTMLResponse)
+async def admin_pagos(request: Request, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir:
+        return redir
+    return templates.TemplateResponse("admin/pagos.html", {"request": request, "active": "pagos"})
+
 @router.get("/admin/liquidaciones", response_class=HTMLResponse)
-async def admin_liquidaciones(request: Request):
-    return templates.TemplateResponse("shared/en_desarrollo.html", {"request": request, "active": "liquidaciones", "titulo": "Liquidaciones", "ruta": "/admin/liquidaciones"})
+async def admin_liquidaciones(request: Request, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir:
+        return redir
+    return templates.TemplateResponse("admin/liquidaciones.html", {"request": request, "active": "liquidaciones"})
+
+@router.get("/admin/liquidaciones/{item_id}", response_class=HTMLResponse)
+async def admin_liquidacion_detalle(request: Request, item_id: int, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir:
+        return redir
+    return templates.TemplateResponse("admin/liquidacion_detalle.html", {"request": request, "active": "liquidaciones", "liquidacion_id": item_id})
+
+@router.get("/tecnico/liquidaciones", response_class=HTMLResponse)
+async def tecnico_liquidaciones(request: Request, db: Session = Depends(get_db)):
+    redir = await _guard_tecnico(request, db)
+    if redir:
+        return redir
+    return templates.TemplateResponse("tecnico/liquidaciones.html", {"request": request, "active": "liquidaciones"})
+
+@router.get("/tecnico/liquidaciones/{item_id}", response_class=HTMLResponse)
+async def tecnico_liquidacion_detalle(request: Request, item_id: int, db: Session = Depends(get_db)):
+    redir = await _guard_tecnico(request, db)
+    if redir:
+        return redir
+    return templates.TemplateResponse("tecnico/liquidacion_detalle.html", {"request": request, "active": "liquidaciones", "liquidacion_id": item_id})
 
 # ========================================
 # SECRETARIA (zMita-10)
@@ -216,12 +269,18 @@ async def login_tecnico(request: Request):
 
 # ---- Panel del técnico MITA (zMita-5, layout con nav inferior) ----
 @router.get("/tecnico", response_class=HTMLResponse)
-async def tecnico_dashboard(request: Request):
+async def tecnico_dashboard(request: Request, db: Session = Depends(get_db)):
     """Inicio del panel del técnico"""
+    redir = await _guard_tecnico(request, db)
+    if redir:
+        return redir
     return templates.TemplateResponse("tecnico/dashboard.html", {"request": request, "active": "home"})
 
 @router.get("/tecnico/servicios", response_class=HTMLResponse)
-async def tecnico_servicios(request: Request):
+async def tecnico_servicios(request: Request, db: Session = Depends(get_db)):
+    redir = await _guard_tecnico(request, db)
+    if redir:
+        return redir
     return templates.TemplateResponse("tecnico/servicios.html", {"request": request, "active": "servicios"})
 
 @router.get("/tecnico/chat", response_class=HTMLResponse)

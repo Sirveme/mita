@@ -180,19 +180,30 @@ async def guardar_integracion(tipo: str, request: Request, data: dict = Body(...
 @router.post("/soporte/api/probar-conexion/{tipo}")
 def probar_conexion(tipo: str, data: dict = Body(default={}), db: Session = Depends(get_db),
                     ident: str = Depends(require_soporte)):
-    """Prueba de estructura (placeholder). La conexión real se implementará con
-    la lógica de cada proveedor."""
+    """Verifica que la URL del proveedor sea alcanzable (GET con timeout corto).
+    No valida la lógica del proveedor todavía; solo conectividad."""
     proveedor = (data.get("proveedor") or "").strip().lower()
-    url = data.get("url_sandbox") if data.get("modo_sandbox") else data.get("url_produccion")
-    faltan = [k for k in ("proveedor",) if not (data.get(k) or "").strip()]
-    if not url:
-        faltan.append("url")
-    db.add(IntegracionLog(tipo=tipo, proveedor=proveedor, accion="probar", usuario=ident,
-                          detalle=f"url={url}"))
+    url = (data.get("url_sandbox") if data.get("modo_sandbox") else data.get("url_produccion")) or ""
+    url = url.strip()
+    if not proveedor or not url:
+        return {"ok": False, "mensaje": "Faltan datos: " + (", ".join(x for x, v in
+                [("proveedor", proveedor), ("url", url)] if not v))}
+
+    detalle, ok, mensaje = f"url={url}", False, ""
+    try:
+        import httpx
+        r = httpx.get(url, timeout=5.0, follow_redirects=True)
+        ok = r.status_code < 500
+        detalle += f" HTTP={r.status_code}"
+        mensaje = f"Alcanzable ({proveedor}) — HTTP {r.status_code}." if ok else \
+                  f"El servidor respondió HTTP {r.status_code}."
+    except Exception as e:
+        detalle += f" error={type(e).__name__}"
+        mensaje = f"No se pudo conectar a {url} ({type(e).__name__})."
+
+    db.add(IntegracionLog(tipo=tipo, proveedor=proveedor, accion="probar", usuario=ident, detalle=detalle))
     db.commit()
-    if faltan:
-        return {"ok": False, "mensaje": "Faltan datos: " + ", ".join(faltan)}
-    return {"ok": True, "mensaje": f"Estructura válida ({proveedor}). La prueba real de conexión está pendiente de implementar."}
+    return {"ok": ok, "mensaje": mensaje}
 
 
 @router.get("/soporte/api/logs")
