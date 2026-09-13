@@ -629,7 +629,26 @@ async function enviarSolicitud() {
         if (r.ok) { const d = await r.json(); estado.solicitudId = d.id; fetch(`/api/v1/asignacion/iniciar/${d.id}`, { method: 'POST' }).catch(() => {}); }
     } catch (e) { /* demo: continúa igual */ }
 
+    // Pago online (tarjeta) vía pasarela: inicia el pago y redirige a la pasarela.
+    if (CFG.pedir_pago && metodo === 'tarjeta') {
+        const url = await iniciarPagoOnline();
+        if (url) { window.location.href = url; return; }
+    }
     setTimeout(mostrarTecnicoAsignado, 4500);
+}
+
+async function iniciarPagoOnline() {
+    try {
+        const r = await fetch('/api/v1/pagos/iniciar', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                solicitud_id: estado.solicitudId || null, monto: estado.precio,
+                tipo_comprobante: 'boleta', cliente_telefono: estado.telefono || null
+            })
+        });
+        const d = await r.json();
+        return (r.ok && d.url_pago) ? d.url_pago : null;   // stub: apunta a /api/v1/pagos/retorno
+    } catch (e) { return null; }
 }
 // Compat: el nombre antiguo sigue disponible
 const confirmarYPagar = avanzar;
