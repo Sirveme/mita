@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.templates import templates
 from app.models.pago import PagoPasarela as Pago
-from app.models.comprobante import ServicioCompletado
+from app.models.servicio_completado import ServicioCompletado
 from app.services import pasarela_service, facturalo_service
 from app.routes.admin_postulantes import require_admin_gerente
 

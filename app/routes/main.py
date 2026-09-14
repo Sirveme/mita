@@ -18,10 +18,24 @@ async def _guard_admin(request: Request, db: Session):
     return None
 
 
+def _es_tecnico(user, db: Session) -> bool:
+    """Técnico si el usuario tiene rol 'tecnico' o su personal vinculado es PROVEEDOR."""
+    if not user:
+        return False
+    if (user.tipo or "").lower() == "tecnico":
+        return True
+    if getattr(user, "personal_id", None):
+        from app.models.personal import Personal
+        p = db.query(Personal).get(user.personal_id)
+        if p and (getattr(p, "tipo_relacion", "") or "").upper() == "PROVEEDOR":
+            return True
+    return False
+
+
 async def _guard_tecnico(request: Request, db: Session):
-    """Redirección a /login si no hay sesión de técnico, o None si OK."""
+    """Redirección a /login si no hay sesión de técnico (rol o PROVEEDOR), o None si OK."""
     user = await get_current_user(request, db)
-    if not user or (user.tipo or "").lower() != "tecnico":
+    if not _es_tecnico(user, db):
         return RedirectResponse(url="/login", status_code=303)
     return None
 
