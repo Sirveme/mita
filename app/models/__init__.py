@@ -44,5 +44,6 @@ from app.models.postulante import Postulante, EstadoPostulante, TipoRelacion
 from app.models.tipo_documento import TipoDocumentoPostulacion
 from app.models.integracion import Integracion, IntegracionLog
 from app.models.waitlist import WaitlistDistrito
-from app.models.comprobante import ServicioCompletado, LiquidacionTecnico
+from app.models.servicio_completado import ServicioCompletado
+from app.models.liquidacion_tecnico import LiquidacionTecnico
 from app.models.pago import PagoPasarela
