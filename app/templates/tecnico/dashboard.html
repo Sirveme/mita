@@ -64,9 +64,35 @@
             <div class="stat-card"><div class="stat-valor" id="stat-calificacion">-</div><div class="stat-label">Calificación</div></div>
         </div>
     </div>
+
+    <!-- Accesos rápidos -->
+    <div class="accesos-rapidos">
+        <a href="/tecnico/liquidaciones" class="acceso-card">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <div><strong>Mis Liquidaciones</strong><small>Pagos y RxH por semana</small></div>
+            <i class="fas fa-chevron-right chev"></i>
+        </a>
+        <a href="/tecnico/servicios" class="acceso-card">
+            <i class="fas fa-receipt"></i>
+            <div><strong>Mis Servicios</strong><small>Servicios completados y comisiones</small></div>
+            <i class="fas fa-chevron-right chev"></i>
+        </a>
+        <a href="/tecnico/perfil" class="acceso-card">
+            <i class="fas fa-user-gear"></i>
+            <div><strong>Mi Perfil</strong><small>Mis datos y cuenta bancaria</small></div>
+            <i class="fas fa-chevron-right chev"></i>
+        </a>
+    </div>
 </div>
 
 <style>
+.accesos-rapidos { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+.acceso-card { display: flex; align-items: center; gap: 14px; background: var(--mita-card); border: 1px solid var(--mita-border); border-radius: 14px; padding: 16px; text-decoration: none; color: #fff; }
+.acceso-card:hover { border-color: var(--mita-primary); }
+.acceso-card > i:first-child { font-size: 22px; color: var(--mita-primary); width: 26px; text-align: center; }
+.acceso-card strong { display: block; font-size: 15px; }
+.acceso-card small { color: #888; font-size: 12px; }
+.acceso-card .chev { margin-left: auto; color: #888; font-size: 14px; }
 .tecnico-dashboard { padding: 16px; max-width: 500px; margin: 0 auto; }
 .solicitud-entrante { background: var(--mita-card); border-radius: 16px; border: 2px solid var(--mita-primary); overflow: hidden; margin-bottom: 24px; animation: pulse-border 1s infinite; }
 @keyframes pulse-border { 0%, 100% { border-color: var(--mita-primary); } 50% { border-color: #f59e0b; } }
