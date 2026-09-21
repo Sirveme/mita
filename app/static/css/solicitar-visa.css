@@ -1,0 +1,221 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+/* ============================================================
+   Solicitar servicio — flujo estilo VISA (dark + dorado)
+   4 niveles: áreas (chips) > tipos > problemas > modal
+   ============================================================ */
+:root {
+    --v-bg: #1a1a2e;
+    --v-bg2: #16162a;
+    --v-card: #252542;
+    --v-card2: #2c2c50;
+    --v-border: #33335a;
+    --v-gold: #d4a853;
+    --v-gold-soft: rgba(212,168,83,.18);
+    --v-text: #ffffff;
+    --v-text2: #a0a0b0;
+    --v-radius: 16px;
+}
+* { box-sizing: border-box; }
+body { background: var(--v-bg) !important; color: var(--v-text); font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+.content-wrapper { padding: 0 !important; max-width: 600px !important; margin: 0 auto; }
+
+.vh { min-height: 100vh; padding: 14px 16px 40px; }
+
+/* Header */
+.v-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.v-back { width: 40px; height: 40px; border-radius: 12px; background: var(--v-card); border: 1px solid var(--v-border); color: var(--v-text); font-size: 16px; cursor: pointer; }
+.v-title { font-size: 20px; font-weight: 800; letter-spacing: .2px; }
+.v-sub { color: var(--v-text2); font-size: 14px; margin: 2px 0 16px 52px; }
+.v-mute { margin-left: auto; width: 40px; height: 40px; border-radius: 12px; background: var(--v-card); border: 1px solid var(--v-border); color: var(--v-text2); cursor: pointer; font-size: 15px; }
+
+/* Intro (se colapsa al seleccionar) */
+.v-intro { transition: max-height .35s ease, opacity .3s ease, margin .3s ease; overflow: hidden; max-height: 120px; opacity: 1; }
+.selected-mode .v-intro { max-height: 0; opacity: 0; margin: 0; }
+
+/* NIVEL 1 — chips de áreas */
+.v-section-label { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--v-text2); margin: 20px 4px 12px; font-weight: 700; }
+.v-chips-wrap { position: sticky; top: 0; z-index: 100; background: var(--v-bg); padding: 10px 0 12px; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+.v-chips { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 8px; scrollbar-width: none; }
+.v-chips::-webkit-scrollbar { display: none; }
+.v-chip { flex: 0 0 auto; width: 108px; background: var(--v-card); border: 1.5px solid var(--v-border); border-radius: 14px; padding: 12px 8px; text-align: center; cursor: pointer; transition: transform .2s ease, border-color .2s ease, box-shadow .25s ease; }
+.v-chip:hover { transform: translateY(-2px); }
+.v-chip .thumb { width: 46px; height: 46px; border-radius: 12px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #1a1a2e; }
+.v-chip .name { font-size: 12.5px; font-weight: 600; line-height: 1.2; }
+.v-chip.selected { border-color: var(--v-gold); box-shadow: 0 0 0 2px var(--v-gold-soft), 0 0 22px var(--v-gold-soft); animation: haloPulse 2s ease-in-out infinite; }
+.selected-mode .v-chip { width: 92px; padding: 9px 6px; }
+.selected-mode .v-chip .thumb { width: 38px; height: 38px; font-size: 16px; margin-bottom: 5px; }
+.selected-mode .v-chip .name { font-size: 11.5px; }
+.selected-mode .v-chip:not(.selected) { opacity: .68; }
+
+@keyframes haloPulse { 0%,100% { box-shadow: 0 0 0 2px var(--v-gold-soft), 0 0 16px var(--v-gold-soft); } 50% { box-shadow: 0 0 0 2px rgba(212,168,83,.35), 0 0 28px rgba(212,168,83,.4); } }
+
+/* Bloques que aparecen */
+.v-block { opacity: 0; transform: translateY(14px); transition: opacity .35s ease-out, transform .35s ease-out; }
+.v-block.show { opacity: 1; transform: none; }
+.v-block[hidden] { display: none; }
+
+/* NIVEL 2 — tipos (card horizontal, imagen 40% / texto 60%) */
+.v-tipos { display: flex; flex-direction: column; gap: 14px; }
+.v-tipo-card { display: flex; background: var(--v-card); border: 1.5px solid var(--v-border); border-radius: var(--v-radius); overflow: hidden; cursor: pointer; min-height: 118px; transition: transform .2s ease, border-color .2s ease; }
+.v-tipo-card:hover { transform: translateY(-2px); border-color: var(--v-gold); }
+.v-tipo-card.selected { border-color: var(--v-gold); box-shadow: 0 0 0 2px var(--v-gold-soft); }
+.v-tipo-img { flex: 0 0 40%; display: flex; align-items: center; justify-content: center; font-size: 40px; color: rgba(255,255,255,.92); }
+.v-tipo-body { flex: 1; padding: 16px 18px; display: flex; flex-direction: column; justify-content: center; }
+.v-tipo-body .t { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+.v-tipo-body .d { font-size: 13.5px; color: var(--v-text2); line-height: 1.35; }
+.v-tipo-body .arrow { color: var(--v-gold); font-size: 13px; margin-top: 8px; font-weight: 600; }
+
+/* NIVEL 3 — problemas (card compacta, miniatura cuadrada + texto) */
+.v-problemas { display: flex; flex-direction: column; gap: 10px; }
+.v-prob-card { display: flex; align-items: center; gap: 14px; background: var(--v-card); border: 1.5px solid var(--v-border); border-radius: 14px; padding: 10px 14px 10px 10px; cursor: pointer; transition: transform .15s ease, border-color .2s ease; }
+.v-prob-card:hover { transform: translateX(3px); border-color: var(--v-gold); }
+.v-prob-thumb { width: 52px; height: 52px; border-radius: 12px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #1a1a2e; }
+.v-prob-name { flex: 1; font-size: 15.5px; font-weight: 600; line-height: 1.25; }
+.v-prob-card .chev { color: var(--v-text2); font-size: 14px; }
+
+/* NIVEL 4 — modal */
+.v-modal { position: fixed; inset: 0; z-index: 200; background: rgba(10,10,20,.72); backdrop-filter: blur(3px); display: none; align-items: flex-end; justify-content: center; }
+.v-modal.open { display: flex; }
+.v-modal-box { background: var(--v-bg2); border: 1px solid var(--v-border); border-radius: 22px 22px 0 0; width: 100%; max-width: 640px; padding: 10px 20px 26px; animation: slideUp .3s ease-out; max-height: 92vh; overflow-y: auto; }
+@keyframes slideUp { from { transform: translateY(40px); opacity: .6; } to { transform: none; opacity: 1; } }
+.v-grabber { width: 44px; height: 5px; border-radius: 3px; background: var(--v-border); margin: 4px auto 16px; }
+.v-modal-hero { width: 92px; height: 92px; border-radius: 24px; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #1a1a2e; }
+.v-breadcrumb { text-align: center; font-size: 12.5px; color: var(--v-text2); margin-bottom: 6px; }
+.v-breadcrumb b { color: var(--v-gold); }
+.v-modal-title { text-align: center; font-size: 21px; font-weight: 800; margin-bottom: 20px; }
+.v-field-label { font-size: 13px; color: var(--v-text2); margin: 0 0 8px 2px; }
+.v-textarea { width: 100%; min-height: 92px; background: var(--v-card); border: 1.5px solid var(--v-border); border-radius: 12px; color: var(--v-text); padding: 12px 14px; font-size: 16px; resize: vertical; font-family: inherit; }
+.v-textarea:focus { outline: none; border-color: var(--v-gold); }
+.v-photo-btn { width: 100%; margin: 12px 0 4px; padding: 14px; background: var(--v-card); border: 1.5px dashed var(--v-border); border-radius: 12px; color: var(--v-text2); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.v-photo-btn.has { border-style: solid; border-color: #22c55e; color: #22c55e; }
+.v-submit { width: 100%; margin-top: 20px; padding: 17px; border: none; border-radius: 14px; font-size: 17px; font-weight: 800; letter-spacing: .3px; cursor: pointer; background: linear-gradient(135deg, #e0be74, var(--v-gold)); color: #1a1200; box-shadow: 0 8px 22px rgba(212,168,83,.35); }
+.v-submit:active { transform: translateY(1px); }
+.v-submit:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Overlay de éxito */
+.v-success { position: fixed; inset: 0; z-index: 300; background: var(--v-bg); display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
+.v-success.open { display: flex; }
+.v-success .ok { width: 96px; height: 96px; border-radius: 50%; background: rgba(34,197,94,.14); color: #22c55e; display: flex; align-items: center; justify-content: center; font-size: 46px; margin-bottom: 22px; animation: pop .4s ease-out; }
+@keyframes pop { 0% { transform: scale(.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.v-success h2 { font-size: 24px; margin-bottom: 10px; }
+.v-success p { color: var(--v-text2); font-size: 15px; max-width: 320px; margin-bottom: 6px; }
+.v-success .bc { color: var(--v-gold); font-weight: 600; margin: 6px 0 22px; }
+.v-success .btn { padding: 15px 26px; border-radius: 12px; background: var(--v-gold); color: #1a1200; font-weight: 800; text-decoration: none; border: none; cursor: pointer; font-size: 16px; }
+.v-success .btn.ghost { background: transparent; color: var(--v-text2); border: 1px solid var(--v-border); margin-top: 12px; }
+
+@media (min-width: 641px) { .v-modal-box { border-radius: 22px; margin-bottom: 24px; } .v-modal { align-items: center; } }
+@media (prefers-reduced-motion: reduce) { .v-chip.selected { animation: none; } * { scroll-behavior: auto !important; } }
+
+/* ============================================================
+   Correcciones: responsive PC, imágenes reales, pasos post-modal
+   ============================================================ */
+.vh { max-width: 760px; margin: 0 auto; }
+
+/* Imágenes reales (placeholder picsum) con ícono de respaldo detrás */
+.v-tipo-img, .v-prob-thumb, .v-modal-hero { position: relative; overflow: hidden; }
+.v-tipo-img img, .v-prob-thumb img, .v-modal-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* NIVEL 3 — miniatura cuadrada 76px estilo VISA, con subtítulo y chevron */
+.v-prob-card { padding: 12px 16px 12px 12px; }
+.v-prob-thumb { width: 76px; height: 76px; border-radius: 14px; }
+.v-prob-name { font-size: 16px; }
+.v-prob-sub { display: block; font-size: 12.5px; color: var(--v-text2); font-weight: 400; margin-top: 3px; }
+
+/* En desktop, las cards de nivel 3 no ocupan todo el ancho */
+@media (min-width: 641px) {
+    .v-problemas { align-items: stretch; }
+    .v-prob-card { max-width: 640px; }
+    .v-tipo-card { max-width: 720px; }
+}
+
+/* Modal multi-pantalla (detalle > dirección > pago) */
+.v-screen { display: none; }
+.v-screen.active { display: block; animation: fadeIn .25s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.v-step-head { display: flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 800; margin: 4px 0 16px; }
+.v-step-head i { color: var(--v-gold); }
+.v-input { width: 100%; background: var(--v-card); border: 1.5px solid var(--v-border); border-radius: 12px; color: var(--v-text); padding: 13px 14px; font-size: 16px; margin-bottom: 12px; font-family: inherit; }
+.v-input:focus { outline: none; border-color: var(--v-gold); }
+select.v-input { appearance: none; }
+
+/* Método de pago (radios como cards) */
+.v-pay-opt { display: flex; align-items: center; gap: 14px; background: var(--v-card); border: 1.5px solid var(--v-border); border-radius: 14px; padding: 16px; margin-bottom: 12px; cursor: pointer; }
+.v-pay-opt.sel { border-color: var(--v-gold); box-shadow: 0 0 0 2px var(--v-gold-soft); }
+.v-pay-opt .pi { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; background: var(--v-card2); color: var(--v-gold); }
+.v-pay-opt .pt { flex: 1; } .v-pay-opt .pt b { font-size: 16px; } .v-pay-opt .pt small { display: block; color: var(--v-text2); font-size: 12.5px; margin-top: 2px; }
+.v-pay-opt .radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--v-border); flex: 0 0 auto; }
+.v-pay-opt.sel .radio { border-color: var(--v-gold); background: radial-gradient(circle, var(--v-gold) 40%, transparent 46%); }
+.v-alerta { display: none; background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.35); color: #f87171; border-radius: 10px; padding: 10px 12px; font-size: 13px; margin-bottom: 10px; }
+.v-alerta.show { display: block; }
+
+/* Total (paso pago) */
+.v-total { display: flex; justify-content: space-between; align-items: baseline; background: var(--v-card); border: 1px solid var(--v-border); border-radius: 12px; padding: 14px 16px; margin: 4px 0 16px; }
+.v-total .amt { font-size: 22px; font-weight: 800; color: var(--v-gold); }
+
+/* Overlay "procesando pago" (tarjeta) */
+.v-paying { position: fixed; inset: 0; z-index: 310; background: rgba(10,10,20,.85); display: none; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
+.v-paying.open { display: flex; }
+.v-paying .spin { width: 46px; height: 46px; border: 3px solid rgba(255,255,255,.25); border-top-color: var(--v-gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   Correcciones DEFINITIVO: max-width, sticky, nav inferior, IziPay
+   ============================================================ */
+.vh { max-width: 600px; margin: 0 auto; padding-bottom: 90px; }   /* espacio para nav inferior */
+@media (min-width: 768px) { .vh, .content-wrapper { max-width: 500px !important; } }
+
+/* Los bloques nivel 2/3 pasan por debajo del header sticky sin quedar tapados */
+.v-block { scroll-margin-top: 150px; }
+
+/* Chips: el texto puede ir en 2 líneas (Artefactos, etc.) */
+.v-chip .name { white-space: normal; word-break: break-word; }
+.v-chip { min-height: 96px; display: flex; flex-direction: column; justify-content: center; }
+
+/* Nav inferior (Inicio / Mis servicios / Perfil) */
+.v-bottomnav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 90; display: flex; justify-content: space-around;
+    background: var(--v-bg2); border-top: 1px solid var(--v-border); padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px)); }
+.v-bottomnav a { flex: 1; text-align: center; color: var(--v-text2); text-decoration: none; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.v-bottomnav a i { font-size: 19px; }
+.v-bottomnav a.active { color: var(--v-gold); }
+
+/* Formulario IziPay simulado */
+.izipay-brand { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 6px 0 14px; font-weight: 800; font-size: 20px; letter-spacing: .5px; }
+.izipay-brand .dot { color: var(--v-gold); }
+.izipay-card { background: linear-gradient(135deg, #2b2b52, #1f1f3d); border: 1px solid var(--v-border); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+.izipay-row { display: flex; gap: 12px; }
+.izipay-row .col { flex: 1; }
+.izipay-secure { text-align: center; color: var(--v-text2); font-size: 12px; margin-top: 12px; }
+.izipay-secure i { color: #22c55e; }
+
+/* Confirmación: datos extra */
+.v-success .detalle { background: var(--v-card); border: 1px solid var(--v-border); border-radius: 14px; padding: 16px; margin: 8px 0 20px; text-align: left; width: 100%; max-width: 340px; }
+.v-success .detalle .row { display: flex; gap: 8px; font-size: 14px; padding: 4px 0; color: var(--v-text2); }
+.v-success .detalle .row i { color: var(--v-gold); width: 18px; text-align: center; margin-top: 2px; }
+.v-success .num { font-family: 'Outfit', monospace; font-weight: 700; color: var(--v-text); }
+
+/* ============================================================
+   Post-pago: selección de técnico + confirmación de asignación
+   ============================================================ */
+.v-overlay { position: fixed; inset: 0; z-index: 300; background: var(--v-bg); display: none; overflow-y: auto; }
+.v-overlay.open { display: block; }
+.v-overlay-box { max-width: 480px; margin: 0 auto; padding: 40px 20px 60px; min-height: 100vh; }
+.v-tec-buscando { text-align: center; padding-top: 60px; }
+.v-tec-buscando .spin { width: 46px; height: 46px; border: 3px solid rgba(255,255,255,.25); border-top-color: var(--v-gold); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 18px; }
+.v-tec-buscando h2 { font-size: 20px; margin-bottom: 6px; }
+.v-tec-head { font-size: 20px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.v-tec-head i { color: var(--v-gold); }
+.v-tec-card { display: flex; align-items: center; gap: 14px; background: var(--v-card); border: 1.5px solid var(--v-border); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+.v-tec-card .ava { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg,#3a3a5a,#252542); display: flex; align-items: center; justify-content: center; color: var(--v-gold); font-size: 22px; flex: 0 0 auto; }
+.v-tec-card .body { flex: 1; min-width: 0; }
+.v-tec-card .body b { font-size: 16px; }
+.v-tec-card .stars { color: var(--v-gold); font-size: 13.5px; margin: 2px 0; } .v-tec-card .stars span { color: var(--v-text2); }
+.v-tec-card .sub { color: var(--v-text2); font-size: 12.5px; }
+.v-tec-elegir { flex: 0 0 auto; background: linear-gradient(135deg,#e0be74,var(--v-gold)); color: #1a1200; border: none; border-radius: 10px; padding: 10px 16px; font-weight: 800; cursor: pointer; font-size: 13px; }
+
+.v-succ-tec { display: none; align-items: center; gap: 14px; background: var(--v-card); border: 1px solid var(--v-border); border-radius: 14px; padding: 14px 16px; margin: 4px 0 16px; width: 100%; max-width: 340px; }
+.v-succ-tec .ava { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg,#3a3a5a,#252542); display: flex; align-items: center; justify-content: center; color: var(--v-gold); font-size: 22px; flex: 0 0 auto; }
+.v-succ-tec b { font-size: 16px; } .v-succ-tec .tecmeta { color: var(--v-text2); font-size: 13px; margin-top: 2px; }
+
+/* Imagen real en el chip de área (nivel 1) */
+.v-chip .thumb { position: relative; overflow: hidden; }
+.v-chip .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
