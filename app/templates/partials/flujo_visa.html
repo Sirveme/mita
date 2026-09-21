@@ -1,0 +1,130 @@
+{# Flujo de solicitud estilo VISA — reutilizable en landing (/) y /cliente/home.
+   Requiere: /static/css/solicitar-visa.css, /static/js/areas-data.js, /static/js/solicitar-visa.js #}
+<div class="v-flow">
+    <!-- NIVEL 1: áreas (chips horizontales) -->
+    <div class="v-chips-wrap">
+        <div class="v-section-label">¿Qué necesitas?</div>
+        <div class="v-chips" id="v-chips"><!-- dinámico --></div>
+    </div>
+
+    <!-- NIVEL 2: tipos -->
+    <div class="v-block" id="nivel2" hidden>
+        <div class="v-section-label">Tipo de servicio · <span id="nivel2-titulo"></span></div>
+        <div class="v-tipos" id="v-tipos"></div>
+    </div>
+
+    <!-- NIVEL 3: problemas -->
+    <div class="v-block" id="nivel3" hidden>
+        <div class="v-section-label" id="nivel3-titulo"></div>
+        <div class="v-problemas" id="v-problemas"></div>
+    </div>
+</div>
+
+<!-- NIVEL 4: modal multi-pantalla -->
+<div class="v-modal" id="v-modal" role="dialog" aria-modal="true">
+    <div class="v-modal-box">
+        <div class="v-grabber"></div>
+
+        <!-- PASO A: detalle -->
+        <div class="v-screen active" id="screen-detalle">
+            <div class="v-modal-hero" id="v-hero"></div>
+            <div class="v-breadcrumb" id="v-breadcrumb"></div>
+            <div class="v-modal-title" id="v-modal-title"></div>
+            <div class="v-field-label">Descripción del problema (opcional)</div>
+            <textarea class="v-textarea" id="v-desc" placeholder="Cuéntanos algún detalle que ayude al técnico..."></textarea>
+            <button type="button" class="v-photo-btn" id="v-photo"><i class="fas fa-camera"></i> <span>Agregar foto (opcional)</span></button>
+            <input type="file" id="v-photo-input" accept="image/*" hidden>
+            <button type="button" class="v-submit" id="btn-a-direccion"><i class="fas fa-arrow-right"></i> CONTINUAR</button>
+            <button type="button" class="v-photo-btn" id="v-modal-close" style="border:none;background:transparent;margin-top:6px;">Cancelar</button>
+        </div>
+
+        <!-- PASO A.1: login rápido (si no está identificado) -->
+        <div class="v-screen" id="screen-login">
+            <div class="v-step-head"><i class="fab fa-whatsapp"></i> Para continuar, ingresa tu número</div>
+            <input class="v-input" id="v-celular" type="tel" inputmode="numeric" maxlength="9" placeholder="Celular (9 dígitos)">
+            <button type="button" class="v-submit" id="btn-whatsapp" style="background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;box-shadow:0 8px 22px rgba(37,211,102,.3);"><i class="fab fa-whatsapp"></i> CONTINUAR CON WHATSAPP</button>
+            <div style="text-align:center;color:var(--v-text2);margin:14px 0;font-size:13px;">─────  o  ─────</div>
+            <a class="v-photo-btn" href="/login" style="text-decoration:none;"><i class="fas fa-right-to-bracket"></i> Tengo una cuenta — Iniciar sesión</a>
+            <button type="button" class="v-photo-btn" style="border:none;background:transparent;margin-top:6px;" data-back="detalle">Atrás</button>
+        </div>
+
+        <!-- PASO B: dirección -->
+        <div class="v-screen" id="screen-direccion">
+            <div class="v-step-head"><i class="fas fa-location-dot"></i> ¿Dónde necesitas el servicio?</div>
+            <input class="v-input" id="v-direccion" type="text" placeholder="Dirección (Av./Calle y número)">
+            <select class="v-input" id="v-distrito"><option value="">Selecciona tu distrito</option></select>
+            <div class="v-alerta" id="v-distrito-alerta"></div>
+            <div id="v-waitlist" style="display:none; margin:-4px 0 12px;">
+                <input class="v-input" id="v-wl-email" type="email" placeholder="Tu email — te avisamos cuando lleguemos">
+                <button type="button" class="v-photo-btn" id="v-wl-btn" style="margin-top:0;">Avísame cuando lleguen a mi zona</button>
+            </div>
+            <input class="v-input" id="v-referencia" type="text" placeholder="Referencia (opcional)">
+            <input class="v-input" id="v-telefono" type="tel" inputmode="numeric" placeholder="Teléfono de contacto">
+            <button type="button" class="v-submit" id="btn-a-pago"><i class="fas fa-arrow-right"></i> CONTINUAR</button>
+            <button type="button" class="v-photo-btn" style="border:none;background:transparent;margin-top:6px;" data-back="detalle">Atrás</button>
+        </div>
+
+        <!-- PASO C: pago -->
+        <div class="v-screen" id="screen-pago">
+            <div class="v-step-head"><i class="fas fa-credit-card"></i> ¿Cómo deseas pagar?</div>
+            <div class="v-total"><span>Visita de diagnóstico</span><span class="amt" id="v-monto">S/ 50.00</span></div>
+            <div id="v-pagos"></div>
+            <button type="button" class="v-submit" id="v-submit"><i class="fas fa-check"></i> CONFIRMAR</button>
+            <button type="button" class="v-photo-btn" style="border:none;background:transparent;margin-top:6px;" data-back="direccion">Atrás</button>
+        </div>
+
+        <!-- PASO C.1: IziPay simulado -->
+        <div class="v-screen" id="screen-izipay">
+            <div class="izipay-brand"><span>izi</span><span class="dot">•</span><span>Pay</span></div>
+            <div class="v-total"><span>Total a pagar</span><span class="amt" id="izi-monto">S/ 50.00</span></div>
+            <div class="izipay-card">
+                <div class="v-field-label">Número de tarjeta</div>
+                <input class="v-input" id="izi-num" inputmode="numeric" placeholder="4111 1111 1111 1111" value="4111 1111 1111 1111">
+                <div class="izipay-row">
+                    <div class="col"><div class="v-field-label">Vencimiento</div><input class="v-input" id="izi-exp" placeholder="12/28" value="12/28"></div>
+                    <div class="col"><div class="v-field-label">CVV</div><input class="v-input" id="izi-cvv" inputmode="numeric" placeholder="123" value="123"></div>
+                </div>
+            </div>
+            <button type="button" class="v-submit" id="izi-pagar"><i class="fas fa-lock"></i> PAGAR <span id="izi-btn-monto">S/ 50.00</span></button>
+            <div class="izipay-secure"><i class="fas fa-shield-halved"></i> Pago seguro con IziPay (modo demo)</div>
+            <button type="button" class="v-photo-btn" style="border:none;background:transparent;margin-top:6px;" data-back="pago">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<div class="v-paying" id="v-paying"><div class="spin"></div><div>Redirigiendo al pago seguro…</div></div>
+
+<!-- POST-PAGO A: selección de técnico -->
+<div class="v-overlay" id="v-tecnicos">
+    <div class="v-overlay-box">
+        <div id="v-tec-buscando" class="v-tec-buscando">
+            <div class="spin"></div>
+            <h2>Buscando técnicos disponibles…</h2>
+            <p id="v-tec-num" style="color:var(--v-text2);"></p>
+        </div>
+        <div id="v-tec-lista" hidden>
+            <div class="v-tec-head"><i class="fas fa-user-gear"></i> Técnicos disponibles para tu servicio</div>
+            <div id="v-tec-cards"></div>
+            <button type="button" class="v-photo-btn" id="v-tec-auto" style="margin-top:14px;"><i class="fas fa-wand-magic-sparkles"></i> ¿Ninguno disponible? Que MITA asigne automáticamente</button>
+        </div>
+    </div>
+</div>
+
+<!-- POST-PAGO B: confirmación de asignación -->
+<div class="v-success" id="v-success">
+    <div class="ok"><i class="fas fa-check"></i></div>
+    <h2>¡Técnico asignado!</h2>
+    <div class="v-succ-tec" id="v-succ-tec" style="display:none;">
+        <div class="ava"><i class="fas fa-user"></i></div>
+        <div><b id="v-succ-tec-nombre">—</b><div class="tecmeta" id="v-succ-tec-meta">—</div></div>
+    </div>
+    <div class="detalle">
+        <div class="row"><i class="fas fa-screwdriver-wrench"></i> <span id="v-succ-bc"></span></div>
+        <div class="row"><i class="fas fa-location-dot"></i> <span id="v-succ-dir"></span></div>
+        <div class="row"><i class="fas" id="v-succ-pago-ic"></i> <span id="v-succ-pago"></span></div>
+        <div class="row"><i class="fas fa-hashtag"></i> <span>N° de solicitud: <b class="num" id="v-succ-num">#—</b></span></div>
+    </div>
+    <p>Te contactará en minutos por el chat.</p>
+    <a class="btn" id="v-success-chat" href="#"><i class="fas fa-comments"></i> IR AL CHAT</a>
+    <a class="btn ghost" href="/">Volver al inicio</a>
+</div>
