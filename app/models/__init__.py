@@ -47,3 +47,6 @@ from app.models.waitlist import WaitlistDistrito
 from app.models.servicio_completado import ServicioCompletado
 from app.models.liquidacion_tecnico import LiquidacionTecnico
 from app.models.pago import PagoPasarela
+from app.models.area_servicio import AreaServicio
+from app.models.problema_servicio import ProblemaServicio
+from app.models.chat_sala import ChatSala, ChatMensaje
