@@ -58,6 +58,12 @@ async def login_cliente(request: Request):
 
 @router.get("/cliente/home", response_class=HTMLResponse)
 async def home_cliente(request: Request):
+    # El flujo de solicitud ES la home del cliente (protagonista).
+    return templates.TemplateResponse("cliente/solicitar.html", {"request": request})
+
+@router.get("/cliente/home-clasico", response_class=HTMLResponse)
+async def home_cliente_clasico(request: Request):
+    """Home anterior (dashboard con FABs), por si se necesita."""
     return templates.TemplateResponse("cliente/home_cliente.html", {"request": request})
 
 @router.get("/cliente/buscando", response_class=HTMLResponse)
@@ -71,8 +77,8 @@ async def seguimiento_servicio(request: Request):
 # Flujo MITA v2: describe problema → categoría → técnico → dirección → chat
 @router.get("/cliente/solicitar", response_class=HTMLResponse)
 async def solicitar_servicio(request: Request):
-    """Solicitud con selector de técnico (recibe ?problema= desde la landing)."""
-    return templates.TemplateResponse("cliente/solicitar.html", {"request": request})
+    """Compatibilidad: el flujo vive en /cliente/home."""
+    return RedirectResponse(url="/cliente/home", status_code=302)
 
 # Demo del chat MITA (estilo WhatsApp) — mensajes precargados + WebSocket
 @router.get("/cliente/chat-demo", response_class=HTMLResponse)
@@ -85,6 +91,16 @@ async def chat_demo(request: Request):
 async def chat_whatsapp(request: Request):
     """Chat MITA estilo WhatsApp Web"""
     return templates.TemplateResponse("cliente/chat_whatsapp.html", {"request": request})
+
+# Centro de chats de un servicio (post-asignación)
+@router.get("/cliente/servicio/{solicitud_id}/chats", response_class=HTMLResponse)
+async def cliente_chats_servicio(request: Request, solicitud_id: int):
+    return templates.TemplateResponse("cliente/chats_servicio.html", {"request": request, "solicitud_id": solicitud_id})
+
+# Chat individual (una sala)
+@router.get("/cliente/chat/{sala_id}", response_class=HTMLResponse)
+async def cliente_chat_sala(request: Request, sala_id: int):
+    return templates.TemplateResponse("cliente/chat.html", {"request": request, "sala_id": sala_id})
 
 # ---- Postulación pública de técnicos ----
 @router.get("/postular", response_class=HTMLResponse)
