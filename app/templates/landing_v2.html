@@ -74,6 +74,16 @@
 
         @media (max-width: 768px) { .nav-links { display: none; } .hero { padding-top: 100px; } .problem-examples { justify-content: center; } }
     </style>
+    <!-- Flujo de solicitud estilo VISA (integrado en la sección de servicios) -->
+    <link rel="stylesheet" href="/static/css/solicitar-visa.css">
+    <style>
+        /* Integración en la landing: preserva su fondo y tipografía */
+        body { background: var(--mita-dark) !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; }
+        #servicios .v-flow { max-width: 620px; margin: 0 auto; }
+        #servicios .v-chips-wrap { top: 62px; background: var(--mita-dark); box-shadow: 0 6px 16px rgba(0,0,0,.4); }
+        #servicios .v-chips-wrap .v-section-label { display: none; }
+        #servicios { scroll-margin-top: 60px; }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -81,67 +91,24 @@
         <div class="nav-links">
             <a href="#servicios">Servicios</a>
             <a href="#como-funciona">¿Cómo funciona?</a>
-            <a href="#contacto">Contacto</a>
+            <a href="https://wa.me/51999999999" target="_blank" rel="noopener">Contacto</a>
         </div>
         <button class="btn-login" onclick="location.href='/login'">Ingresar</button>
     </nav>
 
-    <section class="hero">
+    <!-- Hero mínimo: solo título + subtítulo -->
+    <section class="hero" style="min-height:auto; padding:96px 24px 8px; text-align:center;">
         <div class="hero-content">
-            <div class="hero-badge"><i class="fas fa-bolt"></i> Técnicos verificados en Lima</div>
-            <h1 class="hero-title">Cuéntanos tu <span>problema</span><br>y lo resolvemos hoy</h1>
-            <p class="hero-subtitle">Electricistas, gasfiteros, técnicos en electrodomésticos y más.<br>Servicio rápido, seguro y con garantía.</p>
-
-            <div class="problem-box">
-                <label><i class="fas fa-comment-dots"></i> Describe tu problema y te ayudamos</label>
-                <div class="problem-examples">
-                    <span class="problem-example" onclick="setExample(this)">Mi refrigeradora no enfría</span>
-                    <span class="problem-example" onclick="setExample(this)">Fuga de agua en el baño</span>
-                    <span class="problem-example" onclick="setExample(this)">Necesito armar un mueble</span>
-                    <span class="problem-example" onclick="setExample(this)">Instalar lámpara/araña</span>
-                    <span class="problem-example" onclick="setExample(this)">El tomacorriente no funciona</span>
-                </div>
-                <textarea class="problem-input" id="problem-input" placeholder="Ejemplo: Mi lavadora hace ruido extraño cuando centrifuga y a veces se detiene..."></textarea>
-                <button class="problem-submit" onclick="enviarProblema()"><i class="fas fa-paper-plane"></i> Solicitar ayuda ahora</button>
-            </div>
+            <h1 class="hero-title" style="font-size:clamp(1.6rem,5vw,2.4rem); line-height:1.15;">Servicios técnicos a domicilio en Lima</h1>
+            <p class="hero-subtitle" style="margin-top:8px;">Técnicos verificados • Respuesta inmediata • Garantía</p>
         </div>
     </section>
 
-    <section class="services" id="servicios">
-        <h2 class="section-title">Nuestros Servicios</h2>
-        <p class="section-subtitle">Técnicos especializados para cada necesidad</p>
-        <div class="services-grid">
-            <div class="service-card" onclick="selectService('electricidad')">
-                <div class="service-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;"><i class="fas fa-bolt"></i></div>
-                <div class="service-name">Electricidad</div>
-                <div class="service-examples">Instalación de luminarias, arañas, tomacorrientes, tableros, reparaciones eléctricas</div>
-            </div>
-            <div class="service-card" onclick="selectService('gasfiteria')">
-                <div class="service-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;"><i class="fas fa-faucet"></i></div>
-                <div class="service-name">Gasfitería</div>
-                <div class="service-examples">Fugas de agua, caños, tanques, tuberías, instalación de sanitarios</div>
-            </div>
-            <div class="service-card" onclick="selectService('electrodomesticos')">
-                <div class="service-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;"><i class="fas fa-tv"></i></div>
-                <div class="service-name">Electrodomésticos</div>
-                <div class="service-examples">Refrigeradoras, lavadoras, licuadoras, microondas, aires acondicionados</div>
-            </div>
-            <div class="service-card" onclick="selectService('muebles')">
-                <div class="service-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="fas fa-couch"></i></div>
-                <div class="service-name">Muebles e Instalaciones</div>
-                <div class="service-examples">Armado de muebles, persianas, tendederos, desmontaje, camas, closets</div>
-            </div>
-            <div class="service-card" onclick="selectService('albanileria')">
-                <div class="service-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;"><i class="fas fa-hard-hat"></i></div>
-                <div class="service-name">Albañilería Menor</div>
-                <div class="service-examples">Reparaciones menores, pintura de interiores, resanes, enchapes pequeños</div>
-            </div>
-            <div class="service-card" onclick="selectService('otros')">
-                <div class="service-icon" style="background: rgba(255, 205, 17, 0.1); color: #FFCD11;"><i class="fas fa-tools"></i></div>
-                <div class="service-name">Otros Servicios</div>
-                <div class="service-examples">¿No encuentras lo que buscas? Cuéntanos y te conseguimos un técnico</div>
-            </div>
-        </div>
+    <!-- PROTAGONISTA: flujo de servicios estilo VISA (primera sección de contenido) -->
+    <section class="services" id="servicios" style="padding-top:8px;">
+        <h2 class="section-title">¿Qué necesitas?</h2>
+        <p class="section-subtitle">Elige el área, el tipo y el problema — un técnico llega a tu hogar</p>
+        {% include "partials/flujo_visa.html" %}
     </section>
 
     <section class="how-it-works" id="como-funciona">
@@ -151,15 +118,6 @@
             <div class="step"><div class="step-number">1</div><div class="step-title">Describe tu problema</div><div class="step-desc">Cuéntanos qué necesitas reparar o instalar. Puedes enviar fotos si es necesario.</div></div>
             <div class="step"><div class="step-number">2</div><div class="step-title">Elige tu técnico</div><div class="step-desc">Te mostramos técnicos disponibles con su perfil, experiencia y calificaciones.</div></div>
             <div class="step"><div class="step-number">3</div><div class="step-title">Recibe el servicio</div><div class="step-desc">El técnico llega a tu domicilio. Pagas solo si quedas satisfecho con el servicio.</div></div>
-        </div>
-    </section>
-
-    <section class="cta-final" id="contacto">
-        <h2 class="cta-title">¿Listo para resolver tu problema?</h2>
-        <p class="cta-subtitle">Solicita ayuda ahora y un técnico puede estar en tu casa hoy mismo</p>
-        <div class="cta-buttons">
-            <button class="btn-primary" onclick="scrollToTop()"><i class="fas fa-paper-plane"></i> Solicitar servicio</button>
-            <button class="btn-secondary" onclick="location.href='https://wa.me/51999999999'"><i class="fab fa-whatsapp"></i> Escribir por WhatsApp</button>
         </div>
     </section>
 
@@ -173,31 +131,7 @@
         <div class="footer-copy">© 2026 MITA - Servicios Técnicos a Domicilio. Todos los derechos reservados.</div>
     </footer>
 
-    <script>
-        function setExample(el) { document.getElementById('problem-input').value = el.textContent; }
-        function selectService(service) {
-            const ejemplos = {
-                'electricidad': 'Necesito un electricista para...',
-                'gasfiteria': 'Tengo un problema de agua...',
-                'electrodomesticos': 'Mi electrodoméstico tiene un problema...',
-                'muebles': 'Necesito armar/instalar...',
-                'albanileria': 'Necesito una reparación de...',
-                'otros': ''
-            };
-            document.getElementById('problem-input').value = ejemplos[service] || '';
-            document.getElementById('problem-input').focus();
-            scrollToTop();
-        }
-        function enviarProblema() {
-            const problema = document.getElementById('problem-input').value.trim();
-            if (!problema) { alert('Por favor describe tu problema'); return; }
-            sessionStorage.setItem('mita_problema', problema);
-            window.location.href = '/cliente/solicitar?problema=' + encodeURIComponent(problema);
-        }
-        function scrollToTop() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            setTimeout(() => { document.getElementById('problem-input').focus(); }, 500);
-        }
-    </script>
+    <script src="/static/js/areas-data.js"></script>
+    <script src="/static/js/solicitar-visa.js"></script>
 </body>
 </html>
