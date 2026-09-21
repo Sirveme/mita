@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat — MITA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/static/css/chat.css">
+</head>
+<body>
+<div class="c-wrap">
+    <div class="c-head">
+        <a class="back" href="javascript:history.back()"><i class="fas fa-arrow-left"></i></a>
+        <div class="avatar" id="c-avatar"><i class="fas fa-comments"></i></div>
+        <div class="info"><b id="c-title">Chat</b><small>En línea</small></div>
+        <i class="fas fa-phone call"></i>
+    </div>
+
+    <div class="c-msgs" id="msgs"><div class="c-empty">Cargando...</div></div>
+
+    <div class="c-input">
+        <button class="attach" id="c-attach" aria-label="Adjuntar"><i class="fas fa-paperclip"></i></button>
+        <input type="text" id="c-text" placeholder="Escribe un mensaje..." autocomplete="off">
+        <button class="send" id="c-send" aria-label="Enviar"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+<script>window.SALA_ID = {{ sala_id }};</script>
+<script src="/static/js/chat-sala.js"></script>
+</body>
+</html>

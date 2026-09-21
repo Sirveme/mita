@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chats del servicio — MITA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/static/css/chat.css">
+</head>
+<body>
+<div class="c-wrap">
+    <div class="c-head">
+        <a class="back" href="/cliente/home"><i class="fas fa-arrow-left"></i></a>
+        <div class="info"><b id="serv-num">Servicio</b><small id="serv-estado">—</small></div>
+    </div>
+    <div class="c-serv">
+        <div class="bc" id="serv-bc">—</div>
+        <div class="pr" id="serv-pr">—</div>
+        <div class="estado" id="serv-badge">—</div>
+    </div>
+    <div class="c-label">Chats</div>
+    <div class="c-salas" id="salas"><div class="c-empty">Cargando...</div></div>
+</div>
+<script>
+const SID = {{ solicitud_id }};
+function fecha(iso){ if(!iso) return ''; const d=new Date(iso); const now=new Date(); const s=Math.floor((now-d)/1000);
+    if(s<60) return 'hace '+s+' seg'; if(s<3600) return 'hace '+Math.floor(s/60)+' min'; return d.toLocaleDateString('es-PE'); }
+async function cargar(){
+    try {
+        const r = await fetch('/api/v1/solicitudes/'+SID+'/chats');
+        const d = await r.json();
+        const s = d.solicitud || {};
+        document.getElementById('serv-num').textContent = 'Servicio #'+String(SID).padStart(5,'0');
+        document.getElementById('serv-estado').textContent = s.estado || '';
+        document.getElementById('serv-badge').textContent = s.estado || 'PENDIENTE';
+        // Breadcrumb/problema desde el texto "[Área › Tipo] Problema — desc"
+        const pr = s.problema || '';
+        const m = pr.match(/^\[(.*?)\]\s*(.*)$/);
+        document.getElementById('serv-bc').textContent = m ? m[1] : 'Servicio';
+        document.getElementById('serv-pr').textContent = (m ? m[2] : pr).split(' — ')[0] + (s.direccion ? '' : '');
+        const cont = document.getElementById('salas');
+        const salas = d.salas || [];
+        if(!salas.length){ cont.innerHTML='<div class="c-empty">Aún no hay chats. Se abren al asignar el técnico.</div>'; return; }
+        cont.innerHTML = salas.map(sa=>`
+            <a class="c-sala" href="/cliente/chat/${sa.id}">
+                <div class="ic"><i class="fas ${sa.icono}"></i></div>
+                <div class="body"><b>${sa.titulo}</b><p>${sa.ultimo_mensaje||'Sin mensajes aún'}</p></div>
+                <div style="text-align:right;"><small style="color:var(--c-tx2);font-size:11px;">${fecha(sa.ultimo_at)}</small><br><i class="fas fa-chevron-right arrow"></i></div>
+            </a>`).join('');
+    } catch(e){ document.getElementById('salas').innerHTML='<div class="c-empty">No se pudo cargar.</div>'; }
+}
+document.addEventListener('DOMContentLoaded', cargar);
+</script>
+</body>
+</html>
