@@ -174,6 +174,55 @@ async def retorno_pago(request: Request, ref: Optional[str] = None, sim: Optiona
 # Admin — lista de pagos
 # ============================================
 
+import secrets as _secrets
+from datetime import timedelta as _timedelta
+
+
+@router.post("/api/v1/pagos/preautorizar")
+def preautorizar(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Reserva (no cobra) un monto en la tarjeta. STUB: aprueba siempre.
+    Cuando IziPay dé credenciales, aquí va la pre-autorización real."""
+    monto = float(data.get("monto") or 0)
+    if monto <= 0:
+        return JSONResponse({"success": False, "detail": "Monto inválido."}, status_code=400)
+    auth = "AUTH_" + _secrets.token_hex(5).upper()
+    expira = datetime.utcnow() + _timedelta(days=7)
+    p = Pago(referencia=auth, solicitud_id=data.get("solicitud_id"), monto=monto,
+             estado="AUTORIZADA", pasarela="izipay", autorizacion_id=auth,
+             monto_autorizado=monto, autorizacion_expira=expira,
+             cliente_email=data.get("cliente_email"))
+    db.add(p); db.commit()
+    return {"success": True, "autorizacion_id": auth, "monto_autorizado": monto,
+            "estado": "AUTORIZADA", "expira_en": expira.isoformat(), "simulado": True}
+
+
+@router.post("/api/v1/pagos/capturar")
+def capturar(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Captura (cobra) el monto final sobre una autorización previa. STUB."""
+    auth = data.get("autorizacion_id")
+    p = db.query(Pago).filter(Pago.autorizacion_id == auth).first() if auth else None
+    if not p:
+        raise HTTPException(404, "Autorización no encontrada")
+    monto_final = float(data.get("monto_final") or p.monto_autorizado or p.monto)
+    p.monto_capturado = monto_final
+    p.estado = "APROBADO"
+    p.pagado_en = datetime.utcnow()
+    db.commit()
+    return {"success": True, "autorizacion_id": auth, "monto_capturado": monto_final, "estado": "APROBADO", "simulado": True}
+
+
+@router.post("/api/v1/pagos/cancelar-autorizacion")
+def cancelar_autorizacion(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Libera una autorización sin cobrar (servicio cancelado). STUB."""
+    auth = data.get("autorizacion_id")
+    p = db.query(Pago).filter(Pago.autorizacion_id == auth).first() if auth else None
+    if not p:
+        raise HTTPException(404, "Autorización no encontrada")
+    p.estado = "REEMBOLSADO"
+    db.commit()
+    return {"success": True, "autorizacion_id": auth, "estado": "REEMBOLSADO", "simulado": True}
+
+
 @router.get("/api/v1/admin/pagos")
 def listar_pagos(estado: Optional[str] = None, con_comprobante: Optional[str] = None,
                  desde: Optional[str] = None, hasta: Optional[str] = None,

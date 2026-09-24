@@ -299,12 +299,26 @@ async def login_tecnico(request: Request):
 
 # ---- Panel del técnico MITA (zMita-5, layout con nav inferior) ----
 @router.get("/tecnico", response_class=HTMLResponse)
+async def tecnico_home(request: Request, db: Session = Depends(get_db)):
+    """El inicio del técnico es el dashboard."""
+    redir = await _guard_tecnico(request, db)
+    if redir:
+        return redir
+    return RedirectResponse(url="/tecnico/dashboard", status_code=302)
+
+@router.get("/tecnico/dashboard", response_class=HTMLResponse)
 async def tecnico_dashboard(request: Request, db: Session = Depends(get_db)):
-    """Inicio del panel del técnico"""
     redir = await _guard_tecnico(request, db)
     if redir:
         return redir
     return templates.TemplateResponse("tecnico/dashboard.html", {"request": request, "active": "home"})
+
+@router.get("/tecnico/servicio/{sid}", response_class=HTMLResponse)
+async def tecnico_servicio_activo(request: Request, sid: int, db: Session = Depends(get_db)):
+    redir = await _guard_tecnico(request, db)
+    if redir:
+        return redir
+    return templates.TemplateResponse("tecnico/servicio_activo.html", {"request": request, "servicio_id": sid})
 
 @router.get("/tecnico/servicios", response_class=HTMLResponse)
 async def tecnico_servicios(request: Request, db: Session = Depends(get_db)):
