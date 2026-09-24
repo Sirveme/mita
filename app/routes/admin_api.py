@@ -271,7 +271,7 @@ def listar_usuarios(db: Session = Depends(get_db)):
 
 
 @router.post("/reset-password/{dni}")
-def reset_password_admin(dni: str, db: Session = Depends(get_db)):
+def reset_password_admin(dni: str, db: Session = Depends(get_db), _=Depends(require_admin_gerente)):
     """Resetea la clave de un usuario a su DNI, la marca para cambio y desbloquea la cuenta."""
     import bcrypt
     usuario = db.query(UsuarioMita).filter(UsuarioMita.dni == dni).first()

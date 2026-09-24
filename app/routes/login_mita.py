@@ -231,12 +231,15 @@ async def require_admin(request: Request, db: Session = Depends(get_db)):
 # ============================================
 
 @router.get("/admin/reset-clave/{dni}", response_class=HTMLResponse)
-async def reset_clave_form(request: Request, dni: str):
+async def reset_clave_form(request: Request, dni: str, _=Depends(require_admin)):
     return templates.TemplateResponse("admin/reset_clave.html", {"request": request, "dni": dni})
 
 
 @router.post("/admin/reset-clave/{dni}")
-async def reset_clave(request: Request, dni: str, db: Session = Depends(get_db)):
+async def reset_clave(request: Request, dni: str, db: Session = Depends(get_db), actor=Depends(require_admin)):
+    # El admin no puede resetear su propia cuenta (evita lockout)
+    if actor and actor.dni == dni:
+        return RedirectResponse(url="/admin/usuarios?reset=self", status_code=303)
     usuario = db.query(UsuarioMita).filter(UsuarioMita.dni == dni).first()
     if not usuario:
         return RedirectResponse(url="/admin/usuarios?reset=notfound", status_code=303)

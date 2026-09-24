@@ -108,6 +108,7 @@ def _pagina(nombre, active):
 router.add_api_route("/soporte/facturador", _pagina("facturador", "facturador"), response_class=HTMLResponse)
 router.add_api_route("/soporte/pasarela", _pagina("pasarela", "pasarela"), response_class=HTMLResponse)
 router.add_api_route("/soporte/rubros", _pagina("rubros", "rubros"), response_class=HTMLResponse)
+router.add_api_route("/soporte/reset-password", _pagina("reset_password", "reset"), response_class=HTMLResponse)
 router.add_api_route("/soporte/logs", _pagina("logs", "logs"), response_class=HTMLResponse)
 
 
