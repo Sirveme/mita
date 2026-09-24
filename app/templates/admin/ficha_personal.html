@@ -51,7 +51,19 @@
 .especialidad-item input[type="checkbox"] { width: 20px; height: 20px; }
 .especialidad-item label { flex: 1; cursor: pointer; }
 .especialidad-item .exp-years { width: 60px; }
-#modal-documento { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+#modal-documento, #modal-billetera { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+.billetera-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--mita-dark); border: 1px solid var(--mita-border); border-radius: 12px; margin-bottom: 12px; }
+.billetera-card.principal { border-color: var(--mita-primary); background: rgba(255, 205, 17, 0.05); }
+.billetera-icono { width: 48px; height: 48px; border-radius: 12px; background: var(--mita-card); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--mita-primary); }
+.billetera-icono img { width: 32px; height: 32px; object-fit: contain; }
+.billetera-info { flex: 1; }
+.billetera-tipo { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.badge-principal { font-size: 10px; padding: 2px 6px; background: var(--mita-primary); color: #000; border-radius: 4px; font-weight: 700; }
+.billetera-numero { font-size: 14px; color: #888; margin-top: 4px; }
+.billetera-titular { font-size: 12px; color: #666; }
+.billetera-actions { display: flex; gap: 8px; }
+.billetera-actions button { width: 36px; height: 36px; border-radius: 8px; border: none; background: var(--mita-card); color: #888; cursor: pointer; }
+.billetera-actions button:hover { color: var(--mita-primary); }
 @media (max-width: 768px) { .ficha-header { flex-direction: column; align-items: center; text-align: center; } .ficha-stats { justify-content: center; } .ficha-form-grid { grid-template-columns: 1fr; } }
 </style>
 {% endblock %}
@@ -80,6 +92,7 @@
 
         <div style="display: flex; gap: 8px; align-items: flex-start;">
             <button class="am-btn am-btn-secondary" onclick="history.back()"><i class="fas fa-arrow-left"></i> Volver</button>
+            <button class="am-btn am-btn-secondary" onclick="resetearClave()"><i class="fas fa-key"></i> Resetear contraseña</button>
             <button class="am-btn am-btn-primary" onclick="guardarFicha()"><i class="fas fa-save"></i> Guardar</button>
         </div>
     </div>
@@ -90,6 +103,7 @@
         <button class="ficha-tab" onclick="cambiarTab('laborales')"><i class="fas fa-briefcase"></i> Datos Laborales</button>
         <button class="ficha-tab" onclick="cambiarTab('especialidades')"><i class="fas fa-tools"></i> Especialidades</button>
         <button class="ficha-tab" onclick="cambiarTab('banco')"><i class="fas fa-university"></i> Datos Bancarios</button>
+        <button class="ficha-tab" onclick="cambiarTab('billeteras')"><i class="fas fa-wallet"></i> Billeteras</button>
     </div>
 
     <div class="ficha-section active" id="section-personal">
@@ -167,6 +181,38 @@
                 <select id="tipo_cuenta" class="am-input"><option value="">Seleccionar...</option><option value="ahorros">Ahorros</option><option value="corriente">Corriente</option></select></div>
             <div class="am-form-group"><label>Número de Cuenta</label><input type="text" id="numero_cuenta" class="am-input"></div>
             <div class="am-form-group"><label>CCI (Código Interbancario)</label><input type="text" id="cci" class="am-input" maxlength="20"></div>
+        </div>
+    </div>
+
+    <!-- Sección: Billeteras -->
+    <div class="ficha-section" id="section-billeteras">
+        <h3 class="section-title">Billeteras Electrónicas para Pagos</h3>
+        <p style="color:#888; margin-bottom:20px; font-size:14px;">Configura las billeteras donde recibirás tus pagos. Yape y Plin son las más comunes; puedes agregar otras (Open Banking).</p>
+        <div class="ficha-form-grid" style="margin-bottom:24px;">
+            <div class="am-form-group"><label>Celular Principal</label><input type="tel" id="celular_1" class="am-input" placeholder="999 999 999" maxlength="15"></div>
+            <div class="am-form-group"><label>Celular Secundario (opcional)</label><input type="tel" id="celular_2" class="am-input" placeholder="999 999 999" maxlength="15"></div>
+        </div>
+        <div id="billeteras-list"></div>
+        <button class="am-btn am-btn-secondary" onclick="agregarBilletera()" style="margin-top:16px;"><i class="fas fa-plus"></i> Agregar Billetera</button>
+    </div>
+</div>
+
+<!-- Modal agregar billetera -->
+<div id="modal-billetera">
+    <div class="am-modal" style="max-width:400px;">
+        <div class="am-modal-head"><h3 id="modal-billetera-titulo">Agregar Billetera</h3><button class="close" onclick="cerrarModalBilletera()">&times;</button></div>
+        <div class="am-modal-body">
+            <input type="hidden" id="billetera-id">
+            <div class="am-form-group"><label>Tipo de Billetera</label>
+                <select id="billetera-tipo" class="am-input" onchange="toggleNombreBilletera()"><option value="YAPE">Yape</option><option value="PLIN">Plin</option><option value="OTRA">Otra (Open Banking)</option></select></div>
+            <div class="am-form-group" id="grupo-nombre-billetera" style="display:none;"><label>Nombre de la Billetera</label><input type="text" id="billetera-nombre" class="am-input" placeholder="Ej: BIM, Tunki, etc."></div>
+            <div class="am-form-group"><label>Número de Celular</label><input type="tel" id="billetera-numero" class="am-input" placeholder="999 999 999"></div>
+            <div class="am-form-group"><label>Titular (si es diferente)</label><input type="text" id="billetera-titular" class="am-input" placeholder="Nombre del titular"></div>
+            <div class="am-form-group"><label><input type="checkbox" id="billetera-principal"> Marcar como principal</label></div>
+        </div>
+        <div class="am-modal-foot">
+            <button class="am-btn am-btn-secondary" onclick="cerrarModalBilletera()">Cancelar</button>
+            <button class="am-btn am-btn-primary" onclick="guardarBilletera()">Guardar</button>
         </div>
     </div>
 </div>
@@ -271,11 +317,109 @@ async function guardarFicha() {
     else alert('La ficha se guardó correctamente');
 }
 
+// ============================================
+// Reset de contraseña (clave = DNI, cambio obligatorio)
+// ============================================
+async function resetearClave() {
+    const dni = (document.getElementById('dni').value || '').trim();
+    const nombre = (document.getElementById('nombre-completo').textContent || 'este usuario').trim();
+    if (!dni) { alert('El usuario no tiene DNI registrado.'); return; }
+    if (!confirm(`¿Resetear la contraseña de ${nombre}?\nLa nueva contraseña será su DNI (${dni}) y deberá cambiarla al ingresar.`)) return;
+    try {
+        const r = await fetch(`/api/v1/personal/${dni}/reset-password`, { method: 'POST' });
+        const d = await r.json().catch(() => ({}));
+        if (r.ok) {
+            const msg = `Contraseña reseteada. Nueva contraseña: el DNI del usuario (${dni}).`;
+            if (window.MitaAlert) MitaAlert.success('Contraseña reseteada', msg); else alert(msg);
+        } else {
+            const err = d.detail || 'No se pudo resetear la contraseña.';
+            if (window.MitaAlert) MitaAlert.error('Error', err); else alert(err);
+        }
+    } catch (e) {
+        alert('Error de conexión al resetear la contraseña.');
+    }
+}
+
+// ============================================
+// Billeteras electrónicas
+// ============================================
+async function cargarBilleteras() {
+    if (!personalId) return;
+    const container = document.getElementById('billeteras-list');
+    try {
+        const response = await fetch(`/api/v1/personal/${personalId}/billeteras`);
+        if (!response.ok) throw new Error('sin API');
+        const billeteras = await response.json();
+        if (!billeteras.length) {
+            container.innerHTML = '<div style="text-align:center; padding:40px; color:#888;"><i class="fas fa-wallet" style="font-size:48px; margin-bottom:16px; opacity:0.3;"></i><p>No hay billeteras configuradas</p></div>';
+            return;
+        }
+        container.innerHTML = billeteras.map(b => `
+            <div class="billetera-card ${b.es_principal ? 'principal' : ''}">
+                <div class="billetera-icono">${getBilleteraIcon(b.tipo)}</div>
+                <div class="billetera-info">
+                    <div class="billetera-tipo">${b.tipo === 'OTRA' ? (b.nombre_billetera || 'Otra') : b.tipo} ${b.es_principal ? '<span class="badge-principal">Principal</span>' : ''}</div>
+                    <div class="billetera-numero">${b.numero_celular}</div>
+                    ${b.titular ? `<div class="billetera-titular">${b.titular}</div>` : ''}
+                </div>
+                <div class="billetera-actions">
+                    <button onclick="eliminarBilletera(${b.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>`).join('');
+    } catch (e) {
+        container.innerHTML = '<p style="color:#888;">Configura billeteras cuando la BD esté disponible.</p>';
+    }
+}
+function getBilleteraIcon(tipo) {
+    if (tipo === 'YAPE') return '<i class="fas fa-mobile-alt" style="color:#742284;"></i>';
+    if (tipo === 'PLIN') return '<i class="fas fa-mobile-alt" style="color:#00bcd4;"></i>';
+    return '<i class="fas fa-wallet"></i>';
+}
+function toggleNombreBilletera() {
+    document.getElementById('grupo-nombre-billetera').style.display = document.getElementById('billetera-tipo').value === 'OTRA' ? 'block' : 'none';
+}
+function agregarBilletera() {
+    if (!personalId) { if (window.MitaAlert) MitaAlert.info('Guarda primero', 'Registra el personal antes de agregar billeteras'); return; }
+    document.getElementById('billetera-tipo').value = 'YAPE';
+    document.getElementById('billetera-nombre').value = '';
+    document.getElementById('billetera-numero').value = '';
+    document.getElementById('billetera-titular').value = '';
+    document.getElementById('billetera-principal').checked = false;
+    toggleNombreBilletera();
+    document.getElementById('modal-billetera').style.display = 'flex';
+}
+function cerrarModalBilletera() { document.getElementById('modal-billetera').style.display = 'none'; }
+async function guardarBilletera() {
+    const data = {
+        tipo: document.getElementById('billetera-tipo').value,
+        nombre_billetera: document.getElementById('billetera-nombre').value || null,
+        numero_celular: document.getElementById('billetera-numero').value,
+        titular: document.getElementById('billetera-titular').value || null,
+        es_principal: document.getElementById('billetera-principal').checked
+    };
+    if (!data.numero_celular) { MitaAlert.error('Error', 'Ingresa el número de celular'); return; }
+    try {
+        const r = await fetch(`/api/v1/personal/${personalId}/billeteras`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        if (!r.ok) throw new Error('Error');
+        MitaAlert.success('Guardado', 'Billetera agregada correctamente');
+        cerrarModalBilletera(); cargarBilleteras();
+    } catch (e) { MitaAlert.error('Error', 'No se pudo guardar la billetera'); }
+}
+async function eliminarBilletera(id) {
+    const ok = await MitaAlert.confirm('Eliminar billetera', '¿Seguro que deseas eliminar esta billetera?');
+    if (!ok) return;
+    try { await fetch(`/api/v1/personal/${personalId}/billeteras/${id}`, { method: 'DELETE' }); MitaAlert.success('Eliminada', 'Billetera eliminada'); cargarBilleteras(); }
+    catch (e) { MitaAlert.error('Error', 'No se pudo eliminar'); }
+}
+window.agregarBilletera = agregarBilletera;
+window.eliminarBilletera = eliminarBilletera;
+window.toggleNombreBilletera = toggleNombreBilletera;
+
 document.addEventListener('DOMContentLoaded', () => {
     cargarEspecialidades();
     const urlParams = new URLSearchParams(window.location.search);
     personalId = urlParams.get('id');
-    if (personalId) cargarDatosPersonal(personalId);
+    if (personalId) { cargarDatosPersonal(personalId); cargarBilleteras(); }
 });
 </script>
 {% endblock %}
