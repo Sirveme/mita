@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Servicio — MITA Técnico</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="/static/css/tecnico.css">
+</head>
+<body>
+<div class="t-wrap t-detalle">
+    <div class="t-header">
+        <a class="t-back" href="/tecnico/dashboard"><i class="fas fa-arrow-left"></i></a>
+        <div class="brand" style="margin-left:6px;"><b id="d-num">Servicio</b><small id="d-estado">—</small></div>
+    </div>
+    <div class="t-body" id="d-cont"><div class="card"><h3>Cargando...</h3></div></div>
+</div>
+
+<!-- Modal adicional -->
+<div class="t-modal" id="m-adic">
+    <div class="t-modal-box">
+        <h3 style="margin:0 0 14px;"><i class="fas fa-plus" style="color:var(--t-green)"></i> Servicio adicional</h3>
+        <div style="color:var(--t-tx2);font-size:13px;margin-bottom:6px;">Descripción</div>
+        <input class="t-input" id="ad-desc" placeholder="Ej: Cambio de llave térmica 20A" style="margin-bottom:12px;">
+        <div style="color:var(--t-tx2);font-size:13px;margin-bottom:6px;">Monto adicional (S/)</div>
+        <input class="t-input" id="ad-monto" type="number" inputmode="decimal" placeholder="80" style="margin-bottom:14px;">
+        <button class="t-btn aceptar full" onclick="enviarAdicional()"><i class="fas fa-paper-plane"></i> SOLICITAR APROBACIÓN</button>
+        <p style="color:var(--t-amber);font-size:13px;margin-top:10px;"><i class="fas fa-triangle-exclamation"></i> El cliente recibirá una notificación para aprobar.</p>
+        <button class="t-btn sec full" style="margin-top:8px;" onclick="cerrarAdic()">Cancelar</button>
+    </div>
+</div>
+<div class="t-toast" id="t-toast"></div>
+
+<script>
+const SID = {{ servicio_id }};
+const $ = (s) => document.querySelector(s);
+const esc = (t) => { const d = document.createElement('div'); d.textContent = t == null ? '' : t; return d.innerHTML; };
+const money = (v) => 'S/ ' + (Number(v) || 0).toFixed(2);
+function toast(m){ const t=$('#t-toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+let DET = null;
+
+async function cargar(){
+    try {
+        const r = await fetch('/api/v1/tecnico/servicios/'+SID);
+        if(r.status===401){ location.href='/login'; return; }
+        DET = await r.json();
+    } catch(e){ $('#d-cont').innerHTML='<div class="card"><h3>No se pudo cargar</h3></div>'; return; }
+    render();
+}
+
+function botonesEstado(est){
+    const dir = encodeURIComponent(DET.direccion||'');
+    if(est==='ACEPTADA') return `
+        <a class="t-btn aceptar full" href="https://www.google.com/maps/search/?api=1&query=${dir}" target="_blank" style="text-decoration:none;margin-bottom:10px;"><i class="fas fa-location-arrow"></i> INICIAR NAVEGACIÓN</a>
+        <button class="t-btn sec full" onclick="cambiar('EN_CAMINO')"><i class="fas fa-car"></i> YA VOY EN CAMINO</button>`;
+    if(est==='EN_CAMINO') return `
+        <button class="t-btn aceptar full" onclick="cambiar('EN_SITIO')" style="margin-bottom:10px;"><i class="fas fa-house"></i> LLEGUÉ / INICIANDO</button>
+        <a class="t-btn sec full" href="/cliente/servicio/${SID}/chats" style="text-decoration:none;"><i class="fas fa-comments"></i> CHAT CON CLIENTE</a>`;
+    return '';
+}
+
+function render(){
+    $('#d-num').textContent = '#'+String(SID).padStart(5,'0');
+    $('#d-estado').textContent = DET.estado;
+    const enSitio = DET.estado==='EN_SITIO' || DET.estado==='EN_PROCESO';
+    const adic = (DET.adicionales||[]);
+    $('#d-cont').innerHTML = `
+        <div class="card">
+            <h3><i class="fas fa-clipboard-list"></i> ${esc((DET.problema||'').match(/^\[(.*?)\]/)?RegExp.$1:'Servicio')}</h3>
+            <div class="meta" style="color:var(--t-tx2);margin-bottom:8px;">${esc((DET.problema||'').replace(/^\[.*?\]\s*/,''))}</div>
+            <div class="row"><span class="k"><i class="fas fa-location-dot"></i> Dirección</span><span>${esc(DET.direccion||'—')}</span></div>
+            ${DET.telefono?`<div class="row"><span class="k"><i class="fas fa-phone"></i> Teléfono</span><span>${esc(DET.telefono)}</span></div>`:''}
+        </div>
+
+        <div class="card">${botonesEstado(DET.estado)||'<div style="color:var(--t-tx2)">Servicio en curso.</div>'}</div>
+
+        ${enSitio?`
+        <div class="card">
+            <h3><i class="fas fa-stethoscope"></i> Diagnóstico</h3>
+            <textarea class="t-input" id="d-diag" rows="3" placeholder="Describe el problema encontrado...">${esc(DET.diagnostico||'')}</textarea>
+            <button class="t-btn sec full" style="margin-top:10px;" onclick="guardarDiag()"><i class="fas fa-floppy-disk"></i> Guardar diagnóstico</button>
+            <button class="t-btn aceptar full" style="margin-top:10px;" onclick="abrirAdic()"><i class="fas fa-plus"></i> AGREGAR SERVICIO ADICIONAL</button>
+        </div>`:''}
+
+        <div class="card">
+            <h3><i class="fas fa-receipt"></i> Resumen</h3>
+            <div class="row"><span class="k">Base (visita)</span><span>${money(DET.base)}</span></div>
+            ${adic.map((a,i)=>`<div class="t-adic"><span>Adicional ${i+1}: ${esc(a.descripcion)}</span><span>${money(a.monto)} <span class="est ${a.estado}">${a.estado==='APROBADO'?'✓':(a.estado==='RECHAZADO'?'✗':'⏳')}</span></span></div>`).join('')}
+            <div class="row total"><span class="k">TOTAL</span><span>${money(DET.total)}</span></div>
+        </div>
+
+        ${enSitio?`<button class="t-btn aceptar full" ${DET.hay_pendientes?'disabled style="opacity:.5"':''} onclick="finalizar()"><i class="fas fa-check-double"></i> FINALIZAR SERVICIO</button>
+            ${DET.hay_pendientes?'<p style="color:var(--t-amber);text-align:center;font-size:13px;margin-top:8px;">Espera que el cliente apruebe los adicionales pendientes.</p>':''}`:''}
+    `;
+}
+
+async function cambiar(estado){
+    const r=await fetch('/api/v1/solicitudes/'+SID+'/estado',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({estado})});
+    if(r.ok){ toast('Estado: '+estado); cargar(); } else toast('Error');
+}
+async function guardarDiag(){
+    const diag=$('#d-diag').value.trim();
+    await fetch('/api/v1/solicitudes/'+SID+'/diagnostico',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({diagnostico:diag})});
+    toast('Diagnóstico guardado');
+}
+function abrirAdic(){ $('#ad-desc').value=''; $('#ad-monto').value=''; $('#m-adic').classList.add('open'); }
+function cerrarAdic(){ $('#m-adic').classList.remove('open'); }
+async function enviarAdicional(){
+    const descripcion=$('#ad-desc').value.trim(); const monto=parseFloat($('#ad-monto').value);
+    if(!descripcion || !(monto>0)){ toast('Completa descripción y monto'); return; }
+    const r=await fetch('/api/v1/solicitudes/'+SID+'/adicionales',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({descripcion,monto})});
+    if(r.ok){ cerrarAdic(); toast('Enviado al cliente para aprobación'); cargar(); } else toast('Error');
+}
+async function finalizar(){
+    if(!confirm('¿Finalizar el servicio? Se capturará el monto total.')) return;
+    const r=await fetch('/api/v1/solicitudes/'+SID+'/finalizar',{method:'POST'});
+    const d=await r.json();
+    if(r.ok){ toast('Servicio finalizado · Total '+money(d.total)); setTimeout(()=>location.href='/tecnico/dashboard',1500); }
+    else toast(d.detail||'No se pudo finalizar');
+}
+window.cambiar=cambiar; window.guardarDiag=guardarDiag; window.abrirAdic=abrirAdic; window.cerrarAdic=cerrarAdic; window.enviarAdicional=enviarAdicional; window.finalizar=finalizar;
+document.addEventListener('DOMContentLoaded', cargar);
+</script>
+</body>
+</html>
