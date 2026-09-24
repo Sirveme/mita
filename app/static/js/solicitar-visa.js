@@ -264,10 +264,35 @@
         $('#v-tecnicos').classList.add('open');
         $('#v-tec-buscando').hidden = false; $('#v-tec-lista').hidden = true;
         $('#v-tec-num').textContent = 'Solicitud #' + String(estado.solicitudId || 0).padStart(5, '0');
+        // Flujo real: notificar a técnicos EN_SERVICIO y esperar que uno acepte
+        let notificados = 0;
+        try { const b = await (await fetch('/api/v1/solicitudes/' + estado.solicitudId + '/buscar-tecnico', { method: 'POST' })).json(); notificados = b.tecnicos || 0; } catch (e) {}
+        if (notificados > 0) { esperarAceptacion(); return; }
+        // Fallback (nadie EN_SERVICIO): selección demo para no bloquear el flujo
         let tecnicos = [];
         try { const d = await (await fetch('/api/v1/tecnicos-disponibles?categoria_id=' + (estado.area.categoria_id || ''))).json(); tecnicos = d.tecnicos || []; } catch (e) {}
-        await new Promise(r => setTimeout(r, 1200));   // "buscando…"
+        await new Promise(r => setTimeout(r, 1200));
         renderTecnicos(tecnicos);
+    }
+    function esperarAceptacion() {
+        const h = $('#v-tec-buscando').querySelector('h2'); if (h) h.textContent = 'Buscando técnico… esperando confirmación';
+        let intentos = 0;
+        const iv = setInterval(async () => {
+            intentos++;
+            try {
+                const s = await (await fetch('/api/v1/solicitudes/estado/' + estado.solicitudId)).json();
+                if (s.tecnico_id || ['ACEPTADA', 'EN_CAMINO', 'EN_SITIO', 'EN_PROCESO'].includes(s.estado)) {
+                    clearInterval(iv); estado.tecnico = { nombre: s.tecnico_nombre || 'Técnico', rating: null };
+                    $('#v-tecnicos').classList.remove('open'); mostrarExito(); return;
+                }
+                if (s.estado === 'SIN_TECNICO') {
+                    clearInterval(iv);
+                    $('#v-tec-buscando').innerHTML = '<h2>No hay técnicos disponibles ahora</h2><p style="color:var(--v-text2)">Te avisaremos apenas uno se conecte. Puedes cerrar esta ventana.</p>';
+                    return;
+                }
+            } catch (e) {}
+            if (intentos > 40) clearInterval(iv);   // ~2 min
+        }, 3000);
     }
     function renderTecnicos(tecnicos) {
         $('#v-tec-buscando').hidden = true; $('#v-tec-lista').hidden = false;
