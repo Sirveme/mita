@@ -50,3 +50,5 @@ from app.models.pago import PagoPasarela
 from app.models.area_servicio import AreaServicio
 from app.models.problema_servicio import ProblemaServicio
 from app.models.chat_sala import ChatSala, ChatMensaje
+from app.models.servicio_adicional import ServicioAdicional
+from app.models.notificacion_tecnico import NotificacionTecnico

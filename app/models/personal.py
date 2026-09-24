@@ -100,6 +100,9 @@ class Personal(Base):
     tipo_relacion = Column(String(20), default="PROVEEDOR")  # EMPLEADO / PROVEEDOR
     postulante_id = Column(Integer, ForeignKey("postulantes.id"))
 
+    # Dashboard técnico: disponibilidad en campo (toggle EN_SERVICIO)
+    estado_servicio = Column(String(20), default="FUERA_SERVICIO")  # EN_SERVICIO | FUERA_SERVICIO | OCUPADO
+
     # Meta
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

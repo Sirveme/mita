@@ -41,3 +41,9 @@ class PagoPasarela(Base):
     creado_en = Column(DateTime, server_default=func.now())
     actualizado_en = Column(DateTime, server_default=func.now(), onupdate=func.now())
     pagado_en = Column(DateTime)
+
+    # Pre-autorización de tarjeta (retención sin captura hasta finalizar el servicio)
+    autorizacion_id = Column(String(100))
+    monto_autorizado = Column(Numeric(10, 2))
+    monto_capturado = Column(Numeric(10, 2))
+    autorizacion_expira = Column(DateTime)

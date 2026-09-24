@@ -33,6 +33,12 @@ class Solicitud(Base):
     tecnico_id = Column(Integer, ForeignKey("personal.id"))
     secretaria_id = Column(Integer, ForeignKey("personal.id"), nullable=True)
 
+    # Asignación automática (dashboard técnico)
+    cola_tecnicos = Column(Text)                                        # CSV de ids pendientes
+    tecnico_notificado_id = Column(Integer, ForeignKey("personal.id"))
+    notificado_en = Column(DateTime, nullable=True)
+    diagnostico = Column(Text)
+
     # Estado: PENDIENTE, ACEPTADA, EN_CAMINO, EN_SERVICIO, COMPLETADA, CANCELADA, RECHAZADA
     estado = Column(String(20), default="PENDIENTE", index=True)
 
