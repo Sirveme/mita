@@ -1,0 +1,88 @@
+/* ============================================================
+   Panel Técnico MITA — navy cálido + verde (activo, campo). Mobile-first.
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+:root {
+    --t-bg:#1e2a3a; --t-bg2:#182230; --t-panel:#24344a; --t-panel2:#2b3d56; --t-bd:#33475f;
+    --t-green:#22c55e; --t-green-d:#16a34a; --t-tx:#f1f5f9; --t-tx2:#94a3b8; --t-red:#ef4444; --t-amber:#f59e0b;
+}
+* { box-sizing: border-box; }
+body { margin:0; background:var(--t-bg); color:var(--t-tx); font-family:'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-size:16px; }
+.t-wrap { max-width:560px; margin:0 auto; min-height:100vh; padding-bottom:78px; }
+
+/* Header */
+.t-header { display:flex; align-items:center; gap:12px; padding:16px; background:var(--t-bg2); border-bottom:1px solid var(--t-bd); position:sticky; top:0; z-index:20; }
+.t-header .menu { background:none; border:none; color:var(--t-tx); font-size:20px; cursor:pointer; }
+.t-header .brand b { font-size:16px; } .t-header .brand small { display:block; color:var(--t-tx2); font-size:13px; }
+.t-header .actions { margin-left:auto; display:flex; align-items:center; gap:10px; }
+.t-header .actions button { width:42px; height:42px; border-radius:50%; border:1px solid var(--t-bd); background:var(--t-panel); color:var(--t-tx2); font-size:16px; cursor:pointer; }
+.t-header .avatar { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,var(--t-green),var(--t-green-d)); display:flex; align-items:center; justify-content:center; color:#04210f; font-weight:800; }
+
+.t-body { padding:16px; }
+
+/* Toggle EN SERVICIO */
+.t-toggle-card { background:var(--t-panel); border:1px solid var(--t-bd); border-radius:18px; padding:22px; text-align:center; margin-bottom:20px; }
+.t-toggle-card .estado { font-size:19px; font-weight:800; margin-bottom:16px; display:flex; align-items:center; justify-content:center; gap:10px; }
+.t-toggle-card .estado .dot { width:12px; height:12px; border-radius:50%; background:var(--t-tx2); }
+.t-toggle-card.on .estado .dot { background:var(--t-green); box-shadow:0 0 10px var(--t-green); }
+.t-toggle-card.on .estado { color:var(--t-green); }
+.t-switch { position:relative; width:120px; height:52px; border-radius:26px; background:#3a4a60; margin:0 auto; cursor:pointer; transition:background .3s; }
+.t-toggle-card.on .t-switch { background:var(--t-green-d); }
+.t-switch .knob { position:absolute; top:4px; left:4px; width:44px; height:44px; border-radius:50%; background:#fff; transition:left .3s; display:flex; align-items:center; justify-content:center; color:#1e2a3a; font-weight:800; font-size:13px; }
+.t-toggle-card.on .t-switch .knob { left:72px; }
+.t-switch .lbl { position:absolute; top:18px; font-size:13px; font-weight:700; color:#fff; } .t-switch .lbl.on { left:16px; } .t-switch .lbl.off { right:16px; color:var(--t-tx2); }
+
+/* Secciones */
+.t-sec-label { font-size:13px; letter-spacing:1px; text-transform:uppercase; color:var(--t-tx2); font-weight:800; margin:18px 2px 12px; display:flex; align-items:center; gap:8px; }
+
+/* Solicitud entrante */
+.t-entrante { background:var(--t-panel); border:2px solid var(--t-green); border-radius:18px; overflow:hidden; margin-bottom:16px; animation:pulseBorder 1.4s infinite; }
+@keyframes pulseBorder { 0%,100%{ border-color:var(--t-green);} 50%{ border-color:var(--t-amber);} }
+.t-entrante .cat { background:var(--t-green); color:#04210f; padding:10px 16px; font-weight:800; display:flex; align-items:center; gap:8px; }
+.t-entrante .cat small { font-weight:600; opacity:.85; margin-left:auto; }
+.t-entrante .cuerpo { padding:16px; }
+.t-entrante .prob { font-size:17px; font-weight:600; margin-bottom:12px; }
+.t-entrante .meta { color:var(--t-tx2); font-size:14.5px; margin:5px 0; display:flex; gap:8px; align-items:center; }
+.t-entrante .precio { font-size:18px; font-weight:800; color:var(--t-green); margin:10px 0; }
+.t-timer { display:flex; align-items:center; gap:10px; margin:12px 0; font-weight:700; }
+.t-timer .bar { flex:1; height:8px; background:#3a4a60; border-radius:4px; overflow:hidden; }
+.t-timer .fill { height:100%; background:var(--t-green); transition:width 1s linear; }
+.t-entrante .acciones { display:flex; gap:12px; padding:0 16px 16px; }
+.t-btn { flex:1; padding:16px; border:none; border-radius:14px; font-size:16px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; min-height:52px; }
+.t-btn.aceptar { background:linear-gradient(135deg,var(--t-green),var(--t-green-d)); color:#04210f; }
+.t-btn.rechazar { background:transparent; border:2px solid var(--t-bd); color:var(--t-tx2); }
+.t-btn.full { width:100%; }
+.t-btn.sec { background:var(--t-panel2); color:var(--t-tx); border:1px solid var(--t-bd); }
+
+/* Servicio activo card */
+.t-activo { background:var(--t-panel); border:1px solid var(--t-bd); border-radius:16px; padding:16px; }
+.t-activo .num { font-weight:800; font-size:16px; }
+.t-activo .badge { display:inline-block; font-size:12px; padding:3px 10px; border-radius:20px; background:rgba(34,197,94,.15); color:var(--t-green); margin:6px 0; }
+.t-activo .meta { color:var(--t-tx2); font-size:14px; margin:4px 0; }
+.t-activo a.ver { display:block; margin-top:12px; text-align:center; background:var(--t-green); color:#04210f; text-decoration:none; padding:13px; border-radius:12px; font-weight:800; }
+.t-vacio { text-align:center; color:var(--t-tx2); padding:30px; }
+
+/* Nav inferior */
+.t-nav { position:fixed; bottom:0; left:0; right:0; z-index:30; display:flex; justify-content:space-around; background:var(--t-bg2); border-top:1px solid var(--t-bd); padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px)); max-width:560px; margin:0 auto; }
+.t-nav a { flex:1; text-align:center; color:var(--t-tx2); text-decoration:none; font-size:11px; display:flex; flex-direction:column; align-items:center; gap:3px; }
+.t-nav a i { font-size:20px; } .t-nav a.active { color:var(--t-green); }
+
+/* Detalle de servicio */
+.t-detalle .card { background:var(--t-panel); border:1px solid var(--t-bd); border-radius:16px; padding:18px; margin-bottom:14px; }
+.t-detalle h3 { font-size:15px; margin:0 0 12px; display:flex; align-items:center; gap:10px; } .t-detalle h3 i { color:var(--t-green); }
+.t-detalle .row { display:flex; justify-content:space-between; padding:7px 0; font-size:15px; border-bottom:1px solid var(--t-bd); }
+.t-detalle .row:last-child { border-bottom:none; } .t-detalle .row .k { color:var(--t-tx2); }
+.t-detalle .total { font-size:18px; font-weight:800; color:var(--t-green); }
+.t-input { width:100%; background:var(--t-bg2); border:1px solid var(--t-bd); border-radius:12px; color:var(--t-tx); padding:13px; font-size:16px; font-family:inherit; }
+.t-input:focus { outline:none; border-color:var(--t-green); }
+.t-adic { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--t-bd); font-size:14.5px; }
+.t-adic .est { font-size:12px; padding:2px 9px; border-radius:20px; }
+.est.PENDIENTE { background:rgba(245,158,11,.15); color:var(--t-amber); } .est.APROBADO { background:rgba(34,197,94,.15); color:var(--t-green); } .est.RECHAZADO { background:rgba(239,68,68,.15); color:var(--t-red); }
+
+/* Modal genérico */
+.t-modal { position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.72); display:none; align-items:flex-end; justify-content:center; }
+.t-modal.open { display:flex; }
+.t-modal-box { background:var(--t-bg2); border:1px solid var(--t-bd); border-radius:20px 20px 0 0; width:100%; max-width:560px; padding:20px; }
+.t-back { color:var(--t-tx2); text-decoration:none; font-size:15px; }
+.t-toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:var(--t-panel2); border:1px solid var(--t-bd); color:var(--t-tx); padding:12px 18px; border-radius:12px; font-size:14px; z-index:200; opacity:0; transition:opacity .3s; }
+.t-toast.show { opacity:1; }
