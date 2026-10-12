@@ -75,6 +75,23 @@
     }
     function limpiarEntrante() { clearInterval(timer); entranteId = null; $('#t-entrante-cont').innerHTML = ''; if (window.MitaVoz) MitaVoz.stop(); }
 
+    // "Este servicio ya fue tomado por otro técnico" (auto-cierra en 3s)
+    function mostrarYaTomado() {
+        clearInterval(timer); entranteId = null;
+        if (window.MitaVoz) MitaVoz.stop();
+        const cont = $('#t-entrante-cont');
+        cont.innerHTML = `
+            <div class="t-entrante tomada">
+                <div class="cuerpo" style="text-align:center;padding:22px 16px;">
+                    <div style="font-size:34px;margin-bottom:6px;">🙅</div>
+                    <div class="prob" style="font-weight:700;">Este servicio ya fue tomado por otro técnico</div>
+                </div>
+                <div class="acciones"><button class="t-btn sec full" id="t-ok"><i class="fas fa-check"></i> Entendido</button></div>
+            </div>`;
+        const ok = $('#t-ok'); if (ok) ok.addEventListener('click', limpiarEntrante);
+        setTimeout(() => { const c = $('#t-entrante-cont'); if (c && c.querySelector('.tomada')) c.innerHTML = ''; }, 3000);
+    }
+
     async function responder(respuesta) {
         if (!entranteId) return;
         const nid = entranteId; limpiarEntrante();
@@ -82,6 +99,7 @@
             const r = await fetch(`/api/v1/tecnico/notificaciones/${nid}/responder`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ respuesta }) });
             const d = await r.json();
             if (d.estado === 'ACEPTADA') { location.href = '/tecnico/servicio/' + d.solicitud_id; }
+            else if (d.estado === 'ya_tomada') { mostrarYaTomado(); }
             else { toast('Solicitud rechazada'); cargar(); }
         } catch (e) { toast('No se pudo responder'); }
     }
@@ -108,7 +126,10 @@
             $('#t-nombre').textContent = d.tecnico ? d.tecnico.nombre : 'Técnico';
             $('#t-ava').textContent = (d.tecnico && d.tecnico.nombre ? d.tecnico.nombre[0] : 'T').toUpperCase();
             if (d.entrante && d.entrante.notif_id !== entranteId) renderEntrante(d.entrante);
-            else if (!d.entrante && entranteId) limpiarEntrante();
+            else if (!d.entrante && entranteId) {
+                if (d.ya_tomada_notif_id && d.ya_tomada_notif_id === entranteId) mostrarYaTomado();
+                else limpiarEntrante();
+            }
             renderActivo(d.servicio_activo);
         } catch (e) {}
     }
