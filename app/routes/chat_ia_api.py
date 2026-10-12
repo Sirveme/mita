@@ -13,6 +13,7 @@ o falta la API key, el endpoint responde 503 sin tumbar la app.
 """
 import os
 import json
+import time
 import logging
 from typing import Optional, List
 
@@ -107,21 +108,41 @@ class DireccionInput(BaseModel):
     direccion: str
 
 
+def _openai_key():
+    return settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY")
+
+
 def _openai_client():
-    """Crea el cliente OpenAI de forma perezosa; None si no está disponible."""
-    key = settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY")
+    """Factoría única (usada por /interpretar, /transcribir y /estado).
+    No cachea None: si falla, reintenta en la siguiente llamada. Registra la causa."""
+    key = _openai_key()
     if not key:
+        logger.error("[chat-ia] OPENAI_API_KEY vacía (ni en settings ni en el entorno).")
         return None
     try:
         from openai import OpenAI
     except Exception:
-        logger.warning("Paquete 'openai' no instalado.")
+        logger.error("[chat-ia] Paquete 'openai' no instalado en este entorno.")
         return None
     try:
         return OpenAI(api_key=key)
     except Exception as e:
-        logger.warning("No se pudo crear el cliente OpenAI: %s", e)
+        logger.error("[chat-ia] No se pudo crear el cliente OpenAI: %s", e)
         return None
+
+
+@router.get("/estado")
+async def estado_ia():
+    """Diagnóstico del chat IA (sin exponer el secreto completo)."""
+    import importlib.util
+    key = _openai_key()
+    return {
+        "openai_instalado": importlib.util.find_spec("openai") is not None,
+        "key_presente": bool(key),
+        "key_prefijo": (key[:7] + "…") if key else None,
+        "cliente_ok": _openai_client() is not None,
+        "google_maps": bool(settings.GOOGLE_MAPS_API_KEY or os.getenv("GOOGLE_MAPS_API_KEY")),
+    }
 
 
 def _enriquecer_categoria(db: Session, data: dict) -> dict:
@@ -176,19 +197,26 @@ async def transcribir_audio(audio: UploadFile = File(...)):
     """Transcribe audio (webm/opus u otros) con OpenAI Whisper → texto (modo Premium)."""
     client = _openai_client()
     if client is None:
+        # La causa concreta ya quedó en el log del servidor (_openai_client)
         raise HTTPException(status_code=503, detail="Servicio de transcripción no disponible")
     try:
         audio_bytes = await audio.read()
-        if not audio_bytes:
-            raise HTTPException(status_code=400, detail="Audio vacío")
+        if not audio_bytes or len(audio_bytes) < 1024:
+            raise HTTPException(status_code=400, detail="No se grabó audio")
         nombre = audio.filename or "audio.webm"
-        ctype = audio.content_type or "audio/webm"
+        # Safari graba en mp4; aceptamos los formatos típicos de MediaRecorder
+        ctype = (audio.content_type or "").lower()
+        if ctype not in ("audio/webm", "audio/ogg", "audio/mp4", "audio/mpeg", "audio/wav", "audio/x-m4a"):
+            ctype = "audio/webm"
+        logger.info("[chat-ia] /transcribir recibido: %s bytes, content_type=%s", len(audio_bytes), ctype)
+        t0 = time.monotonic()
         transcript = client.audio.transcriptions.create(
             model="whisper-1",
             file=(nombre, audio_bytes, ctype),
             language="es",
             response_format="text",
         )
+        logger.info("[chat-ia] Whisper respondió en %.2fs", time.monotonic() - t0)
         texto = transcript if isinstance(transcript, str) else getattr(transcript, "text", str(transcript))
         return {"texto": (texto or "").strip(), "modo": "premium"}
     except HTTPException:
