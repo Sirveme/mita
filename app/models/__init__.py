@@ -54,3 +54,5 @@ from app.models.servicio_adicional import ServicioAdicional
 from app.models.notificacion_tecnico import NotificacionTecnico
 from app.models.ubicacion_tecnico import UbicacionTecnico
 from app.models.solicitud_sin_cobertura import SolicitudSinCobertura
+from app.models.chat_conocimiento import ChatConocimiento
+from app.models.catalogo_historial import CatalogoHistorial
