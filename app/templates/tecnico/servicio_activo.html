@@ -6,6 +6,7 @@
     <title>Servicio — MITA Técnico</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="/static/css/tecnico.css">
+    <script src="/static/js/tecnico-ubicacion.js" defer></script>
 </head>
 <body>
 <div class="t-wrap t-detalle">
@@ -92,6 +93,9 @@ function render(){
         ${enSitio?`<button class="t-btn aceptar full" ${DET.hay_pendientes?'disabled style="opacity:.5"':''} onclick="finalizar()"><i class="fas fa-check-double"></i> FINALIZAR SERVICIO</button>
             ${DET.hay_pendientes?'<p style="color:var(--t-amber);text-align:center;font-size:13px;margin-top:8px;">Espera que el cliente apruebe los adicionales pendientes.</p>':''}`:''}
     `;
+    // Seguimiento GPS: se envía la ubicación sólo mientras va EN CAMINO
+    if (DET.estado === 'EN_CAMINO') { if (window.MitaUbicacion) MitaUbicacion.iniciar(SID); }
+    else if (window.MitaUbicacion) MitaUbicacion.detener();
 }
 
 async function cambiar(estado){
@@ -115,7 +119,11 @@ async function finalizar(){
     if(!confirm('¿Finalizar el servicio? Se capturará el monto total.')) return;
     const r=await fetch('/api/v1/solicitudes/'+SID+'/finalizar',{method:'POST'});
     const d=await r.json();
-    if(r.ok){ toast('Servicio finalizado · Total '+money(d.total)); setTimeout(()=>location.href='/tecnico/dashboard',1500); }
+    if(r.ok){
+        if(window.MitaUbicacion) MitaUbicacion.detener();
+        fetch('/api/v1/maps/solicitudes/'+SID+'/ubicacion-tecnico',{method:'DELETE'}).catch(()=>{});  // limpia el tracking
+        toast('Servicio finalizado · Total '+money(d.total)); setTimeout(()=>location.href='/tecnico/dashboard',1500);
+    }
     else toast(d.detail||'No se pudo finalizar');
 }
 window.cambiar=cambiar; window.guardarDiag=guardarDiag; window.abrirAdic=abrirAdic; window.cerrarAdic=cerrarAdic; window.enviarAdicional=enviarAdicional; window.finalizar=finalizar;
