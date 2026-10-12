@@ -17,7 +17,7 @@ Sistema / cliente:
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Body, HTTPException
@@ -76,6 +76,17 @@ def resumen(db: Session = Depends(get_db), pid: int = Depends(require_tecnico)):
         s = db.query(Solicitud).get(notif.solicitud_id)
         if s and s.estado in ("BUSCANDO_TECNICO",):
             entrante = _solicitud_card(s, notif.id)
+    # "Ya tomado": notificación de este técnico cancelada hace pocos segundos
+    # (otro la aceptó). Sirve para mostrar el aviso en el dashboard.
+    ya_tomada_id = None
+    reciente = (db.query(NotificacionTecnico)
+                .filter(NotificacionTecnico.tecnico_id == pid,
+                        NotificacionTecnico.respuesta == "cancelada",
+                        NotificacionTecnico.respondido_en.isnot(None),
+                        NotificacionTecnico.respondido_en > datetime.utcnow() - timedelta(seconds=20))
+                .order_by(NotificacionTecnico.respondido_en.desc()).first())
+    if reciente:
+        ya_tomada_id = reciente.id
     # servicio activo
     activo = (db.query(Solicitud).filter(Solicitud.tecnico_id == pid, Solicitud.estado.in_(ACTIVOS))
               .order_by(Solicitud.id.desc()).first())
@@ -83,6 +94,7 @@ def resumen(db: Session = Depends(get_db), pid: int = Depends(require_tecnico)):
         "tecnico": {"nombre": _nombre(p), "estado_servicio": p.estado_servicio or "FUERA_SERVICIO",
                     "rating": _f(p.rating_promedio) or 5.0, "total_servicios": p.total_servicios or 0},
         "entrante": entrante,
+        "ya_tomada_notif_id": ya_tomada_id,
         "servicio_activo": _solicitud_card(activo, None) if activo else None,
     }
 
@@ -118,15 +130,39 @@ def _crear_chats(db: Session, solicitud_id: int, tecnico_nombre: str, tecnico_id
     return st
 
 
-def _notificar_siguiente(db: Session, s: Solicitud):
-    cola = [c for c in (s.cola_tecnicos or "").split(",") if c]
-    if not cola:
-        s.tecnico_notificado_id = None; s.estado = "SIN_TECNICO"; db.commit(); return None
-    nxt = int(cola[0]); s.cola_tecnicos = ",".join(cola[1:])
-    s.tecnico_notificado_id = nxt; s.notificado_en = datetime.utcnow()
-    db.add(NotificacionTecnico(solicitud_id=s.id, tecnico_id=nxt))
-    db.commit()
-    return nxt
+def _candidatos_ids(db: Session, s: Solicitud) -> list:
+    """IDs de técnicos EN_SERVICIO (con la especialidad del área), mejor rating primero."""
+    q = (db.query(Personal, TecnicoPersonal)
+         .join(TecnicoPersonal, TecnicoPersonal.personal_id == Personal.id)
+         .filter(Personal.tipo == TipoPersonal.TECNICO, Personal.estado == EstadoPersonal.ACTIVO,
+                 Personal.estado_servicio == "EN_SERVICIO"))
+    cand = []
+    for p, tp in q.all():
+        esp = tp.especialidades or []
+        if s.categoria_id and esp and s.categoria_id not in esp:
+            continue
+        cand.append((p.id, _f(p.rating_promedio) or 5.0))
+    cand.sort(key=lambda x: x[1], reverse=True)
+    return [i for i, _ in cand]
+
+
+def _notificar_a_todos(db: Session, s: Solicitud, intento: int) -> int:
+    """Crea una notificación PENDIENTE por cada técnico candidato que no la tenga ya.
+
+    No hace commit ni cambia estado/notificado_en (lo hace el llamador). Devuelve
+    el número de técnicos candidatos actuales (0 si no hay ninguno disponible).
+    """
+    ids = _candidatos_ids(db, s)
+    pendientes = {n.tecnico_id for n in
+                  db.query(NotificacionTecnico)
+                    .filter(NotificacionTecnico.solicitud_id == s.id,
+                            NotificacionTecnico.respuesta.is_(None)).all()}
+    for tid in ids:
+        if tid in pendientes:
+            continue
+        db.add(NotificacionTecnico(solicitud_id=s.id, tecnico_id=tid, intento=intento,
+                                   notificado_en=datetime.utcnow()))
+    return len(ids)
 
 
 @router.post("/api/v1/tecnico/notificaciones/{notif_id}/responder")
@@ -134,27 +170,50 @@ def responder_notificacion(notif_id: int, data: dict = Body(...), db: Session = 
     n = db.query(NotificacionTecnico).get(notif_id)
     if not n or n.tecnico_id != pid:
         raise HTTPException(404, "Notificación no encontrada")
+    if n.respuesta == "cancelada" or n.respuesta == "timeout":
+        # Otro técnico la tomó, o expiró la ronda: avisar sin error.
+        return {"success": False, "estado": "ya_tomada",
+                "mensaje": "Este servicio ya fue tomado por otro técnico."}
     if n.respuesta:
         raise HTTPException(409, "Ya respondida")
     resp = (data.get("respuesta") or "").lower()
-    n.respondido_en = datetime.utcnow()
+    ahora = datetime.utcnow()
+    n.respondido_en = ahora
     if n.notificado_en:
         n.tiempo_respuesta_seg = int((n.respondido_en - n.notificado_en).total_seconds())
     s = db.query(Solicitud).get(n.solicitud_id)
 
     if resp in ("aceptada", "acepto", "aceptar"):
+        # Reclamo atómico: sólo gana quien deje BUSCANDO_TECNICO -> ACEPTADA primero.
+        ganó = (db.query(Solicitud)
+                .filter(Solicitud.id == s.id, Solicitud.estado == "BUSCANDO_TECNICO")
+                .update({Solicitud.tecnico_id: pid, Solicitud.estado: "ACEPTADA",
+                         Solicitud.fecha_aceptacion: ahora}, synchronize_session=False))
+        db.commit()
+        if not ganó:
+            # Otro técnico ya la tomó (o ya no está en búsqueda)
+            n.respuesta = "cancelada"; db.commit()
+            return {"success": False, "estado": "ya_tomada",
+                    "mensaje": "Este servicio ya fue tomado por otro técnico."}
         n.respuesta = "aceptada"
         p = db.query(Personal).get(pid)
-        s.tecnico_id = pid; s.estado = "ACEPTADA"; s.fecha_aceptacion = datetime.utcnow()
         p.estado_servicio = "OCUPADO"
+        # Cancelar las notificaciones pendientes de los demás técnicos
+        (db.query(NotificacionTecnico)
+         .filter(NotificacionTecnico.solicitud_id == s.id,
+                 NotificacionTecnico.tecnico_id != pid,
+                 NotificacionTecnico.respuesta.is_(None))
+         .update({NotificacionTecnico.respuesta: "cancelada",
+                  NotificacionTecnico.respondido_en: ahora}, synchronize_session=False))
         db.commit()
+        s = db.query(Solicitud).get(s.id)
         sala = _crear_chats(db, s.id, _nombre(p), pid)
         db.commit()
         return {"success": True, "estado": "ACEPTADA", "chat_id": sala.id, "solicitud_id": s.id}
 
+    # Rechazo (PASO): sólo marca la propia; los demás siguen con su notificación.
     n.respuesta = "rechazada"; db.commit()
-    siguiente = _notificar_siguiente(db, s)
-    return {"success": True, "estado": "rechazada", "siguiente_tecnico": siguiente}
+    return {"success": True, "estado": "rechazada"}
 
 
 # ============================================
@@ -276,25 +335,16 @@ def responder_adicional(aid: int, data: dict = Body(...), db: Session = Depends(
 def buscar_tecnico(sid: int, db: Session = Depends(get_db)):
     s = db.query(Solicitud).get(sid)
     if not s: raise HTTPException(404, "No encontrada")
-    # Técnicos EN_SERVICIO (con especialidad si aplica), mejor rating primero
-    q = (db.query(Personal, TecnicoPersonal)
-         .join(TecnicoPersonal, TecnicoPersonal.personal_id == Personal.id)
-         .filter(Personal.tipo == TipoPersonal.TECNICO, Personal.estado == EstadoPersonal.ACTIVO,
-                 Personal.estado_servicio == "EN_SERVICIO"))
-    cand = []
-    for p, tp in q.all():
-        esp = tp.especialidades or []
-        if s.categoria_id and esp and s.categoria_id not in esp:
-            continue
-        cand.append((p, _f(p.rating_promedio) or 5.0))
-    cand.sort(key=lambda x: x[1], reverse=True)
-    ids = [p.id for p, _ in cand]
-    if not ids:
+    # Se notifica a TODOS los técnicos EN_SERVICIO con la especialidad, a la vez.
+    s.intento_notificacion = 1
+    s.tecnico_notificado_id = None
+    s.cola_tecnicos = None
+    s.notificado_en = datetime.utcnow()
+    n = _notificar_a_todos(db, s, intento=1)
+    if n == 0:
         s.estado = "SIN_TECNICO"; db.commit()
         return {"success": True, "tecnicos": 0, "mensaje": "No hay técnicos EN SERVICIO ahora."}
-    s.tecnico_notificado_id = ids[0]; s.cola_tecnicos = ",".join(str(i) for i in ids[1:])
-    s.notificado_en = datetime.utcnow(); s.estado = "BUSCANDO_TECNICO"
-    db.add(NotificacionTecnico(solicitud_id=sid, tecnico_id=ids[0]))
+    s.estado = "BUSCANDO_TECNICO"
     db.commit()
-    logger.info("Solicitud %s: notificado técnico %s (cola: %s). Push/WhatsApp: stub.", sid, ids[0], ids[1:])
-    return {"success": True, "tecnicos": len(ids), "notificado": ids[0]}
+    logger.info("Solicitud %s: notificados %s técnicos (intento 1). Notificación interna (no WhatsApp).", sid, n)
+    return {"success": True, "tecnicos": n, "intento": 1}

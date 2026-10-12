@@ -9,6 +9,13 @@ from app.routes.login_mita import get_current_user
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
+# Clave de Google Maps disponible en todas las plantillas de este router
+try:
+    from app.core.config import settings as _settings
+    templates.env.globals["GOOGLE_MAPS_API_KEY"] = _settings.GOOGLE_MAPS_API_KEY or ""
+except Exception:
+    templates.env.globals["GOOGLE_MAPS_API_KEY"] = ""
+
 
 async def _guard_admin(request: Request, db: Session):
     """Devuelve una redirección a /login si no hay sesión admin/gerente, o None si OK."""
@@ -96,6 +103,11 @@ async def chat_whatsapp(request: Request):
 @router.get("/cliente/servicio/{solicitud_id}/chats", response_class=HTMLResponse)
 async def cliente_chats_servicio(request: Request, solicitud_id: int):
     return templates.TemplateResponse("cliente/chats_servicio.html", {"request": request, "solicitud_id": solicitud_id})
+
+# Seguimiento en vivo del técnico (mapa tipo Uber)
+@router.get("/cliente/servicio/{solicitud_id}/seguimiento", response_class=HTMLResponse)
+async def cliente_seguimiento(request: Request, solicitud_id: int):
+    return templates.TemplateResponse("cliente/seguimiento_tecnico.html", {"request": request, "solicitud_id": solicitud_id})
 
 # Chat individual (una sala)
 @router.get("/cliente/chat/{sala_id}", response_class=HTMLResponse)

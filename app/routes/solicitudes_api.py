@@ -96,18 +96,39 @@ def estado_solicitud(solicitud_id: int, db: Session = Depends(get_db)):
     s = db.query(Solicitud).get(solicitud_id)
     if not s:
         raise HTTPException(status_code=404, detail="Solicitud no encontrada")
-    tecnico_nombre = None
+    tecnico_nombre = tecnico_foto = None
+    tecnico_rating = None
     if s.tecnico_id:
         tec = db.query(Personal).get(s.tecnico_id)
         if tec:
             tecnico_nombre = f"{tec.nombres} {tec.apellido_paterno or ''}".strip()
+            tecnico_foto = getattr(tec, "foto_url", None)
+            try:
+                tecnico_rating = float(tec.rating_promedio) if tec.rating_promedio is not None else None
+            except (TypeError, ValueError):
+                tecnico_rating = None
+    # Sala de chat cliente-técnico (para el botón "Chat" del seguimiento)
+    sala_id = None
+    try:
+        from app.models.chat_sala import ChatSala
+        sala = db.query(ChatSala).filter(ChatSala.solicitud_id == s.id,
+                                         ChatSala.tipo == "cliente_tecnico").first()
+        sala_id = sala.id if sala else None
+    except Exception:
+        sala_id = None
     return {
         "id": s.id,
         "estado": s.estado,
         "calificado": bool(s.calificado),
         "tecnico_id": s.tecnico_id,
         "tecnico_nombre": tecnico_nombre,
-        "tecnico_foto": None,
+        "tecnico_foto": tecnico_foto,
+        "tecnico_rating": tecnico_rating,
+        "cliente_lat": float(s.cliente_lat) if s.cliente_lat is not None else None,
+        "cliente_lng": float(s.cliente_lng) if s.cliente_lng is not None else None,
+        "direccion": s.cliente_direccion,
+        "distrito": s.cliente_distrito,
+        "sala_id": sala_id,
     }
 
 
