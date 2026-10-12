@@ -35,7 +35,10 @@ class Settings(BaseSettings):
     
     # Google Maps
     GOOGLE_MAPS_API_KEY: Optional[str] = None
-    
+
+    # OpenAI (chat IA de solicitudes)
+    OPENAI_API_KEY: Optional[str] = None
+
     # Environment
     ENVIRONMENT: str = "production"
     DEBUG: bool = False
