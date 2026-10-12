@@ -109,6 +109,11 @@ async def cliente_chats_servicio(request: Request, solicitud_id: int):
 async def cliente_seguimiento(request: Request, solicitud_id: int):
     return templates.TemplateResponse("cliente/seguimiento_tecnico.html", {"request": request, "solicitud_id": solicitud_id})
 
+# Asistente IA de solicitudes (chat conversacional — zMita-17)
+@router.get("/solicitar/chat", response_class=HTMLResponse)
+async def solicitar_chat(request: Request):
+    return templates.TemplateResponse("cliente/chat_solicitud.html", {"request": request})
+
 # Chat individual (una sala)
 @router.get("/cliente/chat/{sala_id}", response_class=HTMLResponse)
 async def cliente_chat_sala(request: Request, sala_id: int):
