@@ -62,6 +62,8 @@ SQL_FILES = [
     "20_notificaciones_todos.sql",        # notificar a todos + reintentos (intento_notificacion)
     "21_ubicacion_tecnico.sql",           # seguimiento en vivo del técnico (Google Maps)
     "22_sin_cobertura.sql",               # registro de distritos sin cobertura (análisis)
+    "23_chat_conocimiento.sql",           # base de conocimiento editable del chat IA
+    "24_catalogo_historial.sql",          # historial de catálogo + promoción de visita
 ]
 
 # (etiqueta, módulo, función)
