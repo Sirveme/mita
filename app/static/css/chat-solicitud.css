@@ -84,3 +84,28 @@
     border-radius: 50%; animation: spin 1s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== Barra de estado de voz (zMita-19 Parte C) ===== */
+.voice-status { background: #181830; border: 1px solid #2a2a4e; border-radius: 10px; padding: 10px 14px; margin: 0 4px 10px; transition: all .3s ease; }
+.voice-status.hidden { display: none; }
+.voice-status-content { display: flex; align-items: center; gap: 12px; }
+.voice-indicator { width: 12px; height: 12px; border-radius: 50%; background: #666; position: relative; flex-shrink: 0; }
+.voice-status.recording .voice-indicator, .voice-status.recording-premium .voice-indicator { background: #e53935; }
+.voice-status.recording .voice-indicator::after, .voice-status.recording-premium .voice-indicator::after {
+    content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid #e53935; animation: voice-pulse 1.5s ease-out infinite;
+}
+@keyframes voice-pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
+.voice-status.loading .voice-indicator { background: #7b1fa2; animation: voice-loading 1s ease-in-out infinite; }
+@keyframes voice-loading { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+.voice-status.error .voice-indicator { background: #ff5722; }
+.voice-status.success .voice-indicator { background: #4caf50; }
+.voice-status-text { flex: 1; font-size: 13px; color: #ccc; }
+.voice-status.recording .voice-status-text, .voice-status.recording-premium .voice-status-text { color: #e53935; }
+.voice-status.success .voice-status-text { color: #4caf50; }
+.voice-stop-btn { background: #e53935; border: none; width: 28px; height: 28px; border-radius: 6px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; flex-shrink: 0; }
+.voice-stop-btn:hover { background: #c62828; transform: scale(1.1); }
+.voice-status:not(.recording):not(.recording-premium) .voice-stop-btn { display: none; }
+
+/* Pulso del botón en grabación */
+.btn-voice.recording { animation: btn-recording-pulse 1s ease-in-out infinite; }
+@keyframes btn-recording-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(229,57,53,.7); } 50% { box-shadow: 0 0 0 10px rgba(229,57,53,0); } }
