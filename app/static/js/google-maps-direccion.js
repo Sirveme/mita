@@ -96,9 +96,9 @@
         } catch (e) { /* registro opcional */ }
     }
 
-    function fail(msg) {
+    function fail(msg, tipo) {
         S.coords = null; S.distritoOk = false;
-        if (typeof S.opts.onError === 'function') S.opts.onError(msg);
+        if (typeof S.opts.onError === 'function') S.opts.onError(msg, tipo || 'invalid');
     }
 
     // Extrae lat/lng de un place tanto si location expone métodos como números
@@ -145,7 +145,7 @@
 
         // 1) Cobertura
         if (!tieneCobertura(gDistrito)) {
-            fail(`Sin cobertura en ${gDistrito || 'ese distrito'}. Registramos tu interés para expandirnos pronto.`);
+            fail(`Sin cobertura en ${gDistrito || 'ese distrito'}. Registramos tu interés para expandirnos pronto.`, 'sin_cobertura');
             registrarSinCobertura(gDistrito);
             return;
         }

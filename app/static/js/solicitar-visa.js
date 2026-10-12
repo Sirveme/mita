@@ -67,16 +67,24 @@
     async function cargarDistritos() {
         try { const d = (await (await fetch('/api/v1/admin/distritos')).json()).items || []; if (d.length) DISTRITOS = d; else throw 0; }
         catch (e) { DISTRITOS = ['Miraflores','San Isidro','Santiago de Surco','La Molina','San Borja','Barranco','Magdalena','Jesús María'].map(n => ({ nombre: n, habilitado: true })); }
-        $('#v-distrito').innerHTML = '<option value="">Selecciona tu distrito</option>' + DISTRITOS.map(x => `<option value="${esc(x.nombre)}">${esc(x.nombre)}</option>`).join('');
         initMapsDireccion();
     }
 
-    // Autocomplete + validación de distrito + mini mapa (si Google Maps está disponible)
+    // Autocomplete + distrito auto-detectado + mini mapa (si Google Maps está disponible)
     let _mapsDirInit = false;
+    function coberturaDistritos() {
+        return (DISTRITOS || []).filter(x => x.habilitado !== false).map(x => x.nombre);
+    }
+    function mostrarDetectado(distrito) {
+        const box = $('#v-distrito-detectado'), txt = $('#v-distrito-texto');
+        if (txt) txt.textContent = distrito || '';
+        if (box) box.style.display = distrito ? 'flex' : 'none';
+    }
     function initMapsDireccion() {
         if (_mapsDirInit || !window.MitaDireccion) return;
         const okInit = MitaDireccion.init({
-            inputId: 'v-direccion', distritoId: 'v-distrito', mapaId: 'v-mapa-confirmacion',
+            inputId: 'v-direccion', mapaId: 'v-mapa-confirmacion',
+            cobertura: coberturaDistritos(),
             contexto: () => ({
                 area_servicio_id: estado.area ? (estado.area.categoria_id || null) : null,
                 problema_id: estado.problema ? (estado.problema.id || null) : null,
@@ -84,11 +92,18 @@
             }),
             onValid: (info) => {
                 estado.lat = info.coords.lat; estado.lng = info.coords.lng;
+                estado.distrito = info.distrito || '';
+                const hid = $('#v-distrito-hidden'); if (hid) hid.value = estado.distrito;
+                mostrarDetectado(estado.distrito);
+                mostrarWaitlist(false);
                 const al = $('#v-distrito-alerta'); if (al) al.classList.remove('show');
             },
-            onError: (msg) => {
-                estado.lat = null; estado.lng = null;
+            onError: (msg, tipo) => {
+                estado.lat = null; estado.lng = null; estado.distrito = '';
+                const hid = $('#v-distrito-hidden'); if (hid) hid.value = '';
+                mostrarDetectado('');
                 const al = $('#v-distrito-alerta'); if (al) { al.textContent = msg; al.classList.add('show'); }
+                mostrarWaitlist(tipo === 'sin_cobertura');
             }
         });
         if (okInit) _mapsDirInit = true;
@@ -192,12 +207,13 @@
     function mostrarWaitlist(v) { $('#v-waitlist').style.display = v ? 'block' : 'none'; }
     function irAPago() {
         estado.direccion = ($('#v-direccion').value || '').trim();
-        estado.distrito = $('#v-distrito').value;
+        estado.distrito = ($('#v-distrito-hidden').value || estado.distrito || '').trim();
         estado.referencia = ($('#v-referencia').value || '').trim();
         estado.telefono = ($('#v-telefono').value || '').trim();
-        const al = $('#v-distrito-alerta'); al.classList.remove('show'); mostrarWaitlist(false);
+        const al = $('#v-distrito-alerta'); al.classList.remove('show');
         if (!estado.direccion) { $('#v-direccion').focus(); return; }
-        if (!estado.distrito) { $('#v-distrito').focus(); return; }
+        // El distrito se detecta de Google Maps al elegir la dirección
+        if (!estado.distrito) { al.textContent = 'Escribe tu dirección y elígela de la lista para detectar el distrito.'; al.classList.add('show'); $('#v-direccion').focus(); return; }
         const d = DISTRITOS.find(x => x.nombre === estado.distrito);
         if (d && d.habilitado === false) { al.textContent = CFG.mensaje_distrito; al.classList.add('show'); mostrarWaitlist(true); return; }
         renderPagos(); screen('screen-pago');
@@ -207,7 +223,7 @@
         if (!email || !email.includes('@')) { alert('Ingresa un email válido'); return; }
         try {
             await fetch('/api/v1/waitlist', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, distrito_nombre: $('#v-distrito').value, categoria_interes: estado.area ? estado.area.codigo : null }) });
+                body: JSON.stringify({ email, distrito_nombre: estado.distrito || ($('#v-distrito-hidden').value || ''), categoria_interes: estado.area ? estado.area.codigo : null }) });
             alert('¡Gracias! Te avisaremos cuando lleguemos a tu zona.'); mostrarWaitlist(false);
         } catch (e) { alert('No se pudo registrar.'); }
     }
