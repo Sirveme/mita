@@ -83,19 +83,21 @@ RESPONDE SIEMPRE EN JSON:
     "otros": "cualquier otro detalle relevante" | null
   },
   "completo": true/false,
-  "faltante": ["direccion.numero", "area"] | [],
-  "siguiente_pregunta": "En que distrito te encuentras?" | null,
+  "fuera_cobertura": true/false,
+  "faltante": ["direccion", "area"] | [],
+  "siguiente_pregunta": "Cual es tu direccion? (calle, numero y distrito)" | null,
   "confirmacion": "Entendi: Gasfiteria por fuga de agua en Av Larco 435, Miraflores" | null
 }
 
 REGLAS:
-- Si el area no es clara, infiere del problema (fuga -> gasfiteria, cortocircuito -> electricidad)
-- Si la direccion es ambigua (Av Larco existe en varios distritos), marca ambigua=true y da opciones
-- Si falta informacion critica, indica que falta en "faltante" y sugiere pregunta
-- "completo"=true SOLO si tienes: area + problema + calle + numero + distrito
-- Se conciso en siguiente_pregunta (max 15 palabras)
-- Si el distrito NO esta en cobertura, igual extrae todo pero indica en detalles.otros: "distrito sin cobertura"
-- No inventes informacion que el usuario no proporciono
+- Si el area no es clara, infiere del problema (fuga -> gasfiteria, cortocircuito -> electricidad).
+- Pide la DIRECCION COMPLETA en una sola pregunta (calle, numero y distrito si lo sabe). NUNCA preguntes el distrito por separado.
+- NO preguntes detalles opcionales (ambiente, marca, modelo, antiguedad). Solo necesitas area, problema y direccion.
+- Una sola pregunta por mensaje, breve, en español peruano neutro con tuteo.
+- Si el usuario menciona una ciudad o distrito FUERA de Lima (ej. Iquitos, Punchana, Arequipa, Trujillo, Cusco), marca "fuera_cobertura": true y NO pidas mas datos.
+- Si la direccion es ambigua (Av Larco existe en varios distritos), marca ambigua=true y da opciones.
+- "completo"=true SOLO si tienes: area + problema + direccion con calle y distrito.
+- No inventes informacion que el usuario no proporciono.
 """
 
 
@@ -145,6 +147,62 @@ async def estado_ia():
     }
 
 
+import unicodedata
+
+def _norm_txt(s: str) -> str:
+    s = (s or "").lower().strip()
+    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+
+# Alucinaciones típicas de Whisper ante silencio
+WHISPER_BLACKLIST = ["amara.org", "subtitulos realizados", "subtitulos por",
+                     "gracias por ver", "suscribete", "www.", "musica"]
+WHISPER_PROMPT = ("Cliente en Lima describe un problema doméstico: gasfitería, electricidad, "
+                  "electrodomésticos, refrigeradora, lavadora, fuga, cortocircuito, dirección, distrito.")
+
+
+def _es_alucinacion(texto: str) -> bool:
+    t = _norm_txt(texto)
+    if not t:
+        return True
+    if any(b in t for b in WHISPER_BLACKLIST):
+        return True
+    palabras = [w for w in t.split() if len(w) > 1]
+    return len(palabras) < 2
+
+
+def _distritos_cobertura(db: Session):
+    try:
+        from app.models.personal import Distrito
+        return [d.nombre for d in db.query(Distrito).filter(Distrito.habilitado == True).all() if d.nombre]
+    except Exception:
+        return []
+
+
+def _en_cobertura(db: Session, distrito: Optional[str]):
+    """True/False si el distrito está (o no) en cobertura; None si no se puede determinar."""
+    if not distrito:
+        return None
+    n = _norm_txt(distrito)
+    cob = _distritos_cobertura(db)
+    if not cob:
+        return None
+    for nom in cob:
+        a = _norm_txt(nom)
+        if a and (a in n or n in a):
+            return True
+    return False
+
+
+def _marcar_cobertura(db: Session, data: dict) -> dict:
+    distrito = (data.get("direccion") or {}).get("distrito")
+    fuera = bool(data.get("fuera_cobertura"))
+    if not fuera and distrito:
+        if _en_cobertura(db, distrito) is False:
+            fuera = True
+    data["fuera_cobertura"] = fuera
+    return data
+
+
 def _enriquecer_categoria(db: Session, data: dict) -> dict:
     """Agrega categoria_id/codigo/nombre a partir del área detectada."""
     area = (data.get("area") or "").lower()
@@ -189,7 +247,9 @@ async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)
 
     if not isinstance(data, dict):
         raise HTTPException(status_code=502, detail="Respuesta del asistente no válida")
-    return _enriquecer_categoria(db, data)
+    data = _enriquecer_categoria(db, data)
+    data = _marcar_cobertura(db, data)
+    return data
 
 
 @router.post("/transcribir")
@@ -214,11 +274,17 @@ async def transcribir_audio(audio: UploadFile = File(...)):
             model="whisper-1",
             file=(nombre, audio_bytes, ctype),
             language="es",
+            temperature=0,
+            prompt=WHISPER_PROMPT,
             response_format="text",
         )
         logger.info("[chat-ia] Whisper respondió en %.2fs", time.monotonic() - t0)
         texto = transcript if isinstance(transcript, str) else getattr(transcript, "text", str(transcript))
-        return {"texto": (texto or "").strip(), "modo": "premium"}
+        texto = (texto or "").strip()
+        if _es_alucinacion(texto):
+            logger.info("[chat-ia] Transcripción descartada (sin_voz): %r", texto[:60])
+            return {"texto": "", "motivo": "sin_voz"}
+        return {"texto": texto, "modo": "premium"}
     except HTTPException:
         raise
     except Exception as e:
