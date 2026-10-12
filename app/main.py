@@ -58,6 +58,7 @@ from app.routes.tecnico_api import router as tecnico_api_router
 from app.routes.reset_password_api import router as reset_password_api_router
 from app.routes.ubicacion_api import router as ubicacion_api_router
 from app.routes.maps_api import router as maps_api_router
+from app.routes.chat_ia_api import router as chat_ia_router
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -197,6 +198,7 @@ app.include_router(tecnico_api_router)
 app.include_router(reset_password_api_router)
 app.include_router(ubicacion_api_router)
 app.include_router(maps_api_router)
+app.include_router(chat_ia_router)
 
 # Cuando estén listos:
 # from app.routes.clientes import router as clientes_router
