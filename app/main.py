@@ -56,6 +56,8 @@ from app.routes.areas_api import router as areas_api_router
 from app.routes.chat_api import router as chat_api_router
 from app.routes.tecnico_api import router as tecnico_api_router
 from app.routes.reset_password_api import router as reset_password_api_router
+from app.routes.ubicacion_api import router as ubicacion_api_router
+from app.routes.maps_api import router as maps_api_router
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -79,19 +81,25 @@ async def lifespan(app: FastAPI):
     print(f"🌐 Host: {settings.HOST}:{settings.PORT}")
     print("=" * 60)
     
-    # Aquí puedes agregar:
-    # - Conexión a base de datos
-    # - Inicialización de Redis
-    # - Carga de modelos ML
-    # - etc.
-    
+    # Cron de reasignación por timeout de respuesta de técnico
+    try:
+        from app.tasks.timeout_tecnico import iniciar_scheduler
+        iniciar_scheduler()
+    except Exception as e:
+        print(f"⚠️  No se pudo iniciar el cron de timeouts: {e}")
+
     yield  # La app se ejecuta aquí
-    
+
     # SHUTDOWN - Se ejecuta al cerrar la app
     print("=" * 60)
     print("👋 MITA API cerrando...")
     print("🔒 Limpiando recursos...")
     print("=" * 60)
+    try:
+        from app.tasks.timeout_tecnico import detener_scheduler
+        await detener_scheduler()
+    except Exception:
+        pass
     
     # Aquí puedes agregar:
     # - Cerrar conexiones a BD
@@ -187,6 +195,8 @@ app.include_router(areas_api_router)
 app.include_router(chat_api_router)
 app.include_router(tecnico_api_router)
 app.include_router(reset_password_api_router)
+app.include_router(ubicacion_api_router)
+app.include_router(maps_api_router)
 
 # Cuando estén listos:
 # from app.routes.clientes import router as clientes_router
