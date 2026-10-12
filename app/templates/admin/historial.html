@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de catálogo — MITA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <style>
+        :root { --bg:#0e1117; --card:#161b22; --bd:#2a313c; --tx:#e6edf3; --tx2:#8b949e; --am:#FFCD11; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--tx); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+        .wrap { max-width:1000px; margin:0 auto; padding:22px 18px; }
+        .head { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+        .head a { color:var(--tx); text-decoration:none; } h1 { font-size:20px; flex:1; }
+        select { background:#0d1117; border:1px solid var(--bd); color:var(--tx); border-radius:8px; padding:8px 12px; }
+        table { width:100%; border-collapse:collapse; font-size:13px; margin-top:12px; }
+        th { text-align:left; padding:9px 10px; background:#1f2630; border:1px solid var(--bd); color:var(--tx2); }
+        td { padding:8px 10px; border:1px solid var(--bd); }
+        .ent { font-size:11px; padding:2px 8px; border-radius:10px; background:rgba(255,205,17,.15); color:var(--am); }
+        .empty { color:var(--tx2); padding:24px; text-align:center; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="head">
+        <a href="/admin" title="Volver"><i class="fas fa-arrow-left"></i></a>
+        <h1><i class="fas fa-clock-rotate-left" style="color:var(--am)"></i> Historial de cambios</h1>
+        <select id="filtro">
+            <option value="">Todas las entidades</option>
+            <option value="categorias">Categorías</option>
+            <option value="tarifas">Tarifas</option>
+            <option value="distritos">Distritos</option>
+            <option value="config_mita">Configuración</option>
+        </select>
+    </div>
+    <div id="cont"><div class="empty">Cargando…</div></div>
+</div>
+<script>
+const esc=(t)=>{const d=document.createElement('div');d.textContent=t==null?'':t;return d.innerHTML;};
+async function cargar(){
+    const ent=document.getElementById('filtro').value;
+    const cont=document.getElementById('cont');
+    let rows;
+    try{const r=await fetch('/api/v1/admin/historial'+(ent?('?entidad='+encodeURIComponent(ent)):''));if(!r.ok)throw 0;rows=(await r.json()).items||[];}
+    catch(e){cont.innerHTML='<div class="empty">No autorizado o error. Inicia sesión como admin.</div>';return;}
+    if(!rows.length){cont.innerHTML='<div class="empty">Sin cambios registrados.</div>';return;}
+    cont.innerHTML='<table><thead><tr><th>Fecha</th><th>Entidad</th><th>ID</th><th>Campo</th><th>Antes</th><th>Después</th></tr></thead><tbody>'+
+        rows.map(r=>`<tr><td>${esc((r.created_at||'').replace('T',' ').slice(0,16))}</td><td><span class="ent">${esc(r.entidad)}</span></td><td>${esc(r.entidad_id)}</td><td>${esc(r.campo)}</td><td>${esc(r.valor_anterior)}</td><td>${esc(r.valor_nuevo)}</td></tr>`).join('')+
+        '</tbody></table>';
+}
+document.getElementById('filtro').addEventListener('change',cargar);
+document.addEventListener('DOMContentLoaded',cargar);
+</script>
+</body>
+</html>

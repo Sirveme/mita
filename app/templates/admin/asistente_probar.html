@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Probar asistente — MITA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <style>
+        :root { --bg:#0e1117; --card:#161b22; --bd:#2a313c; --tx:#e6edf3; --tx2:#8b949e; --am:#FFCD11; --green:#22c55e; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--tx); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+        .wrap { max-width:1000px; margin:0 auto; padding:22px 18px; }
+        .head { display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+        .head a { color:var(--tx); text-decoration:none; } h1 { font-size:20px; }
+        .sub { color:var(--tx2); font-size:13px; margin-bottom:16px; }
+        .cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        @media(max-width:820px){ .cols{ grid-template-columns:1fr; } }
+        .panel { background:var(--card); border:1px solid var(--bd); border-radius:12px; padding:14px; }
+        .panel h3 { font-size:14px; margin-bottom:10px; color:var(--tx2); }
+        #msgs { height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:4px; }
+        .m { padding:8px 12px; border-radius:10px; font-size:14px; max-width:85%; }
+        .m.u { align-self:flex-end; background:var(--am); color:#000; }
+        .m.b { align-self:flex-start; background:#1f2630; }
+        .m.meta { align-self:flex-start; color:var(--tx2); font-size:12px; background:none; padding:2px 4px; }
+        .quick { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+        .quick button { background:#1f2630; color:var(--tx); border:1px solid var(--bd); border-radius:16px; padding:6px 12px; font-size:12px; cursor:pointer; }
+        .inp { display:flex; gap:8px; margin-top:8px; }
+        .inp input { flex:1; background:#0d1117; border:1px solid var(--bd); border-radius:8px; color:var(--tx); padding:10px 12px; }
+        .inp button { background:var(--am); color:#000; border:none; border-radius:8px; padding:0 16px; font-weight:600; cursor:pointer; }
+        pre { white-space:pre-wrap; font-size:12px; color:var(--tx); background:#0d1117; border:1px solid var(--bd); border-radius:8px; padding:12px; max-height:420px; overflow:auto; }
+        .tag { display:inline-block; background:rgba(34,197,94,.15); color:var(--green); font-size:11px; padding:2px 8px; border-radius:10px; margin-left:6px; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="head"><a href="/admin" title="Volver"><i class="fas fa-arrow-left"></i></a><h1><i class="fas fa-flask" style="color:var(--am)"></i> Probar asistente <span class="tag">modo prueba</span></h1></div>
+    <p class="sub">No crea solicitudes ni registra nada. A la derecha, exactamente lo que el asistente "sabe".</p>
+    <div class="cols">
+        <div class="panel">
+            <h3>Conversación de prueba</h3>
+            <div id="msgs"></div>
+            <div class="quick">
+                <button data-q="¿Cuánto cuesta la visita?">¿Cuánto cuesta la visita?</button>
+                <button data-q="¿Atienden en Surco?">¿Atienden en Surco?</button>
+                <button data-q="¿Tienen garantía?">¿Tienen garantía?</button>
+                <button data-q="¿Qué servicios ofrecen?">¿Qué servicios ofrecen?</button>
+            </div>
+            <div class="inp"><input id="q" placeholder="Escribe una pregunta…"><button id="send">Enviar</button></div>
+        </div>
+        <div class="panel">
+            <h3>Bloque CONOCIMIENTO que recibe el modelo <span id="act" class="tag" style="background:rgba(255,205,17,.15);color:var(--am)"></span></h3>
+            <pre id="bloque">Cargando…</pre>
+        </div>
+    </div>
+</div>
+<script>
+const esc=(t)=>{const d=document.createElement('div');d.textContent=t==null?'':t;return d.innerHTML;};
+let estado={}, historial=[];
+function add(cls,txt){const m=document.getElementById('msgs');m.insertAdjacentHTML('beforeend',`<div class="m ${cls}">${esc(txt)}</div>`);m.scrollTop=m.scrollHeight;}
+async function cargarBloque(){
+    try{const r=await fetch('/api/v1/chat-ia/conocimiento-bloque');if(!r.ok)throw 0;const d=await r.json();
+        document.getElementById('bloque').textContent=d.bloque;
+        if(d.actualizado) document.getElementById('act').textContent='actualizado '+d.actualizado.replace('T',' ').slice(0,16);
+    }catch(e){document.getElementById('bloque').textContent='No autorizado o error. Inicia sesión como admin.';}
+}
+async function enviar(texto){
+    texto=(texto||document.getElementById('q').value||'').trim(); if(!texto)return;
+    document.getElementById('q').value=''; add('u',texto); historial.push({role:'user',content:texto});
+    try{
+        const r=await fetch('/api/v1/chat-ia/interpretar',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({mensaje:texto,contexto:historial,estado:estado,prueba:true})});
+        if(r.status===503){add('meta','(IA no configurada — en Railway tras instalar openai)');return;}
+        const d=await r.json(); estado=d.estado||estado;
+        if(d.respuesta_consulta) add('b',d.respuesta_consulta);
+        if(d.fuera_cobertura) add('b','(fuera de cobertura)');
+        if(d.completo&&d.confirmacion) add('b',d.confirmacion);
+        else if(d.siguiente_pregunta){ add('b',d.siguiente_pregunta); historial.push({role:'assistant',content:d.siguiente_pregunta}); }
+        add('meta','intención: '+(d.intencion||'—')+' · completo: '+d.completo+' · categoría: '+(d.categoria_id||'—'));
+    }catch(e){add('meta','error de conexión');}
+}
+document.getElementById('send').addEventListener('click',()=>enviar());
+document.getElementById('q').addEventListener('keypress',e=>{if(e.key==='Enter')enviar();});
+document.querySelectorAll('.quick button').forEach(b=>b.addEventListener('click',()=>enviar(b.dataset.q)));
+document.addEventListener('DOMContentLoaded',cargarBloque);
+</script>
+</body>
+</html>
