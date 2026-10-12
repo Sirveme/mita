@@ -24,6 +24,8 @@ class Solicitud(Base):
     cliente_referencia = Column(String(255))
     cliente_lat = Column(Float)
     cliente_lng = Column(Float)
+    direccion_completa = Column(Text)                      # dirección formateada por Google
+    direccion_validada = Column(Boolean, default=False)    # TRUE si Google validó la dirección
 
     # Servicio
     categoria_id = Column(Integer, ForeignKey("categorias_servicio.id"))
@@ -33,10 +35,11 @@ class Solicitud(Base):
     tecnico_id = Column(Integer, ForeignKey("personal.id"))
     secretaria_id = Column(Integer, ForeignKey("personal.id"), nullable=True)
 
-    # Asignación automática (dashboard técnico)
-    cola_tecnicos = Column(Text)                                        # CSV de ids pendientes
-    tecnico_notificado_id = Column(Integer, ForeignKey("personal.id"))
-    notificado_en = Column(DateTime, nullable=True)
+    # Asignación automática (dashboard técnico) — se notifica a TODOS a la vez
+    cola_tecnicos = Column(Text)                                        # (legacy) CSV de ids
+    tecnico_notificado_id = Column(Integer, ForeignKey("personal.id"))  # (legacy)
+    notificado_en = Column(DateTime, nullable=True)                     # inicio del intento actual
+    intento_notificacion = Column(Integer, default=1)                   # nº de ronda de notificación
     diagnostico = Column(Text)
 
     # Estado: PENDIENTE, ACEPTADA, EN_CAMINO, EN_SERVICIO, COMPLETADA, CANCELADA, RECHAZADA

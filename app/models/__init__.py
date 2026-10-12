@@ -52,3 +52,5 @@ from app.models.problema_servicio import ProblemaServicio
 from app.models.chat_sala import ChatSala, ChatMensaje
 from app.models.servicio_adicional import ServicioAdicional
 from app.models.notificacion_tecnico import NotificacionTecnico
+from app.models.ubicacion_tecnico import UbicacionTecnico
+from app.models.solicitud_sin_cobertura import SolicitudSinCobertura
