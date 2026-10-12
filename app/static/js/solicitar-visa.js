@@ -104,6 +104,13 @@
                 mostrarDetectado('');
                 const al = $('#v-distrito-alerta'); if (al) { al.textContent = msg; al.classList.add('show'); }
                 mostrarWaitlist(tipo === 'sin_cobertura');
+            },
+            onClear: () => {
+                estado.lat = null; estado.lng = null; estado.distrito = '';
+                const hid = $('#v-distrito-hidden'); if (hid) hid.value = '';
+                mostrarDetectado('');
+                const al = $('#v-distrito-alerta'); if (al) al.classList.remove('show');
+                mostrarWaitlist(false);
             }
         });
         if (okInit) _mapsDirInit = true;

@@ -76,7 +76,23 @@
         if (!S.map) {
             S.map = new google.maps.Map(cont, { zoom: 16, center: location, disableDefaultUI: true, styles: darkMapStyle });
             S.marker = new google.maps.Marker({ position: location, map: S.map, icon: { url: homeIcon(), scaledSize: new google.maps.Size(40, 40) } });
-        } else { S.map.setCenter(location); S.marker.setPosition(location); }
+        } else {
+            S.map.setCenter(location);
+            if (S.marker) S.marker.setPosition(location);
+            else S.marker = new google.maps.Marker({ position: location, map: S.map, icon: { url: homeIcon(), scaledSize: new google.maps.Size(40, 40) } });
+        }
+    }
+
+    function ocultarMapa() {
+        const cont = S.opts.mapaId && document.getElementById(S.opts.mapaId);
+        if (cont) cont.style.display = 'none';
+        if (S.marker) { try { S.marker.setMap(null); } catch (e) {} S.marker = null; }
+    }
+    function limpiarInterno() { S.coords = null; S.distritoOk = false; S.last = null; ocultarMapa(); }
+
+    function valorInput() {
+        try { const inner = S.pac && S.pac.querySelector && S.pac.querySelector('input'); if (inner) return inner.value || ''; } catch (e) {}
+        try { return (S.pac && S.pac.value) || ''; } catch (e) { return ''; }
     }
 
     async function registrarSinCobertura(distrito) {
@@ -191,13 +207,23 @@
             S.pac = pac;
             pac.addEventListener('gmp-select', onSelect);        // API actual
             pac.addEventListener('gmpx-placechange', onSelect);  // fallback versiones previas
+            // Limpiar mapa/distrito/coords cuando el usuario borra la dirección
+            const alBorrar = () => {
+                if (!valorInput().trim()) {
+                    limpiarInterno();
+                    if (typeof S.opts.onClear === 'function') { try { S.opts.onClear(); } catch (e) {} }
+                }
+            };
+            pac.addEventListener('input', () => setTimeout(alBorrar, 0));
+            pac.addEventListener('gmp-clear', alBorrar);
             const sel = document.getElementById(S.opts.distritoId);
             if (sel) sel.addEventListener('change', () => { if (S.last) onSelect({}); });
             return true;
         },
         getCoords() { return S.coords; },
         distritoValido() { return S.distritoOk; },
-        reset() { S.coords = null; S.distritoOk = false; S.last = null; }
+        limpiar() { limpiarInterno(); },
+        reset() { limpiarInterno(); }
     };
 
     window.MitaDireccion = MitaDireccion;

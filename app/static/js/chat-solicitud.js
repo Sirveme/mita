@@ -15,13 +15,25 @@
     const ChatSolicitud = {
         historial: [], turno: 0, MAX_TURNOS: 3, datosExtraidos: null, container: null,
 
-        init(containerId) {
-            this.container = document.getElementById(containerId);
-            if (!this.container) return;
+        init(arg) {
+            // Acepta un id (string), un elemento, o {container, onComplete, onCancel}
+            let opts = {};
+            if (typeof arg === 'string') this.container = document.getElementById(arg);
+            else if (arg && arg.nodeType === 1) this.container = arg;
+            else if (arg && typeof arg === 'object') {
+                opts = arg;
+                this.container = (typeof opts.container === 'string') ? document.getElementById(opts.container) : opts.container;
+            }
+            this.onComplete = opts.onComplete || null;
+            this.onCancel = opts.onCancel || null;
+            if (!this.container) { console.error('[ChatSolicitud] Container no encontrado'); return; }
+            this.container.classList.add('chat-solicitud');
+            this.turno = 0; this.historial = []; this.datosExtraidos = null;
             this.renderUI();
             this.agregarMensajeBot('¡Hola! Cuéntame qué problema tienes y dónde te encuentras.');
             if (window.MitaVoz) { try { MitaVoz.init(); } catch (e) {} }
         },
+        cancelar() { if (this.onCancel) try { this.onCancel(); } catch (e) {} },
 
         renderUI() {
             this.container.innerHTML = `
@@ -171,6 +183,7 @@
                 const d = await r.json();
                 if (r.ok && d.id) {
                     if (d.id) fetch(`/api/v1/asignacion/iniciar/${d.id}`, { method: 'POST' }).catch(() => {});
+                    if (this.onComplete) { try { this.onComplete({ id: d.id, ...data }); } catch (e) {} }
                     window.location.href = `/cliente/servicio/${d.id}/chats`;
                 } else { if (btn) btn.disabled = false; this.agregarMensajeBot('No se pudo crear la solicitud. Intenta por el menú.'); }
             } catch (e) { if (btn) btn.disabled = false; this.agregarMensajeBot('Error al crear la solicitud.'); }

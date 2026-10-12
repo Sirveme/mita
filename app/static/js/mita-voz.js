@@ -1,134 +1,189 @@
 /**
- * MitaVoz (zMita-18) — entrada por voz dual para el chat IA.
- *   Estándar: Web Speech API (gratis, en el navegador)
- *   Premium:  OpenAI Whisper (/api/v1/chat-ia/transcribir)
- * Llamar MitaVoz.init() DESPUÉS de que el chat renderice su input-container.
+ * MitaVoz v2 (zMita-18/19) — entrada por voz con feedback visible.
+ *   Estándar: Web Speech API (continuo, hasta que el usuario pare).
+ *   Premium:  MediaRecorder -> OpenAI Whisper (/api/v1/chat-ia/transcribir).
+ * Llamar MitaVoz.init() DESPUÉS de que el chat renderice sus botones.
  */
+console.log('[MitaVoz] ====== DEBUG INFO ======');
+console.log('[MitaVoz] URL:', (typeof window !== 'undefined') ? window.location.href : '?');
+console.log('[MitaVoz] HTTPS:', (typeof window !== 'undefined') && window.location.protocol === 'https:');
+console.log('[MitaVoz] SpeechRecognition:', (typeof window !== 'undefined') && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window));
+console.log('[MitaVoz] getUserMedia:', (typeof navigator !== 'undefined') && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
+console.log('[MitaVoz] ========================');
+
 const MitaVoz = (function () {
     'use strict';
 
     let isRecording = false;
-    let currentMode = null;          // 'estandar' | 'premium'
+    let currentMode = null;      // 'estandar' | 'premium'
     let mediaRecorder = null;
     let audioChunks = [];
-    let btnEstandar, btnPremium, chatInput;
     let recognition = null;
+    let btnEstandar = null, btnPremium = null, chatInput = null, voiceStatus = null;
 
     function init() {
-        btnEstandar = document.getElementById('btnVozEstandar');
-        btnPremium = document.getElementById('btnVozPremium');
-        chatInput = document.getElementById('chat-input');   // ID real del widget
-        if (!btnEstandar || !btnPremium || !chatInput) {
-            console.warn('[MitaVoz] Elementos no encontrados (¿se inicializó antes que el chat?)');
-            return;
-        }
+        console.log('[MitaVoz] Inicializando...');
+        btnEstandar = document.getElementById('btnVozEstandar') || document.querySelector('.btn-voz-estandar');
+        btnPremium = document.getElementById('btnVozPremium') || document.querySelector('.btn-voz-premium');
+        chatInput = document.getElementById('chat-input') || document.getElementById('chatInput') || document.querySelector('.chat-input-container input');
+        console.log('[MitaVoz] Elementos:', { btnEstandar: !!btnEstandar, btnPremium: !!btnPremium, chatInput: !!chatInput });
+
+        if (!btnEstandar && !btnPremium) { console.warn('[MitaVoz] Botones de voz no encontrados'); return false; }
+        if (!chatInput) { console.warn('[MitaVoz] Input de chat no encontrado'); return false; }
+
+        createStatusElement();
+
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            btnEstandar.disabled = true;
-            btnEstandar.title = 'No soportado en este navegador';
+            console.warn('[MitaVoz] Web Speech API no soportada');
+            if (btnEstandar) { btnEstandar.disabled = true; btnEstandar.title = 'No soportado (solo Chrome/Edge)'; btnEstandar.style.opacity = '0.5'; }
         } else {
             initWebSpeech();
         }
-        btnEstandar.addEventListener('click', () => toggleRecording('estandar'));
-        btnPremium.addEventListener('click', () => toggleRecording('premium'));
+        if (btnEstandar && !btnEstandar.disabled) btnEstandar.addEventListener('click', () => toggleRecording('estandar'));
+        if (btnPremium) btnPremium.addEventListener('click', () => toggleRecording('premium'));
+        console.log('[MitaVoz] ✅ Inicializado');
+        return true;
     }
 
-    // ---------- Web Speech (Estándar) ----------
+    function createStatusElement() {
+        voiceStatus = document.getElementById('voice-status');
+        if (voiceStatus) return;
+        voiceStatus = document.createElement('div');
+        voiceStatus.id = 'voice-status';
+        voiceStatus.className = 'voice-status hidden';
+        voiceStatus.innerHTML = `
+            <div class="voice-status-content">
+                <div class="voice-indicator"></div>
+                <span class="voice-status-text">Escuchando…</span>
+                <button type="button" class="voice-stop-btn" title="Detener">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                </button>
+            </div>`;
+        const inputContainer = chatInput.closest('.chat-input-container') || chatInput.parentElement;
+        if (inputContainer && inputContainer.parentNode) inputContainer.parentNode.insertBefore(voiceStatus, inputContainer);
+        const stopBtn = voiceStatus.querySelector('.voice-stop-btn');
+        if (stopBtn) stopBtn.addEventListener('click', stopRecording);
+    }
+
+    // ---------- Web Speech ----------
     function initWebSpeech() {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SR();
-        recognition.continuous = false;
+        recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'es-PE';
-        recognition.onresult = function (event) {
-            let transcript = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) transcript += event.results[i][0].transcript;
-            chatInput.value = transcript;
+        recognition.onstart = () => { console.log('[MitaVoz] 🎤 Web Speech iniciado'); showStatus('Escuchando… (habla ahora)', 'recording'); };
+        recognition.onresult = (event) => {
+            let interim = '', final = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const t = event.results[i][0].transcript;
+                if (event.results[i].isFinal) final += t; else interim += t;
+            }
+            chatInput.value = (final + interim).trim();
+            if (interim) showStatus('Escuchando… (click en ⬛ para terminar)', 'recording');
         };
-        recognition.onerror = function (event) {
-            stopRecording();
-            if (event.error === 'not-allowed') alert('Permiso de micrófono denegado. Habilítalo en el navegador.');
+        recognition.onerror = (event) => {
+            console.error('[MitaVoz] ❌ Web Speech:', event.error);
+            let msg = 'Error de reconocimiento';
+            if (event.error === 'not-allowed') { msg = 'Permiso de micrófono denegado.'; alert(msg); }
+            else if (event.error === 'no-speech') msg = 'No se detectó voz';
+            else if (event.error === 'network') msg = 'Error de red';
+            else if (event.error === 'audio-capture') msg = 'No se pudo acceder al micrófono';
+            showStatus(msg, 'error');
+            setTimeout(() => stopRecording(), 2000);
         };
-        recognition.onend = function () { if (currentMode === 'estandar') stopRecording(); };
+        recognition.onend = () => {
+            console.log('[MitaVoz] Web Speech terminado');
+            if (isRecording && currentMode === 'estandar') {
+                try { recognition.start(); } catch (e) { stopRecording(); }
+            }
+        };
     }
-    function startWebSpeech() { if (recognition) { try { recognition.start(); } catch (e) { /* ya activo */ } } }
-    function stopWebSpeech() { if (recognition) { try { recognition.stop(); } catch (e) {} } }
 
-    // ---------- Whisper (Premium) ----------
+    // ---------- Whisper ----------
     async function startWhisperRecording() {
-        if (!navigator.mediaDevices || !window.MediaRecorder) { alert('Grabación no soportada en este navegador.'); stopRecording(); return; }
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mime = (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) ? 'audio/webm;codecs=opus' : '';
-            mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+            showStatus('Solicitando acceso al micrófono…', 'loading');
+            if (!navigator.mediaDevices || !window.MediaRecorder) throw new Error('MediaRecorder no soportado');
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+            console.log('[MitaVoz] 🎙️ Micrófono obtenido');
+            showStatus('Grabando… (click en ⬛ para terminar)', 'recording-premium');
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+            mediaRecorder = new MediaRecorder(stream, { mimeType });
             audioChunks = [];
             mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
             mediaRecorder.onstop = async () => {
                 stream.getTracks().forEach(t => t.stop());
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                await transcribeWithWhisper(audioBlob);
+                if (!audioChunks.length) { showStatus('No se grabó audio', 'error'); setTimeout(hideStatus, 2000); return; }
+                const blob = new Blob(audioChunks, { type: mimeType });
+                console.log('[MitaVoz] Audio blob:', blob.size, 'bytes');
+                await transcribeWithWhisper(blob);
             };
-            mediaRecorder.start();
+            mediaRecorder.onerror = (e) => { console.error('[MitaVoz] ❌ MediaRecorder:', e.error); showStatus('Error de grabación', 'error'); stopRecording(); };
+            mediaRecorder.start(1000);
         } catch (error) {
+            console.error('[MitaVoz] ❌ Micrófono:', error);
+            if (error && error.name === 'NotAllowedError') alert('Permiso de micrófono denegado. Habilítalo en el navegador.');
+            else if (error && error.name === 'NotFoundError') alert('No se encontró ningún micrófono.');
+            else alert('Error al acceder al micrófono: ' + (error && error.message));
             stopRecording();
-            if (error && error.name === 'NotAllowedError') alert('Permiso de micrófono denegado.');
         }
     }
-    function stopWhisperRecording() { if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop(); }
 
     async function transcribeWithWhisper(audioBlob) {
-        showTranscribingIndicator();
+        showStatus('Transcribiendo con Whisper…', 'loading');
         try {
             const fd = new FormData();
             fd.append('audio', audioBlob, 'audio.webm');
+            console.log('[MitaVoz] Enviando a /api/v1/chat-ia/transcribir…');
             const resp = await fetch('/api/v1/chat-ia/transcribir', { method: 'POST', body: fd });
-            if (resp.status === 503) { alert('La transcripción Premium no está disponible ahora. Usa el modo Estándar.'); return; }
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            console.log('[MitaVoz] Respuesta:', resp.status);
+            if (resp.status === 503) { showStatus('Transcripción Premium no disponible. Usa Estándar.', 'error'); return; }
+            if (!resp.ok) { const t = await resp.text(); throw new Error('HTTP ' + resp.status + ': ' + t); }
             const data = await resp.json();
-            if (data.texto) chatInput.value = data.texto;
+            if (data.texto) { chatInput.value = data.texto; showStatus('✓ Transcripción completada', 'success'); chatInput.focus(); }
+            else showStatus('No se pudo transcribir el audio', 'error');
         } catch (error) {
-            alert('Error al transcribir. Intenta de nuevo.');
+            console.error('[MitaVoz] ❌ Whisper:', error);
+            showStatus('Error al transcribir', 'error');
         } finally {
-            hideTranscribingIndicator();
-            stopRecording();
+            setTimeout(() => { hideStatus(); stopRecording(); }, 2000);
         }
     }
 
     // ---------- Control ----------
     function toggleRecording(mode) {
-        if (isRecording) {
-            if (currentMode === mode) stopRecording();
-            else { stopRecording(); setTimeout(() => startRecording(mode), 120); }
-        } else { startRecording(mode); }
+        console.log('[MitaVoz] Toggle:', mode, 'isRecording:', isRecording);
+        if (isRecording) stopRecording(); else startRecording(mode);
     }
     function startRecording(mode) {
+        console.log('[MitaVoz] ▶️ Iniciando:', mode);
         isRecording = true; currentMode = mode;
-        if (mode === 'estandar') { btnEstandar.classList.add('recording'); startWebSpeech(); }
-        else { btnPremium.classList.add('recording'); startWhisperRecording(); }
         chatInput.value = '';
-        chatInput.placeholder = 'Escuchando…';
+        if (mode === 'estandar' && btnEstandar) { btnEstandar.classList.add('recording'); try { recognition.start(); } catch (e) {} }
+        else if (mode === 'premium' && btnPremium) { btnPremium.classList.add('recording'); startWhisperRecording(); }
     }
     function stopRecording() {
+        console.log('[MitaVoz] ⏹️ Deteniendo');
         if (!isRecording) return;
         isRecording = false;
-        if (currentMode === 'estandar') { stopWebSpeech(); btnEstandar.classList.remove('recording'); }
-        else { stopWhisperRecording(); if (btnPremium) btnPremium.classList.remove('recording'); }
+        if (currentMode === 'estandar') { if (recognition) { try { recognition.stop(); } catch (e) {} } if (btnEstandar) btnEstandar.classList.remove('recording'); }
+        else if (currentMode === 'premium') { if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop(); if (btnPremium) btnPremium.classList.remove('recording'); }
         currentMode = null;
-        chatInput.placeholder = 'Escribe o dicta tu problema...';
+        setTimeout(hideStatus, 1500);
     }
 
-    // ---------- UI ----------
-    function showTranscribingIndicator() {
-        if (document.getElementById('transcribingIndicator')) return;
-        const el = document.createElement('div');
-        el.id = 'transcribingIndicator';
-        el.className = 'transcribing-indicator';
-        el.innerHTML = '<div class="spinner"></div><span>Transcribiendo con Whisper…</span>';
-        const container = document.querySelector('.chat-input-container');
-        if (container && container.parentNode) container.parentNode.insertBefore(el, container);
+    // ---------- Status UI ----------
+    function showStatus(text, type) {
+        if (!voiceStatus) return;
+        voiceStatus.classList.remove('hidden', 'recording', 'recording-premium', 'loading', 'error', 'success');
+        voiceStatus.classList.add(type);
+        const el = voiceStatus.querySelector('.voice-status-text'); if (el) el.textContent = text;
     }
-    function hideTranscribingIndicator() { const el = document.getElementById('transcribingIndicator'); if (el) el.remove(); }
+    function hideStatus() { if (voiceStatus) voiceStatus.classList.add('hidden'); }
 
-    return { init: init, stop: stopRecording };
+    return { init, stop: stopRecording, isRecording: () => isRecording };
 })();
 
 window.MitaVoz = MitaVoz;
+console.log('[MitaVoz] Módulo cargado (esperando init)');
