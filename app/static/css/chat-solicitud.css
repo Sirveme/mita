@@ -110,3 +110,10 @@
 /* Pulso del botón en grabación */
 .btn-voice.recording { animation: btn-recording-pulse 1s ease-in-out infinite; }
 @keyframes btn-recording-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(229,57,53,.7); } 50% { box-shadow: 0 0 0 10px rgba(229,57,53,0); } }
+
+/* ===== Medidor de micrófono (zMita-21 Parte A) ===== */
+.voice-meter { display: flex; align-items: flex-end; gap: 3px; height: 18px; }
+.voice-meter .vm-bar { width: 3px; height: 16px; border-radius: 2px; background: #8a8a9a; transform: scaleY(.12); transform-origin: bottom; transition: transform .08s linear; }
+.voice-status.recording .vm-bar, .voice-status.recording-premium .vm-bar { background: #e53935; }
+.voice-device { font-size: 11px; color: #8a8a9a; margin-top: 6px; padding-left: 2px; }
+.voice-status.error .voice-meter { display: none; }
