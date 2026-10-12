@@ -60,6 +60,27 @@ def get_tiempo_espera(db: Session) -> int:
 def get_tiempo_respuesta(db: Session) -> int:
     return ConfigService.get(db, "tiempo_respuesta_tecnico", 90)
 
+def get_timeout_tecnico(db: Session) -> int:
+    """Segundos que se espera la respuesta de un técnico antes de pasar al siguiente."""
+    try:
+        return int(ConfigService.get(db, "tiempo_espera_tecnico", 180) or 180)
+    except (TypeError, ValueError):
+        return 180
+
+def get_max_reintentos(db: Session) -> int:
+    """Cuántas rondas de notificación se hacen antes de marcar SIN_TECNICO."""
+    try:
+        return int(ConfigService.get(db, "notificaciones_max_reintentos", 3) or 3)
+    except (TypeError, ValueError):
+        return 3
+
+def get_intervalo_notif(db: Session) -> int:
+    """Segundos entre cada reenvío de la notificación a los técnicos."""
+    try:
+        return int(ConfigService.get(db, "notificaciones_intervalo_seg", 180) or 180)
+    except (TypeError, ValueError):
+        return 180
+
 def get_radio_inicial(db: Session) -> float:
     return ConfigService.get(db, "radio_busqueda_inicial_km", 5.0)
 
