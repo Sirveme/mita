@@ -51,8 +51,11 @@
         <!-- PASO B: dirección -->
         <div class="v-screen" id="screen-direccion">
             <div class="v-step-head"><i class="fas fa-location-dot"></i> ¿Dónde necesitas el servicio?</div>
-            <input class="v-input" id="v-direccion" type="text" placeholder="Dirección (Av./Calle y número)">
-            <select class="v-input" id="v-distrito"><option value="">Selecciona tu distrito</option></select>
+            <input class="v-input" id="v-direccion" type="text" placeholder="Escribe tu dirección (Av./Calle y número)">
+            <input type="hidden" id="v-distrito-hidden">
+            <div id="v-distrito-detectado" class="distrito-detectado" style="display:none;">
+                <i class="fas fa-map-marker-alt"></i> <span id="v-distrito-texto"></span>
+            </div>
             <div class="v-alerta" id="v-distrito-alerta"></div>
             <div id="v-waitlist" style="display:none; margin:-4px 0 12px;">
                 <input class="v-input" id="v-wl-email" type="email" placeholder="Tu email — te avisamos cuando lleguemos">
