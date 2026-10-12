@@ -22,6 +22,52 @@ const MitaVoz = (function () {
     let recognition = null;
     let textoBase = '';          // texto ya presente en el input al empezar
     let btnEstandar = null, btnPremium = null, voiceStatus = null;
+    // Medidor de micrófono (Parte A)
+    const UMBRAL_RMS = 0.01;
+    let audioCtx = null, analyser = null, meterStream = null, meterTimer = null, meterWarnTimer = null;
+    let peakRMS = 0, meterInicio = 0, recInicio = 0;
+
+    const MIC_MSG = 'Tu micrófono no capta sonido. Revisa cuál está seleccionado en el navegador (ícono 🎤 en la barra de direcciones).';
+
+    async function startMeter(existingStream) {
+        peakRMS = 0; meterInicio = Date.now();
+        try {
+            meterStream = existingStream || await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (e) { console.warn('[MitaVoz] medidor: sin stream', e); return null; }
+        try {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AC();
+            const src = audioCtx.createMediaStreamSource(meterStream);
+            analyser = audioCtx.createAnalyser(); analyser.fftSize = 512;
+            src.connect(analyser);
+            const buf = new Uint8Array(analyser.fftSize);
+            const dev = document.getElementById('voice-device');
+            const track = meterStream.getAudioTracks()[0];
+            if (dev && track) dev.textContent = '🎤 ' + (track.label || 'micrófono');
+            const bars = voiceStatus ? voiceStatus.querySelectorAll('.vm-bar') : [];
+            meterTimer = setInterval(() => {
+                analyser.getByteTimeDomainData(buf);
+                let sum = 0;
+                for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; sum += v * v; }
+                const rms = Math.sqrt(sum / buf.length);
+                if (rms > peakRMS) peakRMS = rms;
+                const nivel = Math.min(1, rms * 6);
+                bars.forEach((b, i) => { b.style.transform = 'scaleY(' + Math.max(0.12, Math.min(1, nivel * (0.5 + i * 0.18))) + ')'; });
+            }, 80);
+            meterWarnTimer = setTimeout(() => { if (peakRMS < UMBRAL_RMS) showStatus(MIC_MSG, 'error'); }, 3000);
+        } catch (e) { console.warn('[MitaVoz] medidor no disponible', e); }
+        return meterStream;
+    }
+    function stopMeter(closeStream) {
+        if (meterTimer) { clearInterval(meterTimer); meterTimer = null; }
+        if (meterWarnTimer) { clearTimeout(meterWarnTimer); meterWarnTimer = null; }
+        try { if (audioCtx) audioCtx.close(); } catch (e) {}
+        audioCtx = null; analyser = null;
+        if (closeStream && meterStream) { try { meterStream.getTracks().forEach(t => t.stop()); } catch (e) {} }
+        meterStream = null;
+        const dev = document.getElementById('voice-device'); if (dev) dev.textContent = '';
+        return peakRMS;
+    }
 
     function getInput() {
         return document.getElementById('chat-input') || document.getElementById('chatInput') || document.querySelector('.chat-input-container input');
@@ -59,11 +105,13 @@ const MitaVoz = (function () {
         voiceStatus.innerHTML = `
             <div class="voice-status-content">
                 <div class="voice-indicator"></div>
+                <div class="voice-meter" aria-hidden="true"><span class="vm-bar"></span><span class="vm-bar"></span><span class="vm-bar"></span><span class="vm-bar"></span><span class="vm-bar"></span></div>
                 <span class="voice-status-text">Escuchando…</span>
                 <button type="button" class="voice-stop-btn" title="Detener">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
                 </button>
-            </div>`;
+            </div>
+            <div class="voice-device" id="voice-device"></div>`;
         const container = input.closest('.chat-input-container') || input.parentElement;
         if (container && container.parentNode) container.parentNode.insertBefore(voiceStatus, container);
         const stopBtn = voiceStatus.querySelector('.voice-stop-btn');
@@ -91,9 +139,9 @@ const MitaVoz = (function () {
             console.error('[MitaVoz] error ' + event.error);
             let msg = 'Error de reconocimiento';
             if (event.error === 'not-allowed') { msg = 'Permiso de micrófono denegado.'; alert(msg); }
-            else if (event.error === 'no-speech') msg = 'No te escuché, intenta de nuevo';
+            else if (event.error === 'no-speech') msg = MIC_MSG;
+            else if (event.error === 'audio-capture') msg = MIC_MSG;
             else if (event.error === 'network') msg = 'Error de red';
-            else if (event.error === 'audio-capture') msg = 'No se pudo acceder al micrófono';
             showStatus(msg, 'error');
             if (event.error !== 'no-speech') setTimeout(() => stopRecording(), 1500);
         };
@@ -120,14 +168,18 @@ const MitaVoz = (function () {
             audioChunks = [];
             mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
             mediaRecorder.onstop = async () => {
+                const dur = (Date.now() - recInicio) / 1000;
+                const peak = stopMeter(false);     // leer pico antes de cerrar el stream
                 stream.getTracks().forEach(t => t.stop());
-                if (!audioChunks.length) { showStatus('No se grabó audio', 'error'); setTimeout(hideStatus, 2000); return; }
+                if (!audioChunks.length || dur < 0.8) { showStatus('Habla un poco más y vuelve a intentar.', 'error'); setTimeout(hideStatus, 2500); return; }
+                if (peak < UMBRAL_RMS) { showStatus(MIC_MSG, 'error'); setTimeout(hideStatus, 4000); return; }
                 const blob = new Blob(audioChunks, { type: (mediaRecorder.mimeType || 'audio/webm') });
-                console.log('[MitaVoz] audio blob:', blob.size, 'bytes');
+                console.log('[MitaVoz] audio blob:', blob.size, 'bytes, dur', dur.toFixed(1), 's, peak', peak.toFixed(3));
                 await transcribeWithWhisper(blob);
             };
             mediaRecorder.onerror = (e) => { console.error('[MitaVoz] error MediaRecorder', e.error); showStatus('Error de grabación', 'error'); stopRecording(); };
             mediaRecorder.start(1000);
+            startMeter(stream);   // medidor reutiliza el mismo stream
         } catch (error) {
             console.error('[MitaVoz] error micrófono', error);
             if (error && error.name === 'NotAllowedError') alert('Permiso de micrófono denegado. Habilítalo en el navegador.');
@@ -149,8 +201,9 @@ const MitaVoz = (function () {
             if (!resp.ok) { const t = await resp.text(); throw new Error('HTTP ' + resp.status + ': ' + t); }
             const data = await resp.json();
             const inp = getInput();
+            if (data.motivo === 'sin_voz') { showStatus(MIC_MSG, 'error'); return; }
             if (data.texto && inp) { inp.value = data.texto; showStatus('✓ Listo — revisa y presiona Enviar', 'success'); inp.focus(); }
-            else showStatus('No te escuché, intenta de nuevo', 'error');
+            else showStatus(MIC_MSG, 'error');
         } catch (error) {
             console.error('[MitaVoz] error Whisper', error);
             showStatus('Error al transcribir', 'error');
@@ -167,11 +220,11 @@ const MitaVoz = (function () {
     function startRecording(mode) {
         console.log('[MitaVoz] start ' + mode);
         const inp = getInput(); if (!inp) return;
-        isRecording = true; currentMode = mode;
+        isRecording = true; currentMode = mode; recInicio = Date.now();
         textoBase = (inp.value || '').trim();     // no borramos lo ya escrito
         if (textoBase) textoBase += ' ';
         inp.placeholder = 'Habla ahora… toca ⬛ para terminar';
-        if (mode === 'estandar' && btnEstandar) { btnEstandar.classList.add('recording'); try { recognition.start(); } catch (e) { /* ya corriendo */ } }
+        if (mode === 'estandar' && btnEstandar) { btnEstandar.classList.add('recording'); startMeter(); try { recognition.start(); } catch (e) { /* ya corriendo */ } }
         else if (mode === 'premium' && btnPremium) { btnPremium.classList.add('recording'); startWhisperRecording(); }
     }
     function stopRecording() {
@@ -182,6 +235,7 @@ const MitaVoz = (function () {
         const inp = getInput();
         if (mode === 'estandar') {
             if (recognition) { try { recognition.stop(); } catch (e) {} }
+            stopMeter(true);
             if (btnEstandar) btnEstandar.classList.remove('recording');
             const val = (inp && inp.value || '').trim();
             if (val) { showStatus('✓ Listo — revisa y presiona Enviar', 'success'); if (inp) inp.focus(); }
