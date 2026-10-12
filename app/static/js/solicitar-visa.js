@@ -16,7 +16,9 @@
     const CFG = { permitir_efectivo: true, momento_cobro: 'cliente_elige', tarifa_visita: 50, mensaje_distrito: 'Distrito fuera de alcance' };
     const estado = { area: null, tipoKey: null, problema: null, descripcion: '', foto: null,
                      direccion: '', distrito: '', referencia: '', telefono: '', metodo: 'efectivo',
-                     solicitudId: null, pagoRef: null };
+                     lat: null, lng: null, solicitudId: null, pagoRef: null };
+    // Reintentar el init de Google Maps si el script carga después (async)
+    document.addEventListener('mita-maps-ready', () => { try { initMapsDireccion(); } catch (e) {} });
 
     const $ = (s) => document.querySelector(s);
     const esc = (t) => { const d = document.createElement('div'); d.textContent = t == null ? '' : t; return d.innerHTML; };
@@ -66,6 +68,30 @@
         try { const d = (await (await fetch('/api/v1/admin/distritos')).json()).items || []; if (d.length) DISTRITOS = d; else throw 0; }
         catch (e) { DISTRITOS = ['Miraflores','San Isidro','Santiago de Surco','La Molina','San Borja','Barranco','Magdalena','Jesús María'].map(n => ({ nombre: n, habilitado: true })); }
         $('#v-distrito').innerHTML = '<option value="">Selecciona tu distrito</option>' + DISTRITOS.map(x => `<option value="${esc(x.nombre)}">${esc(x.nombre)}</option>`).join('');
+        initMapsDireccion();
+    }
+
+    // Autocomplete + validación de distrito + mini mapa (si Google Maps está disponible)
+    let _mapsDirInit = false;
+    function initMapsDireccion() {
+        if (_mapsDirInit || !window.MitaDireccion) return;
+        const okInit = MitaDireccion.init({
+            inputId: 'v-direccion', distritoId: 'v-distrito', mapaId: 'v-mapa-confirmacion',
+            contexto: () => ({
+                area_servicio_id: estado.area ? (estado.area.categoria_id || null) : null,
+                problema_id: estado.problema ? (estado.problema.id || null) : null,
+                descripcion: estado.descripcion || null
+            }),
+            onValid: (info) => {
+                estado.lat = info.coords.lat; estado.lng = info.coords.lng;
+                const al = $('#v-distrito-alerta'); if (al) al.classList.remove('show');
+            },
+            onError: (msg) => {
+                estado.lat = null; estado.lng = null;
+                const al = $('#v-distrito-alerta'); if (al) { al.textContent = msg; al.classList.add('show'); }
+            }
+        });
+        if (okInit) _mapsDirInit = true;
     }
 
     // -------- NIVEL 1: chips --------
@@ -213,6 +239,7 @@
                 problema: problemaTexto, categoria_id: estado.area.categoria_id || 1,
                 direccion: estado.direccion, distrito: estado.distrito || null,
                 referencia: estado.referencia || null, telefono: estado.telefono || null,
+                lat: estado.lat || null, lng: estado.lng || null,
                 metodo_pago: estado.metodo, pago_adelantado: false
             })
         });
