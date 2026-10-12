@@ -19,6 +19,9 @@
         <div class="pr" id="serv-pr">—</div>
         <div class="estado" id="serv-badge">—</div>
     </div>
+    <a id="seg-btn" href="/cliente/servicio/{{ solicitud_id }}/seguimiento" style="display:none;align-items:center;justify-content:center;gap:8px;margin:12px 0;padding:14px;background:#22c55e;color:#06210f;border-radius:12px;text-decoration:none;font-weight:700;font-family:Outfit,sans-serif;">
+        <i class="fas fa-location-arrow"></i> Ver a tu técnico en el mapa
+    </a>
     <div id="adic-cont"></div>
     <div class="c-label">Chats</div>
     <div class="c-salas" id="salas"><div class="c-empty">Cargando...</div></div>
@@ -36,6 +39,8 @@ async function cargar(){
         document.getElementById('serv-num').textContent = 'Servicio #'+String(SID).padStart(5,'0');
         document.getElementById('serv-estado').textContent = s.estado || '';
         document.getElementById('serv-badge').textContent = s.estado || 'PENDIENTE';
+        const segBtn = document.getElementById('seg-btn');
+        if (segBtn) segBtn.style.display = ['EN_CAMINO','EN_SITIO','EN_PROCESO'].includes(s.estado) ? 'flex' : 'none';
         // Breadcrumb/problema desde el texto "[Área › Tipo] Problema — desc"
         const pr = s.problema || '';
         const m = pr.match(/^\[(.*?)\]\s*(.*)$/);

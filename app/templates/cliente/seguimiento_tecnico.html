@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Seguimiento — MITA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap">
+    <style>
+        :root { --bg:#0e0e1a; --panel:#181830; --panel2:#252542; --tx:#e9edef; --tx2:#8a8a9a; --green:#22c55e; --border:#2a2a4e; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--tx); }
+        .seg { max-width:520px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; }
+        .seg-head { padding:18px 20px 10px; display:flex; align-items:center; gap:12px; }
+        .seg-head .back { color:var(--tx); font-size:18px; text-decoration:none; }
+        .seg-head h2 { font-size:18px; font-weight:700; flex:1; }
+        .eta { display:flex; gap:14px; font-size:16px; color:var(--green); font-weight:600; padding:0 20px 10px; }
+        #mapa-seguimiento { height:50vh; min-height:280px; margin:0 16px; border-radius:16px; overflow:hidden; background:var(--panel); }
+        .tecnico-card { display:flex; align-items:center; gap:14px; padding:16px; margin:14px 16px 0; background:var(--panel); border:1px solid var(--border); border-radius:14px; }
+        .tecnico-card .foto { width:52px; height:52px; border-radius:50%; background:var(--panel2); display:flex; align-items:center; justify-content:center; font-size:22px; color:var(--green); font-weight:700; overflow:hidden; }
+        .tecnico-card .foto img { width:100%; height:100%; object-fit:cover; }
+        .tecnico-card .datos { flex:1; }
+        .tecnico-card .datos b { font-size:16px; } .tecnico-card .datos span { display:block; color:var(--tx2); font-size:13px; margin-top:2px; }
+        .btn-chat { background:var(--green); color:#06210f; padding:10px 14px; border-radius:10px; text-decoration:none; font-weight:700; font-size:14px; }
+        .estados { display:flex; flex-direction:column; gap:8px; padding:16px; }
+        .estado { padding:12px 14px; border-radius:10px; background:var(--panel2); color:var(--tx2); font-size:14px; font-weight:500; }
+        .estado.done { color:var(--green); }
+        .estado.now { background:rgba(34,197,94,.14); border:1px solid var(--green); color:var(--green); font-weight:700; }
+    </style>
+    {% if GOOGLE_MAPS_API_KEY %}
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places"></script>
+    {% endif %}
+    <script src="/static/js/cliente-seguimiento.js" defer></script>
+</head>
+<body>
+<div class="seg">
+    <div class="seg-head">
+        <a class="back" href="/cliente/servicio/{{ solicitud_id }}/chats"><i class="fas fa-arrow-left"></i></a>
+        <h2 id="seg-titulo">Tu técnico viene en camino</h2>
+    </div>
+    <div class="eta" id="eta-tecnico"><span class="eta-tiempo">🕐 Calculando…</span></div>
+    <div id="mapa-seguimiento"></div>
+
+    <div class="tecnico-card">
+        <div class="foto" id="t-foto"><i class="fas fa-user"></i></div>
+        <div class="datos"><b id="t-nombre">Técnico</b><span id="t-meta">⭐ —</span></div>
+        <a class="btn-chat" id="t-chat" href="#"><i class="fas fa-comment"></i> Chat</a>
+    </div>
+
+    <div class="estados" id="estados">
+        <div class="estado done"><i class="fas fa-check"></i> Técnico asignado</div>
+        <div class="estado" data-e="EN_CAMINO">🚗 En camino</div>
+        <div class="estado" data-e="EN_SITIO">🏠 En tu domicilio</div>
+        <div class="estado" data-e="FINALIZADO">✅ Servicio completado</div>
+    </div>
+</div>
+
+<script>
+const SID = {{ solicitud_id }};
+const ORDEN = ['ASIGNADA','ACEPTADA','EN_CAMINO','EN_SITIO','EN_PROCESO','FINALIZADO'];
+function pintarEstados(estado){
+    const idx = Math.max(ORDEN.indexOf(estado), 0);
+    document.querySelectorAll('#estados .estado[data-e]').forEach(el=>{
+        const i = ORDEN.indexOf(el.dataset.e);
+        el.classList.remove('done','now');
+        if (i < idx) el.classList.add('done');
+        else if (el.dataset.e === estado || (estado==='EN_PROCESO' && el.dataset.e==='EN_SITIO')) el.classList.add('now');
+    });
+}
+let seguimientoIniciado = false;
+async function cargar(){
+    let d; try { d = await (await fetch('/api/v1/solicitudes/estado/'+SID)).json(); } catch(e){ return; }
+    if (d.tecnico_nombre) {
+        document.getElementById('t-nombre').textContent = d.tecnico_nombre;
+        document.getElementById('seg-titulo').textContent = d.tecnico_nombre + ' viene en camino';
+    }
+    document.getElementById('t-meta').textContent = '⭐ ' + (d.tecnico_rating != null ? d.tecnico_rating.toFixed(1) : '—');
+    if (d.tecnico_foto) document.getElementById('t-foto').innerHTML = '<img src="'+d.tecnico_foto+'" alt="">';
+    const chat = document.getElementById('t-chat');
+    chat.href = d.sala_id ? ('/cliente/chat/'+d.sala_id) : ('/cliente/servicio/'+SID+'/chats');
+    pintarEstados(d.estado);
+    if (!seguimientoIniciado && window.MitaSeguimiento) {
+        seguimientoIniciado = true;
+        MitaSeguimiento.iniciar({ solicitudId: SID, clienteLat: d.cliente_lat, clienteLng: d.cliente_lng, mapaId: 'mapa-seguimiento', etaId: 'eta-tecnico' });
+    }
+    if (['FINALIZADO','CANCELADA'].includes(d.estado) && window.MitaSeguimiento) MitaSeguimiento.detener();
+}
+document.addEventListener('DOMContentLoaded', ()=>{ cargar(); setInterval(cargar, 8000); });
+</script>
+</body>
+</html>
