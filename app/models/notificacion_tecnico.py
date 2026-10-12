@@ -13,5 +13,6 @@ class NotificacionTecnico(Base):
     tecnico_id = Column(Integer, ForeignKey("personal.id"), index=True)
     notificado_en = Column(DateTime, server_default=func.now())
     respondido_en = Column(DateTime)
-    respuesta = Column(String(20))          # aceptada | rechazada | timeout
+    respuesta = Column(String(20))          # aceptada | rechazada | timeout | cancelada
     tiempo_respuesta_seg = Column(Integer)
+    intento = Column(Integer, default=1)    # ronda de notificación en la que se envió
