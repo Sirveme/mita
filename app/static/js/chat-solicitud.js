@@ -30,7 +30,7 @@
             if (!this.container) { console.error('[ChatSolicitud] Container no encontrado'); return; }
             this.container.classList.add('chat-solicitud');
             this.turno = 0; this.historial = []; this.datosExtraidos = null;
-            this.sinProgreso = 0; this.ultimaFirma = ''; this.cerrado = false;
+            this.sinProgreso = 0; this.ultimaFirma = ''; this.cerrado = false; this.estado = {};
             this.renderUI();
             this.agregarMensajeBot('¡Hola! Cuéntame qué problema tienes y dónde te encuentras.');
             this.mostrarSugerencias(['Tengo una fuga de agua', 'Mi refri no enfría', 'Necesito un electricista']);
@@ -110,7 +110,7 @@
             try {
                 const resp = await fetch('/api/v1/chat-ia/interpretar', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mensaje, contexto: this.historial })
+                    body: JSON.stringify({ mensaje, contexto: this.historial, estado: this.estado || {} })
                 });
                 this.ocultarEscribiendo();
                 if (resp.status === 503) { this.agregarMensajeBot('El asistente no está disponible por ahora. Usa el menú de servicios.'); this.mostrarFallback(); return; }
@@ -129,12 +129,20 @@
 
         procesarRespuesta(data) {
             this.datosExtraidos = data;
+            if (data.estado) this.estado = data.estado;   // memoria: guardar estado fusionado
 
             // Progreso: ¿la IA extrajo algún dato nuevo respecto al turno anterior?
             const firma = this._firma(data);
             const huboProgreso = firma !== this.ultimaFirma && firma !== '["","","","",""]';
+            const esConsulta = (data.intencion === 'consulta');
             if (huboProgreso) { this.sinProgreso = 0; this.ultimaFirma = firma; }
-            else { this.sinProgreso++; }
+            else if (!esConsulta) { this.sinProgreso++; }   // consultas no cuentan para el fallback
+
+            // Responder primero la consulta (precio/horario/garantía…)
+            if (data.respuesta_consulta) {
+                this.agregarMensajeBot(data.respuesta_consulta);
+                this.historial.push({ role: 'assistant', content: data.respuesta_consulta });
+            }
 
             // B.2 Fuera de cobertura: registrar y cerrar
             if (data.fuera_cobertura) { this.mostrarFueraCobertura(data); return; }

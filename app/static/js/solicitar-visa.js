@@ -63,6 +63,11 @@
                 if (c.mensaje_distrito_fuera_alcance) CFG.mensaje_distrito = c.mensaje_distrito_fuera_alcance;
             }
         } catch (e) {}
+        // Precio vigente HOY (misma fuente que el chat): respeta promociones
+        try {
+            const pv = await (await fetch('/api/v1/chat-ia/precio-visita')).json();
+            if (pv && typeof pv.precio === 'number') CFG.tarifa_visita = pv.precio;
+        } catch (e) {}
     }
     async function cargarDistritos() {
         try { const d = (await (await fetch('/api/v1/admin/distritos')).json()).items || []; if (d.length) DISTRITOS = d; else throw 0; }
@@ -412,6 +417,20 @@
     }
 
     const on = (sel, ev, fn) => { const e = $(sel); if (e) e.addEventListener(ev, fn); };
+    // zMita-22 Parte D: precargar lo capturado por el chat IA
+    function aplicarPrefillChat() {
+        let pf = null;
+        try { const raw = sessionStorage.getItem('mita_chat_prefill'); if (raw) pf = JSON.parse(raw); sessionStorage.removeItem('mita_chat_prefill'); } catch (e) { return; }
+        if (!pf) return;
+        try {
+            if (pf.problema) estado.descripcion = pf.problema;
+            if (pf.direccion) { const di = $('#v-direccion'); if (di) di.value = pf.direccion; estado.direccion = pf.direccion; }
+            if (pf.distrito) { estado.distrito = pf.distrito; const hid = $('#v-distrito-hidden'); if (hid) hid.value = pf.distrito; if (typeof mostrarDetectado === 'function') mostrarDetectado(pf.distrito); }
+            if (pf.lat && pf.lng) { estado.lat = pf.lat; estado.lng = pf.lng; }
+            if (pf.categoria_id) { const a = AREAS.find(x => String(x.categoria_id) === String(pf.categoria_id)); if (a) seleccionarArea(a.codigo); }
+        } catch (e) {}
+    }
+
     async function init() {
         if (!$('#v-chips')) return;   // el flujo no está en esta página
         pintarMute();
@@ -432,6 +451,7 @@
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#v-modal').classList.contains('open')) navBack(); });
 
         await cargarConfig(); await cargarAreas(); await cargarDistritos(); renderChips();
+        aplicarPrefillChat();
     }
     document.addEventListener('DOMContentLoaded', init);
 })();
