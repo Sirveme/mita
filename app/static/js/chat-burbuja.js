@@ -19,7 +19,19 @@ const MitaBurbuja = (function () {
         if (closeBtn) closeBtn.addEventListener('click', close);
         if (overlay) overlay.addEventListener('click', close);
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen) close(); });
-        setTimeout(() => { if (!isOpen) bubble.classList.add('attention'); }, 5000);
+        // Primera visita: mostrar la etiqueta sola 4s, a los 6s de cargar (una vez)
+        let yaMostrada = false;
+        try { yaMostrada = localStorage.getItem('mita_bubble_hint') === '1'; } catch (e) {}
+        if (!yaMostrada) {
+            const label = document.getElementById('bubbleLabel');
+            setTimeout(() => {
+                if (!isOpen && label) {
+                    label.classList.add('show');
+                    setTimeout(() => label.classList.remove('show'), 4000);
+                    try { localStorage.setItem('mita_bubble_hint', '1'); } catch (e) {}
+                }
+            }, 6000);
+        }
         console.log('[MitaBurbuja] Inicializado');
     }
 

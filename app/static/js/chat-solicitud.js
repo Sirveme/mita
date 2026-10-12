@@ -31,9 +31,30 @@
             this.turno = 0; this.historial = []; this.datosExtraidos = null;
             this.renderUI();
             this.agregarMensajeBot('¡Hola! Cuéntame qué problema tienes y dónde te encuentras.');
+            this.mostrarSugerencias(['Tengo una fuga de agua', 'Mi refri no enfría', 'Necesito un electricista']);
             if (window.MitaVoz) { try { MitaVoz.init(); } catch (e) {} }
         },
         cancelar() { if (this.onCancel) try { this.onCancel(); } catch (e) {} },
+
+        mostrarSugerencias(lista) {
+            const m = document.getElementById('chat-mensajes');
+            if (!m) return;
+            const cont = document.createElement('div');
+            cont.className = 'chat-sugerencias';
+            lista.forEach(txt => {
+                const b = document.createElement('button');
+                b.className = 'chat-sugerencia'; b.type = 'button'; b.textContent = txt;
+                b.addEventListener('click', () => {
+                    cont.remove();
+                    const input = document.getElementById('chat-input');
+                    if (input) input.value = txt;
+                    this.enviar();
+                });
+                cont.appendChild(b);
+            });
+            m.appendChild(cont);
+            m.scrollTop = m.scrollHeight;
+        },
 
         renderUI() {
             this.container.innerHTML = `
