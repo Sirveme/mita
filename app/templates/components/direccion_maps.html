@@ -1,0 +1,63 @@
+{# Componente reutilizable: input de dirección con Google Maps (zMita-15).
+   Requiere /static/css/mita-maps.css y /static/js/mita-maps.js en la página. #}
+
+<div class="paso-direccion" id="paso-direccion">
+    <h3><i class="fas fa-map-marker-alt"></i> ¿Dónde necesitas el servicio?</h3>
+
+    <div class="campo-form">
+        <label for="select-distrito">Distrito *</label>
+        <select id="select-distrito" class="am-input" required>
+            <option value="">Seleccionar distrito...</option>
+        </select>
+    </div>
+
+    <div class="campo-form campo-direccion">
+        <label for="input-direccion">Dirección *</label>
+        <input type="text" id="input-direccion" class="am-input" placeholder="Ej: Av. Larco 123" autocomplete="off" required>
+        <div id="error-direccion" class="error-direccion"></div>
+    </div>
+
+    <div class="campo-form">
+        <label for="input-referencia">Referencia (opcional)</label>
+        <input type="text" id="input-referencia" class="am-input" placeholder="Ej: Casa azul, frente al parque">
+    </div>
+
+    <div id="mapa-confirmacion" class="mapa-confirmacion"></div>
+
+    <input type="hidden" id="direccion-lat">
+    <input type="hidden" id="direccion-lng">
+    <input type="hidden" id="direccion-completa">
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+    await cargarDistritosMaps();
+    if (window.MitaMaps) {
+        MitaMaps.inicializarGoogleMaps((ok) => {
+            if (!ok) return;
+            MitaMaps.inicializarAutocomplete('input-direccion', 'select-distrito', 'mapa-confirmacion', (direccion) => {
+                document.getElementById('direccion-lat').value = direccion.lat;
+                document.getElementById('direccion-lng').value = direccion.lng;
+                document.getElementById('direccion-completa').value = direccion.direccion_completa;
+                document.getElementById('mapa-confirmacion').classList.add('visible');
+            });
+        });
+    }
+});
+
+async function cargarDistritosMaps() {
+    const select = document.getElementById('select-distrito');
+    if (!select) return;
+    try {
+        const resp = await fetch('/api/v1/admin/distritos');
+        const data = await resp.json();
+        const items = data.items || data || [];
+        items.forEach(d => {
+            const o = document.createElement('option');
+            o.value = d.id != null ? d.id : (d.nombre || d);
+            o.textContent = d.nombre || d;
+            select.appendChild(o);
+        });
+    } catch (e) { console.error('Error cargando distritos:', e); }
+}
+</script>

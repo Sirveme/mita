@@ -1,0 +1,53 @@
+{# Componente reutilizable: seguimiento del técnico para el cliente (zMita-15).
+   Requiere /static/css/mita-maps.css y /static/js/mita-maps.js en la página, y
+   un contexto con `solicitud`, `tecnico` y `sala_id`. #}
+
+<div class="seguimiento-container" id="seguimiento-container">
+
+    <div class="tecnico-seguimiento">
+        <img src="{{ tecnico.foto_url or '/static/img/avatar-default.png' }}" alt="{{ tecnico.nombres }}">
+        <div class="tecnico-seguimiento-info">
+            <div class="tecnico-seguimiento-nombre">{{ tecnico.nombres }}</div>
+            <div class="tecnico-seguimiento-rating">
+                ⭐ {{ "%.1f"|format(tecnico.rating or 5.0) }} · {{ tecnico.especialidad or 'Técnico' }}
+            </div>
+        </div>
+        <a href="/cliente/chat/{{ sala_id }}" class="btn-chat-seguimiento">💬 Chat</a>
+    </div>
+
+    <div class="eta-tecnico" id="eta-tecnico">
+        <div class="eta-item"><i class="fas fa-clock"></i> <span class="eta-tiempo" id="eta-tiempo">Calculando...</span></div>
+        <div class="eta-item"><i class="fas fa-road"></i> <span class="eta-distancia" id="eta-distancia">--</span></div>
+    </div>
+
+    <div id="mapa-seguimiento" class="mapa-seguimiento"></div>
+
+    <div class="estados-seguimiento">
+        <div class="estado-item completado"><i class="fas fa-check-circle"></i> Técnico asignado</div>
+        <div class="estado-item activo" id="estado-en-camino"><i class="fas fa-car"></i> En camino</div>
+        <div class="estado-item pendiente" id="estado-en-sitio"><i class="fas fa-home"></i> En tu domicilio</div>
+        <div class="estado-item pendiente" id="estado-completado"><i class="fas fa-check-double"></i> Servicio completado</div>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+    const solicitudId = {{ solicitud.id }};
+    const clienteLat = {{ solicitud.cliente_lat if solicitud.cliente_lat is not none else 'null' }};
+    const clienteLng = {{ solicitud.cliente_lng if solicitud.cliente_lng is not none else 'null' }};
+    if (!window.MitaMaps) return;
+    MitaMaps.inicializarGoogleMaps((ok) => {
+        if (!ok) return;
+        MitaMaps.iniciarSeguimientoTecnico('mapa-seguimiento', solicitudId, clienteLat, clienteLng, (info) => {
+            if (info.disponible) {
+                document.getElementById('eta-tiempo').textContent = info.duracion;
+                document.getElementById('eta-distancia').textContent = info.distancia;
+            } else {
+                document.getElementById('eta-tiempo').textContent = info.mensaje;
+            }
+        });
+    });
+});
+window.addEventListener('beforeunload', () => { if (window.MitaMaps) MitaMaps.detenerSeguimientoTecnico(); });
+</script>
