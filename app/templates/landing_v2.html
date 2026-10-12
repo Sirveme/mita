@@ -137,5 +137,27 @@
     <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places&v=weekly&callback=initAutocomplete" async defer></script>
     {% endif %}
     <script src="/static/js/solicitar-visa.js"></script>
+
+    <!-- Burbuja de Chat IA (zMita-19) -->
+    <link rel="stylesheet" href="/static/css/chat-burbuja.css">
+    <div id="chatBubble" class="chat-bubble">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span class="bubble-label">¿En qué te ayudamos?</span>
+    </div>
+    <div id="chatModal" class="chat-modal hidden">
+        <div class="chat-modal-header">
+            <span><i class="fas fa-robot"></i> Asistente MITA</span>
+            <button type="button" id="chatModalClose" class="chat-modal-close" aria-label="Cerrar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="chat-modal-body" id="chatModalBody"></div>
+    </div>
+    <div id="chatOverlay" class="chat-overlay hidden"></div>
+    <script src="/static/js/chat-burbuja.js"></script>
 </body>
 </html>
