@@ -1,48 +1,92 @@
-/* Burbuja flotante del chat IA (zMita-19 Parte A) */
-.chat-bubble {
-    position: fixed; bottom: 24px; right: 24px; width: 60px; height: 60px;
-    background: linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%);
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    cursor: pointer; box-shadow: 0 4px 20px rgba(123,31,162,.4); transition: all .3s ease;
-    z-index: 9998; color: #fff;
-}
-.chat-bubble:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(123,31,162,.6); }
-.chat-bubble:hover .bubble-label { opacity: 1; transform: translateX(0); }
-.bubble-label {
-    position: absolute; right: 70px; background: #1a1a2e; color: #fff; padding: 8px 16px;
-    border-radius: 8px; font-size: 14px; white-space: nowrap; opacity: 0; transform: translateX(10px);
-    transition: all .3s ease; pointer-events: none; box-shadow: 0 2px 10px rgba(0,0,0,.3);
-}
-.bubble-label::after { content: ''; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); border: 6px solid transparent; border-left-color: #1a1a2e; }
-@keyframes bubble-attention { 0%, 100% { box-shadow: 0 4px 20px rgba(123,31,162,.4); } 50% { box-shadow: 0 4px 30px rgba(123,31,162,.7); } }
-.chat-bubble.attention { animation: bubble-attention 2s ease-in-out infinite; }
+/* Burbuja + modal del chat IA — aspecto premium (zMita-20 Parte C) */
 
+/* ===== Burbuja ===== */
+.chat-bubble {
+    position: fixed; bottom: 24px; right: 24px; width: 64px; height: 64px;
+    background: linear-gradient(135deg, #5b1a86 0%, #8e3fc4 100%);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #fff; z-index: 9998;
+    border: 1px solid rgba(255, 255, 255, .18);
+    box-shadow: 0 6px 16px rgba(20, 8, 32, .45), 0 2px 6px rgba(0, 0, 0, .35);
+    transition: transform .25s ease, box-shadow .25s ease, opacity .2s ease;
+}
+.chat-bubble:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(20, 8, 32, .55), 0 3px 8px rgba(0, 0, 0, .4); }
+.chat-bubble svg { position: relative; z-index: 2; }
+
+/* Anillo de respiración (lento) */
+.chat-bubble::before {
+    content: ''; position: absolute; inset: -6px; border-radius: 50%;
+    border: 2px solid rgba(142, 63, 196, .45); z-index: 0;
+    animation: bubble-breathe 3s ease-in-out infinite;
+}
+@keyframes bubble-breathe { 0%, 100% { transform: scale(1); opacity: .5; } 50% { transform: scale(1.12); opacity: 0; } }
+
+/* Destello dorado arriba-derecha */
+.bubble-spark { position: absolute; top: 2px; right: 6px; font-size: 13px; color: #d4af37; z-index: 3; text-shadow: 0 0 6px rgba(212, 175, 55, .6); }
+/* Punto "en línea" abajo-derecha */
+.bubble-online { position: absolute; bottom: 6px; right: 8px; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; border: 2px solid #5b1a86; z-index: 3; }
+
+/* Etiqueta en hover / primera visita */
+.bubble-label {
+    position: absolute; right: 74px; padding: 9px 15px; border-radius: 10px; font-size: 14px; white-space: nowrap;
+    color: #f4f2f8; background: rgba(18, 16, 26, .82); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, .08); box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+    opacity: 0; transform: translateX(10px); transition: all .3s ease; pointer-events: none;
+}
+.bubble-label::after { content: ''; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); border: 6px solid transparent; border-left-color: rgba(18, 16, 26, .82); }
+.chat-bubble:hover .bubble-label, .bubble-label.show { opacity: 1; transform: translateX(0); }
+
+/* ===== Modal ===== */
 .chat-modal {
-    position: fixed; bottom: 100px; right: 24px; width: 380px; max-width: calc(100vw - 48px);
-    height: 550px; max-height: calc(100vh - 150px); background: #0d0d1a; border-radius: 16px;
-    box-shadow: 0 10px 50px rgba(0,0,0,.5); z-index: 9999; display: flex; flex-direction: column;
-    overflow: hidden; transform: scale(.9) translateY(20px); opacity: 0; transition: all .3s ease;
+    position: fixed; bottom: 104px; right: 24px; width: 384px; max-width: calc(100vw - 48px);
+    height: 560px; max-height: calc(100vh - 150px);
+    background: #12101a; border: 1px solid rgba(255, 255, 255, .06); border-radius: 20px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .55); z-index: 9999; display: flex; flex-direction: column; overflow: hidden;
+    opacity: 0; transform: translateY(12px); transition: opacity .26s cubic-bezier(.2, .8, .2, 1), transform .26s cubic-bezier(.2, .8, .2, 1);
 }
-.chat-modal.visible { transform: scale(1) translateY(0); opacity: 1; }
+.chat-modal.visible { opacity: 1; transform: translateY(0); }
 .chat-modal.hidden { pointer-events: none; }
+
 .chat-modal-header {
-    display: flex; align-items: center; justify-content: space-between; padding: 16px 20px;
-    background: linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%); color: #fff; font-weight: 600; font-size: 16px;
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+    background: linear-gradient(135deg, #4a1570 0%, #6d2aa0 100%); color: #f4f2f8;
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
 }
-.chat-modal-close { background: none; border: none; color: #fff; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background .2s; }
-.chat-modal-close:hover { background: rgba(255,255,255,.2); }
+.chat-modal-header .avatar { position: relative; width: 38px; height: 38px; border-radius: 50%; background: rgba(255, 255, 255, .1); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.chat-modal-header .avatar .spark { position: absolute; top: -2px; right: -2px; font-size: 11px; color: #d4af37; }
+.chat-modal-header .titulo { flex: 1; min-width: 0; }
+.chat-modal-header .titulo b { display: block; font-size: 15px; font-weight: 700; }
+.chat-modal-header .titulo small { display: block; font-size: 12px; color: #c9bfe0; }
+.chat-modal-header .titulo small .dot { color: #22c55e; }
+.chat-modal-close { background: none; border: none; color: #c9bfe0; cursor: pointer; padding: 6px; display: flex; border-radius: 8px; transition: background .2s, color .2s; }
+.chat-modal-close:hover { background: rgba(255, 255, 255, .12); color: #fff; }
 .chat-modal-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 10px; }
 .chat-modal-body .chat-solicitud, .chat-modal-body .chat-container { height: 100%; min-height: 0; border-radius: 0; }
+.chat-modal-body .spinner { width: 28px; height: 28px; border: 3px solid #8e3fc4; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.chat-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 9997; opacity: 0; transition: opacity .3s ease; }
+/* ===== Overlay ===== */
+.chat-overlay { position: fixed; inset: 0; background: rgba(6, 4, 12, .5); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); z-index: 9997; opacity: 0; transition: opacity .26s ease; }
 .chat-overlay.visible { opacity: 1; }
 .chat-overlay.hidden { pointer-events: none; }
 
-.chat-modal-body .spinner { width: 28px; height: 28px; border: 3px solid #7b1fa2; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* ===== Chips de sugerencias (bienvenida) ===== */
+.chat-sugerencias { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 2px 8px; }
+.chat-sugerencia {
+    padding: 9px 13px; border-radius: 16px; font-size: 13px; cursor: pointer;
+    background: #1b1830; color: #e9e3f5; border: 1px solid #2f2750; transition: border-color .15s, background .15s;
+}
+.chat-sugerencia:hover { border-color: #8e3fc4; background: #241d3d; }
 
+/* ===== Responsive (hoja inferior) ===== */
 @media (max-width: 480px) {
-    .chat-modal { bottom: 0; right: 0; width: 100%; max-width: 100%; height: 85vh; max-height: 85vh; border-radius: 16px 16px 0 0; }
+    .chat-modal { bottom: 0; right: 0; left: 0; width: 100%; max-width: 100%; height: 88vh; max-height: 88vh; border-radius: 18px 18px 0 0; }
+    .chat-modal::before { content: ''; position: absolute; top: 7px; left: 50%; transform: translateX(-50%); width: 40px; height: 4px; border-radius: 3px; background: rgba(255, 255, 255, .25); z-index: 2; }
     .chat-bubble { bottom: 16px; right: 16px; }
     .bubble-label { display: none; }
+}
+
+/* ===== Accesibilidad: sin animación ===== */
+@media (prefers-reduced-motion: reduce) {
+    .chat-bubble, .chat-bubble::before, .chat-modal, .chat-overlay { animation: none !important; transition: none !important; }
 }
