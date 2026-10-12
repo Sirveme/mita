@@ -114,6 +114,21 @@ async def cliente_seguimiento(request: Request, solicitud_id: int):
 async def solicitar_chat(request: Request):
     return templates.TemplateResponse("cliente/chat_solicitud.html", {"request": request})
 
+# Base de conocimiento del chat IA (admin — zMita-22)
+@router.get("/admin/chat-conocimiento", response_class=HTMLResponse)
+async def admin_chat_conocimiento(request: Request):
+    return templates.TemplateResponse("admin/chat_conocimiento.html", {"request": request, "active": "chat-conocimiento"})
+
+# Sandbox para probar el asistente (admin — zMita-23)
+@router.get("/admin/asistente/probar", response_class=HTMLResponse)
+async def admin_asistente_probar(request: Request):
+    return templates.TemplateResponse("admin/asistente_probar.html", {"request": request, "active": "asistente"})
+
+# Historial de cambios del catálogo (admin — zMita-23)
+@router.get("/admin/historial", response_class=HTMLResponse)
+async def admin_historial(request: Request):
+    return templates.TemplateResponse("admin/historial.html", {"request": request, "active": "historial"})
+
 # Chat individual (una sala)
 @router.get("/cliente/chat/{sala_id}", response_class=HTMLResponse)
 async def cliente_chat_sala(request: Request, sala_id: int):

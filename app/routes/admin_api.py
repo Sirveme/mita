@@ -60,8 +60,16 @@ def _filtrar_columnas(model, data: dict) -> dict:
     return {k: v for k, v in data.items() if k in cols and k != "id"}
 
 
-def _crud_basico(model, prefijo: str, orden_col: Optional[str] = None):
-    """Registra GET(list)/GET(id)/POST/PUT/DELETE genéricos para un modelo simple."""
+def _es_catalogo(entidad):
+    """Hook para entidades del catálogo: invalida el chat y registra historial."""
+    from app.services.catalogo import invalidar_conocimiento, registrar_historial
+    return invalidar_conocimiento, registrar_historial
+
+
+def _crud_basico(model, prefijo: str, orden_col: Optional[str] = None, catalogo: Optional[str] = None):
+    """Registra GET(list)/GET(id)/POST/PUT/DELETE genéricos para un modelo simple.
+    Si `catalogo` (nombre de entidad) está presente: baja lógica (activo=False),
+    historial de cambios e invalidación del conocimiento del chat."""
 
     @router.get(f"/{prefijo}", name=f"listar_{prefijo}")
     def listar(db: Session = Depends(get_db)):
@@ -83,6 +91,10 @@ def _crud_basico(model, prefijo: str, orden_col: Optional[str] = None):
         db.add(obj)
         db.commit()
         db.refresh(obj)
+        if catalogo:
+            inval, hist = _es_catalogo(catalogo)
+            hist(db, catalogo, obj.id, "alta", None, _to_dict(obj).get("nombre") or obj.id)
+            inval()
         return _to_dict(obj)
 
     @router.put(f"/{prefijo}/{{item_id}}", name=f"actualizar_{prefijo}")
@@ -90,10 +102,20 @@ def _crud_basico(model, prefijo: str, orden_col: Optional[str] = None):
         obj = db.query(model).get(item_id)
         if not obj:
             raise HTTPException(404, f"{prefijo} no encontrado")
+        antes = _to_dict(obj) if catalogo else None
         for k, v in _filtrar_columnas(model, data).items():
             setattr(obj, k, v)
         db.commit()
         db.refresh(obj)
+        if catalogo:
+            inval, hist = _es_catalogo(catalogo)
+            despues = _to_dict(obj)
+            for k, nuevo in despues.items():
+                if k in ("updated_at", "created_at"):
+                    continue
+                if antes.get(k) != nuevo:
+                    hist(db, catalogo, item_id, k, antes.get(k), nuevo)
+            inval()
         return _to_dict(obj)
 
     @router.delete(f"/{prefijo}/{{item_id}}", name=f"eliminar_{prefijo}")
@@ -101,19 +123,30 @@ def _crud_basico(model, prefijo: str, orden_col: Optional[str] = None):
         obj = db.query(model).get(item_id)
         if not obj:
             raise HTTPException(404, f"{prefijo} no encontrado")
-        db.delete(obj)
-        db.commit()
-        return {"success": True, "eliminado": item_id}
+        # Baja lógica si el modelo tiene 'activo'; si no, baja física
+        if hasattr(model, "activo"):
+            obj.activo = False
+            db.commit()
+            resultado = {"success": True, "baja_logica": item_id}
+        else:
+            db.delete(obj)
+            db.commit()
+            resultado = {"success": True, "eliminado": item_id}
+        if catalogo:
+            inval, hist = _es_catalogo(catalogo)
+            hist(db, catalogo, item_id, "baja", True, False)
+            inval()
+        return resultado
 
 
 # ============================================
 # CRUD genéricos (columnas simples, sin enums Python)
 # ============================================
-_crud_basico(CategoriaServicio, "categorias", orden_col="orden")
+_crud_basico(CategoriaServicio, "categorias", orden_col="orden", catalogo="categorias")
 _crud_basico(TipoServicio, "tipos", orden_col="nombre")
-_crud_basico(Distrito, "distritos", orden_col="nombre")
+_crud_basico(Distrito, "distritos", orden_col="nombre", catalogo="distritos")
 _crud_basico(TiempoEntreDistritos, "tiempos-distritos")
-_crud_basico(TarifaServicio, "tarifas")
+_crud_basico(TarifaServicio, "tarifas", catalogo="tarifas")
 
 
 # ============================================
@@ -230,16 +263,32 @@ def detalle_config_mita(db: Session = Depends(get_db), _=Depends(require_admin_g
 def actualizar_config_mita(datos: dict = Body(...), db: Session = Depends(get_db), _=Depends(require_admin_gerente)):
     """Actualiza varios parámetros a la vez: {clave: valor, ...}. Solo admin/gerente."""
     actualizadas, errores = 0, []
+    from app.services.catalogo import invalidar_conocimiento, registrar_historial
     for clave, valor in datos.items():
         try:
+            anterior = ConfigService.get(db, clave, None)
             if ConfigService.set(db, clave, valor):
                 actualizadas += 1
+                if str(anterior) != str(valor):
+                    registrar_historial(db, "config_mita", clave, clave, anterior, valor)
             else:
                 errores.append(f"{clave}: no encontrada")
         except Exception as e:
             errores.append(f"{clave}: {e}")
     ConfigService.clear_cache()
+    invalidar_conocimiento()   # precios/tarifas al día en el chat
     return {"success": len(errores) == 0, "actualizadas": actualizadas, "errores": errores or None}
+
+
+@router.get("/historial")
+def listar_historial(entidad: Optional[str] = None, limite: int = 200,
+                     db: Session = Depends(get_db), _=Depends(require_admin_gerente)):
+    """Historial de cambios del catálogo (precios, servicios, distritos, políticas)."""
+    from app.models.catalogo_historial import CatalogoHistorial
+    q = db.query(CatalogoHistorial).order_by(CatalogoHistorial.created_at.desc())
+    if entidad:
+        q = q.filter(CatalogoHistorial.entidad == entidad)
+    return {"success": True, "items": [_to_dict(x) for x in q.limit(min(limite, 1000)).all()]}
 
 
 @router.get("/ubigeos")
