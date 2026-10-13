@@ -266,44 +266,92 @@ const MitaVoz = (function () {
     function marcarDictado() { ultimoDictadoTs = Date.now(); }
     function ultimoDictado() { return ultimoDictadoTs; }
 
+    let _cancelTts = false;
+
     function detenerVoz() {
+        _cancelTts = true;
         if (ttsAudio) { try { ttsAudio.pause(); } catch (e) {} ttsAudio = null; }
         try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {}
     }
 
+    function _sentencias(t) { return (String(t).match(/[^.!?]+[.!?]*/g) || [String(t)]).map(s => s.trim()).filter(Boolean); }
+
+    function _cargarVoces(cb) {
+        const v = (window.speechSynthesis && speechSynthesis.getVoices()) || [];
+        if (v.length) { cb(v); return; }
+        try { speechSynthesis.onvoiceschanged = () => cb(speechSynthesis.getVoices() || []); } catch (e) { cb([]); }
+    }
+    function _elegirVozEs(voces) {
+        const score = (v) => {
+            const n = (v.name || '').toLowerCase(), l = (v.lang || '').toLowerCase();
+            if (/online.*natural/.test(n)) return 100;     // Edge neuronales
+            if (/google espa/.test(n)) return 90;          // Chrome
+            if (l.startsWith('es-pe')) return 80;
+            if (l.startsWith('es-419') || l.startsWith('es-us')) return 70;
+            if (l.startsWith('es')) return 50;
+            return 0;
+        };
+        return voces.filter(v => /^es/i.test(v.lang || '') || /espa/i.test(v.name || '')).sort((a, b) => score(b) - score(a))[0] || null;
+    }
     function _vozEstandar(texto, onEnd) {
-        try {
-            if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
-            const u = new SpeechSynthesisUtterance(texto);
-            const voces = speechSynthesis.getVoices() || [];
-            u.voice = voces.find(v => /es-PE/i.test(v.lang)) || voces.find(v => /es-419|es-US/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang)) || null;
-            u.lang = (u.voice && u.voice.lang) || 'es-PE';
-            u.rate = 1.0;
-            if (onEnd) { u.onend = onEnd; u.onerror = onEnd; }
-            speechSynthesis.speak(u);
-        } catch (e) { if (onEnd) onEnd(); }
+        if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
+        _cancelTts = false;
+        _cargarVoces((voces) => {
+            const voz = _elegirVozEs(voces);
+            console.log('[MitaVoz] voz estándar =', voz && voz.name, voz && voz.lang);
+            const frases = _sentencias(texto); let i = 0;
+            const next = () => {
+                if (_cancelTts || i >= frases.length) { if (onEnd) onEnd(); return; }
+                const u = new SpeechSynthesisUtterance(frases[i++]);
+                if (voz) u.voice = voz; u.lang = (voz && voz.lang) || 'es-PE'; u.rate = 1.0; u.pitch = 1.0;
+                u.onend = next; u.onerror = next;
+                try { speechSynthesis.speak(u); } catch (e) { next(); }
+            };
+            next();
+        });
+    }
+
+    async function _pedirAudio(frase) {
+        const r = await fetch('/api/v1/chat-ia/hablar', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texto: frase })
+        });
+        if (!r.ok) throw new Error('hablar HTTP ' + r.status);
+        return URL.createObjectURL(await r.blob());
+    }
+    function _reproducir(url, onFirst) {
+        return new Promise((res) => {
+            ttsAudio = new Audio(url);
+            if (onFirst) onFirst();
+            ttsAudio.onended = () => { try { URL.revokeObjectURL(url); } catch (e) {} res(true); };
+            ttsAudio.onerror = () => res(false);
+            ttsAudio.play().catch(() => res('blocked'));
+        });
     }
 
     async function hablar(texto, opts) {
         texto = (texto || '').trim(); if (!texto) return;
         opts = opts || {};
-        detenerVoz();
-        // Premium (OpenAI TTS); si falla, Estándar en silencio
+        detenerVoz(); _cancelTts = false;
+        const frases = _sentencias(texto);
+        // PREMIUM: pedir 1ª oración y reproducir mientras se piden las siguientes (cola)
         try {
-            const r = await fetch('/api/v1/chat-ia/hablar', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texto })
-            });
-            if (r.ok) {
-                const blob = await r.blob();
-                const url = URL.createObjectURL(blob);
-                ttsAudio = new Audio(url);
-                if (opts.onPlay) ttsAudio.addEventListener('play', opts.onPlay);
-                if (opts.onEnded) ttsAudio.addEventListener('ended', opts.onEnded);
-                ttsAudio.addEventListener('ended', () => { try { URL.revokeObjectURL(url); } catch (e) {} });
-                try { await ttsAudio.play(); return; }
-                catch (e) { if (opts.onBlocked) opts.onBlocked(); return; }  // autoplay bloqueado
+            let siguiente = _pedirAudio(frases[0]);   // prefetch 1ª
+            let primera = true;
+            for (let i = 0; i < frases.length; i++) {
+                if (_cancelTts) return;
+                const url = await siguiente;
+                if (i + 1 < frases.length) siguiente = _pedirAudio(frases[i + 1]).catch(() => null);
+                const r = await _reproducir(url, primera ? opts.onPlay : null);
+                primera = false;
+                if (r === 'blocked') { if (opts.onBlocked) opts.onBlocked(); return; }
             }
-        } catch (e) { /* cae a estándar */ }
+            if (opts.onEnded) opts.onEnded();
+            console.log('[MitaVoz] habló PREMIUM');
+            return;
+        } catch (e) {
+            console.warn('[MitaVoz] Premium TTS falló, uso Estándar:', e.message);
+            if (opts.onEstandar) opts.onEstandar();
+        }
         if (opts.onPlay) opts.onPlay();
         _vozEstandar(texto, opts.onEnded);
     }

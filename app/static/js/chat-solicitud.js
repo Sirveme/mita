@@ -110,7 +110,8 @@
             MitaVoz.hablar(texto, {
                 onPlay: () => { if (ult) ult.classList.add('hablando'); },
                 onEnded: () => { if (ult) ult.classList.remove('hablando'); },
-                onBlocked: () => { if (ult) ult.classList.remove('hablando'); }
+                onBlocked: () => { if (ult) ult.classList.remove('hablando'); this.agregarMensajeBot('Toca 🔊 para escucharme.'); },
+                onEstandar: () => { if (ult && !ult.querySelector('.voz-std')) ult.insertAdjacentHTML('beforeend', '<span class="voz-std" title="Voz estándar del navegador"> · voz estándar</span>'); }
             });
         },
         _fmtFecha(iso) {
@@ -148,19 +149,62 @@
 
         async _interpretar(mensaje) {
             this.mostrarEscribiendo();
+            const req = { mensaje, contexto: this.historial, estado: this.estado || {} };
+            this._ultimoReq = req;
+            const ctrl = new AbortController();
+            const tmo = setTimeout(() => ctrl.abort(), 20000);   // timeout 20 s
             try {
                 const resp = await fetch('/api/v1/chat-ia/interpretar', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mensaje, contexto: this.historial, estado: this.estado || {} })
+                    body: JSON.stringify(req), signal: ctrl.signal
                 });
-                this.ocultarEscribiendo();
-                if (resp.status === 503) { this.agregarMensajeBot('El asistente no está disponible por ahora. Usa el menú de servicios.'); this.mostrarFallback(); return; }
-                if (!resp.ok) throw new Error('bad');
-                this.procesarRespuesta(await resp.json());
+                if (!resp.ok && resp.status !== 200) {
+                    const t = await resp.text().catch(() => '');
+                    this._logCliente('interpretar HTTP ' + resp.status, t);
+                    this.agregarMensajeBot('Tuve un problema, ¿me lo repites?');
+                    return;
+                }
+                const data = await resp.json();
+                this._ultimoResp = data; this._pintarDebug();
+                // Error controlado del backend (nunca silencio)
+                if (data && data.mensaje) {
+                    this.agregarMensajeBot(data.mensaje); this._hablar(data.mensaje);
+                    if (data.estado) this.estado = data.estado;
+                    if (data.sin_ia) this.mostrarFallback();
+                    return;
+                }
+                this.procesarRespuesta(data);
             } catch (e) {
-                this.ocultarEscribiendo();
-                this.agregarMensajeBot('Hubo un error. ¿Puedes intentar de nuevo?');
+                const abort = e && e.name === 'AbortError';
+                this._logCliente('interpretar ' + (abort ? 'timeout' : 'fetch error'), (e && e.stack) || String(e));
+                this.agregarMensajeBot(abort ? 'Me tomó demasiado responder, ¿me lo repites?' : 'Tuve un problema, ¿me lo repites?');
+            } finally {
+                clearTimeout(tmo);
+                this.ocultarEscribiendo();   // el "escribiendo…" SIEMPRE se quita
             }
+        },
+
+        _logCliente(mensaje, stack) {
+            try {
+                fetch('/api/v1/chat-ia/log-cliente', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mensaje, stack, ultimo_request: this._ultimoReq || {} })
+                }).catch(() => {});
+            } catch (e) {}
+        },
+
+        _pintarDebug() {
+            try {
+                if (!/[?&]debug=1/.test(location.search)) return;
+                let p = document.getElementById('chat-debug');
+                if (!p) {
+                    p = document.createElement('details'); p.id = 'chat-debug';
+                    p.style.cssText = 'margin:8px 4px;font-size:11px;color:#8a8a9a;';
+                    p.innerHTML = '<summary>debug</summary><pre style="white-space:pre-wrap;max-height:200px;overflow:auto;"></pre>';
+                    this.container.appendChild(p);
+                }
+                p.querySelector('pre').textContent = JSON.stringify({ req: this._ultimoReq, resp: this._ultimoResp, estado: this.estado }, null, 2);
+            } catch (e) {}
         },
 
         _firma(data) {
@@ -213,6 +257,10 @@
                 this.agregarMensajeBot(data.siguiente_pregunta);
                 this.historial.push({ role: 'assistant', content: data.siguiente_pregunta });
                 this._hablar(data.siguiente_pregunta);
+            } else {
+                // Nada renderizable: nunca dejar al usuario sin respuesta
+                this.agregarMensajeBot('Tuve un problema, ¿me lo repites?');
+                this._logCliente('respuesta sin texto renderizable', JSON.stringify(data).slice(0, 400));
             }
 
             // Fallback solo tras 3 turnos SEGUIDOS sin progreso
