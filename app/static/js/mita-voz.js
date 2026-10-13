@@ -345,11 +345,13 @@ const MitaVoz = (function () {
         });
     }
 
+    let _lastProv = '', _lastVoz = '';
     async function _pedirAudio(frase) {
         const r = await fetch('/api/v1/chat-ia/hablar', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texto: frase })
         });
         if (!r.ok) throw new Error('hablar HTTP ' + r.status);
+        _lastProv = r.headers.get('X-Proveedor') || ''; _lastVoz = r.headers.get('X-Voz') || '';
         return URL.createObjectURL(await r.blob());
     }
     function _reproducir(url, onFirst) {
@@ -380,7 +382,7 @@ const MitaVoz = (function () {
                 if (r === 'blocked') { if (opts.onBlocked) opts.onBlocked(); return; }
             }
             if (opts.onEnded) opts.onEnded();
-            console.log('[MitaVoz] habló PREMIUM');
+            console.log('[MitaVoz] nivel=premium proveedor=' + _lastProv + ' voz=' + _lastVoz);
             return;
         } catch (e) {
             console.warn('[MitaVoz] Premium TTS falló, uso Estándar:', e.message);
