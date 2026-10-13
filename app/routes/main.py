@@ -9,12 +9,17 @@ from app.routes.login_mita import get_current_user
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
-# Clave de Google Maps disponible en todas las plantillas de este router
+# Clave de Google Maps + versión de estáticos (cache-busting) para las plantillas de este router
 try:
     from app.core.config import settings as _settings
     templates.env.globals["GOOGLE_MAPS_API_KEY"] = _settings.GOOGLE_MAPS_API_KEY or ""
 except Exception:
     templates.env.globals["GOOGLE_MAPS_API_KEY"] = ""
+try:
+    from app.core.templates import STATIC_V as _STATIC_V
+    templates.env.globals["STATIC_V"] = _STATIC_V
+except Exception:
+    templates.env.globals["STATIC_V"] = ""
 
 
 async def _guard_admin(request: Request, db: Session):

@@ -238,7 +238,7 @@ def _conocimiento(db: Session):
         tarifa_line = (f"TARIFA DE VISITA / DIAGNÓSTICO: S/ {pv['precio']:.2f} (incluye el diagnóstico; "
                        "la reparación la cotiza el técnico en sitio antes de empezar).")
     lines += ["", tarifa_line,
-              "DISTRITOS CON COBERTURA: " + (", ".join(distritos) if distritos else "Lima Moderna")]
+              "DISTRITOS CON COBERTURA: " + (", ".join(distritos) if distritos else "(aún no hay distritos habilitados)")]
     extras = [e for e in activos if (e.contenido or "").strip()]
     if extras:
         lines += ["", "INFORMACIÓN ADICIONAL:"]
