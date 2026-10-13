@@ -47,6 +47,7 @@ class Solicitud(Base):
 
     # Tiempos
     fecha_solicitud = Column(DateTime, default=datetime.utcnow, index=True)
+    fecha_programada = Column(DateTime, nullable=True)   # cita agendada (chat/formulario)
     fecha_aceptacion = Column(DateTime, nullable=True)
     fecha_llegada = Column(DateTime, nullable=True)
     fecha_inicio_servicio = Column(DateTime, nullable=True)
