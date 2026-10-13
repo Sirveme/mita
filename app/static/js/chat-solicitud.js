@@ -243,7 +243,8 @@
             // C) Agenda: ofrecer horarios concretos
             if (Array.isArray(data.horarios) && data.horarios.length) {
                 if (data.siguiente_pregunta) { this.agregarMensajeBot(data.siguiente_pregunta); this._hablar(data.siguiente_pregunta, true); }
-                this.mostrarHorarios(data.horarios);
+                if (data.asap) this.mostrarAsap(data.horarios[0]);
+                else this.mostrarHorarios(data.horarios);
                 return;
             }
 
@@ -311,6 +312,25 @@
             this.agregarMensajeUsuario(h.etiqueta);
             this.historial.push({ role: 'user', content: 'Quiero el horario: ' + h.etiqueta });
             this._interpretar('Confirmo ese horario');
+        },
+
+        // C) Oferta ASAP: el primer horario disponible + "¿Te lo reservo?"
+        mostrarAsap(h) {
+            const c = document.getElementById('chat-opciones');
+            if (!c || !h) return;
+            c.style.display = 'block'; c.innerHTML = '';
+            const si = document.createElement('button');
+            si.className = 'btn-opcion'; si.type = 'button'; si.textContent = '✓ Sí, resérvalo';
+            si.addEventListener('click', () => this.elegirHorario(h));
+            const otros = document.createElement('button');
+            otros.className = 'btn-opcion'; otros.type = 'button'; otros.textContent = '🕐 Ver otros horarios';
+            otros.addEventListener('click', () => {
+                c.style.display = 'none';
+                this.agregarMensajeUsuario('Ver otros horarios');
+                this.historial.push({ role: 'user', content: 'Prefiero ver otros horarios' });
+                this._interpretar('Prefiero ver otros horarios');
+            });
+            c.appendChild(si); c.appendChild(otros);
         },
 
         _precioHtml(pv) {
@@ -396,8 +416,7 @@
         },
 
         async mostrarFueraCobertura(data) {
-            if (this.cerrado) return;
-            this.cerrado = true;
+            // B.2: NO cerramos el chat — el usuario puede corregir la dirección.
             const dir = data.direccion || {};
             const est = data.estado || this.estado || {};
             const distrito = dir.distrito || est.localidad_mencionada || (est.direccion || {}).distrito || '';
@@ -418,10 +437,18 @@
             const c = document.getElementById('chat-opciones');
             if (c) {
                 c.style.display = 'block'; c.innerHTML = '';
-                const b = document.createElement('button');
-                b.className = 'btn-opcion'; b.type = 'button'; b.textContent = 'Entendido';
-                b.addEventListener('click', () => { c.style.display = 'none'; this.cancelar(); });
-                c.appendChild(b);
+                const corregir = document.createElement('button');
+                corregir.className = 'btn-opcion'; corregir.type = 'button'; corregir.textContent = '✏️ Corregir mi dirección';
+                corregir.addEventListener('click', () => {
+                    c.style.display = 'none';
+                    this.agregarMensajeBot('Dime la dirección correcta (calle, número y distrito).');
+                    const input = document.getElementById('chat-input');
+                    if (input) input.focus();
+                });
+                const ok = document.createElement('button');
+                ok.className = 'btn-opcion'; ok.type = 'button'; ok.textContent = 'Entendido';
+                ok.addEventListener('click', () => { c.style.display = 'none'; this.cerrado = true; this.cancelar(); });
+                c.appendChild(corregir); c.appendChild(ok);
             }
         },
 

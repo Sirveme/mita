@@ -36,6 +36,40 @@ const MitaVoz = (function () {
         const inp = getInput();
         if (inp && (inp.value || '').trim() && _onAutoEnviar) { _reaperturas = 0; try { _onAutoEnviar(); } catch (e) {} }
     }
+
+    // Ventana de edición antes del auto-envío (Parte B, zMita-31):
+    // el texto aparece 1.5 s con un botón ✏️; tocar ✏️ o el input cancela el envío.
+    let _autoEnvioTimer = null, _editarBtn = null;
+    const AUTOENVIO_MS = 1500;
+    function _quitarBotonEditar() { if (_editarBtn) { try { _editarBtn.remove(); } catch (e) {} _editarBtn = null; } }
+    function _cancelarAutoEnvio(inp) {
+        if (_autoEnvioTimer) { clearTimeout(_autoEnvioTimer); _autoEnvioTimer = null; }
+        _quitarBotonEditar();
+        showStatus('Revisa el texto y presiona Enviar', 'success');
+        setTimeout(hideStatus, 2000);
+        if (inp) { try { inp.focus(); } catch (e) {} }
+    }
+    function _programarAutoEnvio(inp) {
+        if (!inp || !(inp.value || '').trim()) return;
+        if (_autoEnvioTimer) clearTimeout(_autoEnvioTimer);
+        marcarDictado();
+        showStatus('Enviando en un momento… toca ✏️ o el texto para editar', 'success');
+        _quitarBotonEditar();
+        _editarBtn = document.createElement('button');
+        _editarBtn.type = 'button'; _editarBtn.className = 'voice-edit-btn'; _editarBtn.textContent = '✏️ Editar';
+        const cancelar = () => _cancelarAutoEnvio(inp);
+        _editarBtn.addEventListener('click', cancelar);
+        const cont = inp.closest('.chat-input-container') || inp.parentElement;
+        if (cont && cont.parentNode) cont.parentNode.insertBefore(_editarBtn, cont);
+        inp.addEventListener('focus', cancelar, { once: true });
+        inp.addEventListener('input', cancelar, { once: true });
+        _autoEnvioTimer = setTimeout(() => {
+            _autoEnvioTimer = null; _quitarBotonEditar();
+            try { inp.removeEventListener('focus', cancelar); inp.removeEventListener('input', cancelar); } catch (e) {}
+            showStatus('Enviando…', 'success');
+            _dispararAutoEnvio();
+        }, AUTOENVIO_MS);
+    }
     function reabrir() {
         // Reabre el micrófono en el último modo (modo conversación)
         if (isRecording || !_ultimoModo) return false;
@@ -162,7 +196,7 @@ const MitaVoz = (function () {
             console.log('[MitaVoz] onresult ' + event.results.length + ' resultados');
             // Envío automático: 1.2 s tras el último resultado final sin nuevos
             if (_finalTimer) clearTimeout(_finalTimer);
-            if (hayFinal) _finalTimer = setTimeout(() => { if (currentMode === 'estandar' && isRecording) { stopRecording(); _dispararAutoEnvio(); } }, FINAL_MS);
+            if (hayFinal) _finalTimer = setTimeout(() => { if (currentMode === 'estandar' && isRecording) { stopRecording(); _programarAutoEnvio(getInput()); } }, FINAL_MS);
         };
         recognition.onerror = (event) => {
             console.error('[MitaVoz] error ' + event.error);
@@ -233,7 +267,7 @@ const MitaVoz = (function () {
             if (data.motivo === 'sin_voz') { showStatus(MIC_MSG, 'error'); return; }
             if (data.texto && inp) {
                 inp.value = data.texto; marcarDictado();
-                if (_autoEnviarPremium) { _autoEnviarPremium = false; showStatus('Enviando…', 'success'); _dispararAutoEnvio(); }
+                if (_autoEnviarPremium) { _autoEnviarPremium = false; _programarAutoEnvio(inp); }
                 else { showStatus('✓ Listo — revisa y presiona Enviar', 'success'); inp.focus(); }
             }
             else showStatus(MIC_MSG, 'error');
