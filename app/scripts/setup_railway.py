@@ -67,6 +67,7 @@ SQL_FILES = [
     "25_agenda.sql",                      # fecha_programada + voz del asistente
     "26_voz_config.sql",                  # configuración de voz (laboratorio de voces)
     "27_politica_cancelacion.sql",        # política de cancelación editable
+    "28_contacto_emergencias.sql",        # contacto de emergencias (ASAP sin cupos hoy)
 ]
 
 # (etiqueta, módulo, función)
