@@ -117,3 +117,14 @@
 .voice-status.recording .vm-bar, .voice-status.recording-premium .vm-bar { background: #e53935; }
 .voice-device { font-size: 11px; color: #8a8a9a; margin-top: 6px; padding-left: 2px; }
 .voice-status.error .voice-meter { display: none; }
+
+/* ===== Asistente hablando (ondas) zMita-25 ===== */
+.mensaje.hablando .burbuja { position: relative; }
+.mensaje.hablando .burbuja::after {
+    content: ''; display: inline-block; margin-left: 8px; width: 14px; height: 10px; vertical-align: middle;
+    background: linear-gradient(#22c55e,#22c55e) left/3px 100% no-repeat,
+                linear-gradient(#22c55e,#22c55e) center/3px 60% no-repeat,
+                linear-gradient(#22c55e,#22c55e) right/3px 100% no-repeat;
+    animation: ondas .7s ease-in-out infinite alternate;
+}
+@keyframes ondas { from { opacity:.4; } to { opacity:1; } }
