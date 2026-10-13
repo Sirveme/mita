@@ -34,7 +34,7 @@
             this.renderUI();
             this.agregarMensajeBot('¡Hola! Cuéntame qué problema tienes y dónde te encuentras.');
             this.mostrarSugerencias(['Tengo una fuga de agua', 'Mi refri no enfría', 'Necesito un electricista']);
-            if (window.MitaVoz) { try { MitaVoz.init(); } catch (e) {} }
+            if (window.MitaVoz) { try { MitaVoz.init(); MitaVoz.onAutoEnviar(() => this.enviar()); } catch (e) {} }
         },
         cancelar() { if (this.onCancel) try { this.onCancel(); } catch (e) {} },
 
@@ -103,13 +103,18 @@
             try { usoMic = window.MitaVoz && (Date.now() - MitaVoz.ultimoDictado() < 30000); } catch (e) {}
             return !!(this.tts || usoMic);
         },
-        _hablar(texto) {
+        _hablar(texto, reabrir) {
             if (!texto || !window.MitaVoz || !this._debeHablar()) return;
             const m = document.getElementById('chat-mensajes');
             const ult = m ? m.querySelector('.mensaje.bot:last-of-type') : null;
+            const puedeReabrir = !!(reabrir && this._entradaVoz && !this.cerrado);
             MitaVoz.hablar(texto, {
                 onPlay: () => { if (ult) ult.classList.add('hablando'); },
-                onEnded: () => { if (ult) ult.classList.remove('hablando'); },
+                onEnded: () => {
+                    if (ult) ult.classList.remove('hablando');
+                    // Modo conversación: reabrir el micrófono si el turno vino por voz
+                    if (puedeReabrir) { try { MitaVoz.reabrir(); } catch (e) {} }
+                },
                 onBlocked: () => { if (ult) ult.classList.remove('hablando'); this.agregarMensajeBot('Toca 🔊 para escucharme.'); },
                 onEstandar: () => { if (ult && !ult.querySelector('.voz-std')) ult.insertAdjacentHTML('beforeend', '<span class="voz-std" title="Voz estándar del navegador"> · voz estándar</span>'); }
             });
@@ -140,6 +145,8 @@
             const input = document.getElementById('chat-input');
             const texto = (input.value || '').trim();
             if (!texto) return;
+            // ¿Este turno vino por voz? (para "si me hablas, te hablo" y modo conversación)
+            try { this._entradaVoz = !!(window.MitaVoz && (Date.now() - MitaVoz.ultimoDictado() < 30000)); } catch (e) { this._entradaVoz = false; }
             input.value = '';
             this.agregarMensajeUsuario(texto);
             this.turno++;
@@ -227,7 +234,7 @@
             if (data.respuesta_consulta) {
                 this.agregarMensajeBot(data.respuesta_consulta);
                 this.historial.push({ role: 'assistant', content: data.respuesta_consulta });
-                this._hablar(data.respuesta_consulta);
+                this._hablar(data.respuesta_consulta, true);
             }
 
             // B.2 Fuera de cobertura: registrar y cerrar
@@ -235,7 +242,7 @@
 
             // C) Agenda: ofrecer horarios concretos
             if (Array.isArray(data.horarios) && data.horarios.length) {
-                if (data.siguiente_pregunta) { this.agregarMensajeBot(data.siguiente_pregunta); this._hablar(data.siguiente_pregunta); }
+                if (data.siguiente_pregunta) { this.agregarMensajeBot(data.siguiente_pregunta); this._hablar(data.siguiente_pregunta, true); }
                 this.mostrarHorarios(data.horarios);
                 return;
             }
@@ -256,7 +263,7 @@
             if (data.siguiente_pregunta) {
                 this.agregarMensajeBot(data.siguiente_pregunta);
                 this.historial.push({ role: 'assistant', content: data.siguiente_pregunta });
-                this._hablar(data.siguiente_pregunta);
+                this._hablar(data.siguiente_pregunta, true);
             } else {
                 // Nada renderizable: nunca dejar al usuario sin respuesta
                 this.agregarMensajeBot('Tuve un problema, ¿me lo repites?');
@@ -404,7 +411,8 @@
                     })
                 });
             } catch (e) {}
-            this.agregarMensajeBot('Por ahora atendemos solo en Lima Moderna. Ya registramos tu zona para avisarte apenas lleguemos.');
+            const msgFuera = 'Por ahora atendemos solo en Lima Moderna. Ya registramos tu zona para avisarte apenas lleguemos.';
+            this.agregarMensajeBot(msgFuera); this._hablar(msgFuera);
             const c = document.getElementById('chat-opciones');
             if (c) {
                 c.style.display = 'block'; c.innerHTML = '';
@@ -418,7 +426,8 @@
         mostrarFallback() {
             if (this.cerrado) return;
             this.cerrado = true;
-            this.agregarMensajeBot('Para no hacerte perder tiempo, sigamos con el formulario — ya llevo lo que me contaste.');
+            const msgFb = 'Para no hacerte perder tiempo, sigamos con el formulario — ya llevo lo que me contaste.';
+            this.agregarMensajeBot(msgFb); this._hablar(msgFb);
             const c = document.getElementById('chat-opciones');
             if (c) {
                 c.style.display = 'block'; c.innerHTML = '';

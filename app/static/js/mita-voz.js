@@ -26,6 +26,24 @@ const MitaVoz = (function () {
     const UMBRAL_RMS = 0.01;
     let audioCtx = null, analyser = null, meterStream = null, meterTimer = null, meterWarnTimer = null;
     let peakRMS = 0, meterInicio = 0, recInicio = 0;
+    // Conversación por voz (manos libres)
+    let _onAutoEnviar = null, _ultimoModo = null, _reaperturas = 0;
+    let _finalTimer = null, _vozDetectada = false, _silencioDesde = 0, _autoEnviarPremium = false;
+    const UMBRAL_SILENCIO = 0.012, SILENCIO_MS = 1300, FINAL_MS = 1200, MAX_REC_MS = 30000;
+    function onAutoEnviar(cb) { _onAutoEnviar = cb; }
+    function ultimoModo() { return _ultimoModo; }
+    function _dispararAutoEnvio() {
+        const inp = getInput();
+        if (inp && (inp.value || '').trim() && _onAutoEnviar) { _reaperturas = 0; try { _onAutoEnviar(); } catch (e) {} }
+    }
+    function reabrir() {
+        // Reabre el micrófono en el último modo (modo conversación)
+        if (isRecording || !_ultimoModo) return false;
+        if (_reaperturas >= 2) { _reaperturas = 0; return false; }  // 2 reaperturas sin hablar -> parar
+        _reaperturas += 1;
+        startRecording(_ultimoModo);
+        return true;
+    }
 
     const MIC_MSG = 'Tu micrófono no capta sonido. Revisa cuál está seleccionado en el navegador (ícono 🎤 en la barra de direcciones).';
 
@@ -53,6 +71,13 @@ const MitaVoz = (function () {
                 if (rms > peakRMS) peakRMS = rms;
                 const nivel = Math.min(1, rms * 6);
                 bars.forEach((b, i) => { b.style.transform = 'scaleY(' + Math.max(0.12, Math.min(1, nivel * (0.5 + i * 0.18))) + ')'; });
+                // Detección de silencio (Premium, manos libres): tras hablar, 1.3 s en silencio -> enviar
+                if (currentMode === 'premium' && isRecording) {
+                    const ahora = Date.now();
+                    if (rms >= UMBRAL_SILENCIO) { _vozDetectada = true; _silencioDesde = 0; }
+                    else if (_vozDetectada) { if (!_silencioDesde) _silencioDesde = ahora; else if (ahora - _silencioDesde > SILENCIO_MS) { _autoEnviarPremium = true; stopRecording(); } }
+                    if (ahora - recInicio > MAX_REC_MS) { _autoEnviarPremium = true; stopRecording(); }   // tope 30 s
+                }
             }, 80);
             meterWarnTimer = setTimeout(() => { if (peakRMS < UMBRAL_RMS) showStatus(MIC_MSG, 'error'); }, 3000);
         } catch (e) { console.warn('[MitaVoz] medidor no disponible', e); }
@@ -128,12 +153,16 @@ const MitaVoz = (function () {
         recognition.onstart = () => { console.log('[MitaVoz] start estandar'); showStatus('Habla ahora… toca ⬛ para terminar', 'recording'); };
         recognition.onresult = (event) => {
             let finales = '', parcial = '';
+            let hayFinal = false;
             for (let i = 0; i < event.results.length; i++) {
                 const t = event.results[i][0].transcript;
-                if (event.results[i].isFinal) finales += t + ' '; else parcial += t;
+                if (event.results[i].isFinal) { finales += t + ' '; hayFinal = true; } else parcial += t;
             }
             const inp = getInput(); if (inp) inp.value = (textoBase + finales + parcial).trim();
             console.log('[MitaVoz] onresult ' + event.results.length + ' resultados');
+            // Envío automático: 1.2 s tras el último resultado final sin nuevos
+            if (_finalTimer) clearTimeout(_finalTimer);
+            if (hayFinal) _finalTimer = setTimeout(() => { if (currentMode === 'estandar' && isRecording) { stopRecording(); _dispararAutoEnvio(); } }, FINAL_MS);
         };
         recognition.onerror = (event) => {
             console.error('[MitaVoz] error ' + event.error);
@@ -202,7 +231,11 @@ const MitaVoz = (function () {
             const data = await resp.json();
             const inp = getInput();
             if (data.motivo === 'sin_voz') { showStatus(MIC_MSG, 'error'); return; }
-            if (data.texto && inp) { inp.value = data.texto; marcarDictado(); showStatus('✓ Listo — revisa y presiona Enviar', 'success'); inp.focus(); }
+            if (data.texto && inp) {
+                inp.value = data.texto; marcarDictado();
+                if (_autoEnviarPremium) { _autoEnviarPremium = false; showStatus('Enviando…', 'success'); _dispararAutoEnvio(); }
+                else { showStatus('✓ Listo — revisa y presiona Enviar', 'success'); inp.focus(); }
+            }
             else showStatus(MIC_MSG, 'error');
         } catch (error) {
             console.error('[MitaVoz] error Whisper', error);
@@ -222,6 +255,7 @@ const MitaVoz = (function () {
         const inp = getInput(); if (!inp) return;
         detenerVoz();   // cortar cualquier audio del asistente al empezar a grabar
         isRecording = true; currentMode = mode; recInicio = Date.now();
+        _ultimoModo = mode; _vozDetectada = false; _silencioDesde = 0; _autoEnviarPremium = false;
         textoBase = (inp.value || '').trim();     // no borramos lo ya escrito
         if (textoBase) textoBase += ' ';
         inp.placeholder = 'Habla ahora… toca ⬛ para terminar';
@@ -358,7 +392,7 @@ const MitaVoz = (function () {
 
     return {
         init, stop: stopRecording, isRecording: () => isRecording, _initCount: () => initCount,
-        hablar, detenerVoz, ultimoDictado
+        hablar, detenerVoz, ultimoDictado, onAutoEnviar, reabrir, ultimoModo
     };
 })();
 
