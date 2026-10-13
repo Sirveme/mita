@@ -65,6 +65,7 @@ SQL_FILES = [
     "23_chat_conocimiento.sql",           # base de conocimiento editable del chat IA
     "24_catalogo_historial.sql",          # historial de catálogo + promoción de visita
     "25_agenda.sql",                      # fecha_programada + voz del asistente
+    "26_voz_config.sql",                  # configuración de voz (laboratorio de voces)
 ]
 
 # (etiqueta, módulo, función)
