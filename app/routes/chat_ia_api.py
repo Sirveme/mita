@@ -14,6 +14,7 @@ o falta la API key, el endpoint responde 503 sin tumbar la app.
 import os
 import json
 import time
+import uuid
 import logging
 from typing import Optional, List
 
@@ -311,12 +312,24 @@ def _enriquecer_categoria(db: Session, data: dict) -> dict:
     return data
 
 
+def _err_chat(estado, mensaje):
+    """Respuesta de error legible (nunca deja al usuario sin texto). Loguea con request_id."""
+    eid = uuid.uuid4().hex[:8]
+    logger.exception("[chat-ia][%s] %s", eid, mensaje)
+    return {"mensaje": mensaje, "error_id": eid, "estado": estado or {},
+            "siguiente_pregunta": None, "completo": False, "fuera_cobertura": False}
+
+
 @router.post("/interpretar")
 async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)):
-    """Interpreta el mensaje con memoria: fusiona el estado y decide la siguiente pregunta."""
+    """Interpreta el mensaje con memoria: fusiona el estado y decide la siguiente pregunta.
+    NUNCA falla en silencio: ante cualquier error devuelve un JSON con `mensaje` y `error_id`."""
+    estado_prev = dict(datos.estado or {})
     client = _openai_client()
     if client is None:
-        raise HTTPException(status_code=503, detail="Chat IA no disponible (OpenAI no configurado).")
+        return {"mensaje": "El asistente no está disponible ahora. Intenta por el formulario.",
+                "error_id": None, "estado": estado_prev, "siguiente_pregunta": None,
+                "completo": False, "fuera_cobertura": False, "sin_ia": True}
 
     conocimiento, _faltantes, _validos = _conocimiento(db)
     system = SYSTEM_PROMPT_BASE.replace("__CONOCIMIENTO__", conocimiento)
@@ -329,7 +342,6 @@ async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)
                "llena preferencia_horaria. No propongas tú los horarios concretos; el sistema los calcula.")
 
     mensajes = [{"role": "system", "content": system}]
-    estado_prev = dict(datos.estado or {})
     if estado_prev:
         mensajes.append({"role": "system", "content": "Estado acumulado (no vuelvas a pedir lo que ya está): " + json.dumps(estado_prev, ensure_ascii=False)})
     for msg in (datos.contexto or [])[-10:]:
@@ -346,12 +358,18 @@ async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)
             max_tokens=500,
         )
         data = json.loads(response.choices[0].message.content)
-    except Exception as e:
-        logger.exception("Error llamando a OpenAI")
-        raise HTTPException(status_code=502, detail=f"Error del asistente: {e}")
+    except Exception:
+        return _err_chat(estado_prev, "Tuve un problema con el asistente, ¿me lo repites?")
     if not isinstance(data, dict):
-        raise HTTPException(status_code=502, detail="Respuesta del asistente no válida")
+        return _err_chat(estado_prev, "Tuve un problema entendiéndote, ¿me lo repites?")
 
+    try:
+        return await _procesar_interpretacion(db, data, estado_prev)
+    except Exception:
+        return _err_chat(estado_prev, "Tuve un problema procesando tu mensaje, ¿me lo repites?")
+
+
+async def _procesar_interpretacion(db, data, estado_prev):
     # 1) Fusionar estado (la memoria vive en el backend)
     estado = _fusionar(estado_prev, data)
     estado = _enriquecer_categoria(db, estado)      # categoria_id a partir de estado.area
@@ -477,6 +495,26 @@ async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)
     }
 
 
+_LOG_CLIENTE = {"ventana": 0, "n": 0}
+
+
+@router.post("/log-cliente")
+async def log_cliente(data: dict = Body(...)):
+    """Recibe errores del chat/voz del navegador y los escribe en el log del servidor."""
+    import time as _t
+    ahora = int(_t.time() // 60)
+    if _LOG_CLIENTE["ventana"] != ahora:
+        _LOG_CLIENTE["ventana"] = ahora; _LOG_CLIENTE["n"] = 0
+    _LOG_CLIENTE["n"] += 1
+    if _LOG_CLIENTE["n"] > 60:          # rate-limit: 60/min global
+        return {"ok": False, "motivo": "rate_limited"}
+    msg = str(data.get("mensaje") or "")[:500]
+    stack = str(data.get("stack") or "")[:1500]
+    ultimo = json.dumps(data.get("ultimo_request") or {}, ensure_ascii=False)[:1000]
+    logger.warning("[CHAT-CLIENTE] %s | ultimo_request=%s | stack=%s", msg, ultimo, stack)
+    return {"ok": True}
+
+
 @router.get("/precio-visita")
 async def precio_visita(db: Session = Depends(get_db)):
     """Precio de la visita vigente HOY (misma fuente que usa el chat y el formulario)."""
@@ -578,9 +616,10 @@ async def transcribir_audio(audio: UploadFile = File(...)):
             prompt=WHISPER_PROMPT,
             response_format="text",
         )
-        logger.info("[chat-ia] Whisper respondió en %.2fs", time.monotonic() - t0)
+        dt = time.monotonic() - t0
         texto = transcript if isinstance(transcript, str) else getattr(transcript, "text", str(transcript))
         texto = (texto or "").strip()
+        logger.info("[chat-ia] Whisper %.2fs, %s bytes, texto=%r", dt, len(audio_bytes), texto[:120])
         if _es_alucinacion(texto):
             logger.info("[chat-ia] Transcripción descartada (sin_voz): %r", texto[:60])
             return {"texto": "", "motivo": "sin_voz"}
