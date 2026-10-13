@@ -71,6 +71,9 @@
                         <button type="button" id="btnVozPremium" class="btn-voice premium recommended" title="Dictar (Premium)" aria-label="Dictar en modo Premium">
                             <i class="fas fa-microphone-lines"></i>
                         </button>
+                        <button type="button" id="btnTts" class="btn-voice" title="Que el asistente hable" aria-label="Activar o silenciar la voz del asistente">
+                            <i class="fas fa-volume-high"></i>
+                        </button>
                     </div>
                     <input type="text" id="chat-input" placeholder="Escribe o dicta tu problema...">
                     <button id="chat-enviar" class="btn-enviar" aria-label="Enviar"><i class="fas fa-paper-plane"></i></button>
@@ -78,6 +81,44 @@
             const input = document.getElementById('chat-input');
             input.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.enviar(); });
             document.getElementById('chat-enviar').addEventListener('click', () => this.enviar());
+            // Toggle de voz del asistente (recordado)
+            try { this.tts = localStorage.getItem('mita_tts') !== 'off'; } catch (e) { this.tts = true; }
+            this._pintarTts();
+            const bt = document.getElementById('btnTts');
+            if (bt) bt.addEventListener('click', () => {
+                this.tts = !this.tts;
+                try { localStorage.setItem('mita_tts', this.tts ? 'on' : 'off'); } catch (e) {}
+                if (!this.tts && window.MitaVoz) MitaVoz.detenerVoz();
+                this._pintarTts();
+            });
+        },
+        _pintarTts() {
+            const bt = document.getElementById('btnTts'); if (!bt) return;
+            bt.innerHTML = `<i class="fas ${this.tts ? 'fa-volume-high' : 'fa-volume-xmark'}"></i>`;
+            bt.classList.toggle('premium', !!this.tts);
+        },
+        _debeHablar() {
+            // "si me hablas, te hablo": si usó el micrófono en este turno, habla aunque esté en mute
+            let usoMic = false;
+            try { usoMic = window.MitaVoz && (Date.now() - MitaVoz.ultimoDictado() < 30000); } catch (e) {}
+            return !!(this.tts || usoMic);
+        },
+        _hablar(texto) {
+            if (!texto || !window.MitaVoz || !this._debeHablar()) return;
+            const m = document.getElementById('chat-mensajes');
+            const ult = m ? m.querySelector('.mensaje.bot:last-of-type') : null;
+            MitaVoz.hablar(texto, {
+                onPlay: () => { if (ult) ult.classList.add('hablando'); },
+                onEnded: () => { if (ult) ult.classList.remove('hablando'); },
+                onBlocked: () => { if (ult) ult.classList.remove('hablando'); }
+            });
+        },
+        _fmtFecha(iso) {
+            if (!iso) return '';
+            try {
+                const d = new Date(iso);
+                return d.toLocaleString('es-PE', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+            } catch (e) { return iso; }
         },
 
         _avatar() { return '<div class="avatar-bot"><i class="fas fa-robot"></i></div>'; },
@@ -142,10 +183,18 @@
             if (data.respuesta_consulta) {
                 this.agregarMensajeBot(data.respuesta_consulta);
                 this.historial.push({ role: 'assistant', content: data.respuesta_consulta });
+                this._hablar(data.respuesta_consulta);
             }
 
             // B.2 Fuera de cobertura: registrar y cerrar
             if (data.fuera_cobertura) { this.mostrarFueraCobertura(data); return; }
+
+            // C) Agenda: ofrecer horarios concretos
+            if (Array.isArray(data.horarios) && data.horarios.length) {
+                if (data.siguiente_pregunta) { this.agregarMensajeBot(data.siguiente_pregunta); this._hablar(data.siguiente_pregunta); }
+                this.mostrarHorarios(data.horarios);
+                return;
+            }
 
             // Dirección ambigua -> opciones (solo si hay opciones reales)
             if (data.direccion && data.direccion.ambigua && Array.isArray(data.direccion.opciones) && data.direccion.opciones.length) {
@@ -153,12 +202,17 @@
             }
 
             // Completo -> confirmación
-            if (data.completo && data.confirmacion) { this.mostrarConfirmacion(data); return; }
+            if (data.completo && data.confirmacion) {
+                this.mostrarConfirmacion(data);
+                this._hablar('Te dejo el resumen en pantalla, ¿lo confirmas?');
+                return;
+            }
 
             // Siguiente pregunta
             if (data.siguiente_pregunta) {
                 this.agregarMensajeBot(data.siguiente_pregunta);
                 this.historial.push({ role: 'assistant', content: data.siguiente_pregunta });
+                this._hablar(data.siguiente_pregunta);
             }
 
             // Fallback solo tras 3 turnos SEGUIDOS sin progreso
@@ -185,6 +239,25 @@
             this._interpretar('(el usuario eligió: ' + opcion + ')');
         },
 
+        mostrarHorarios(horarios) {
+            const c = document.getElementById('chat-opciones');
+            c.style.display = 'block';
+            c.innerHTML = '<p>Horarios disponibles:</p>';
+            horarios.forEach(h => {
+                const b = document.createElement('button');
+                b.className = 'btn-opcion'; b.type = 'button'; b.textContent = '🕐 ' + h.etiqueta;
+                b.addEventListener('click', () => this.elegirHorario(h));
+                c.appendChild(b);
+            });
+        },
+        elegirHorario(h) {
+            document.getElementById('chat-opciones').style.display = 'none';
+            this.estado = this.estado || {}; this.estado.horario_elegido = h.iso;
+            this.agregarMensajeUsuario(h.etiqueta);
+            this.historial.push({ role: 'user', content: 'Quiero el horario: ' + h.etiqueta });
+            this._interpretar('Confirmo ese horario');
+        },
+
         _precioHtml(pv) {
             if (!pv || typeof pv.precio !== 'number') return '';
             if (pv.es_promo) {
@@ -207,6 +280,7 @@
                         <p><strong>Problema:</strong> ${esc(data.problema || '—')}</p>
                         <p><strong>Dirección:</strong> ${esc(dirLinea || '—')}</p>
                         ${dir.distrito ? `<p><strong>Distrito:</strong> ${esc(dir.distrito)}</p>` : ''}
+                        ${(data.fecha_programada || (this.estado && this.estado.horario_elegido)) ? `<p><strong>Fecha y hora:</strong> ${esc(this._fmtFecha(data.fecha_programada || this.estado.horario_elegido))}</p>` : ''}
                         ${this._precioHtml(data.precio_visita)}
                         ${urg ? `<p><strong>Prioridad:</strong> ${urg}</p>` : ''}
                     </div>
@@ -248,7 +322,8 @@
                     direccion: (geo && geo.direccion_formateada) || direccionCompleta,
                     distrito: (geo && geo.distrito) || dir.distrito || null,
                     referencia: dir.referencia || null,
-                    lat: geo ? geo.lat : null, lng: geo ? geo.lng : null
+                    lat: geo ? geo.lat : null, lng: geo ? geo.lng : null,
+                    fecha_programada: (this.estado && this.estado.horario_elegido) || data.fecha_programada || null
                 };
                 const r = await fetch('/api/v1/solicitudes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const d = await r.json();
@@ -313,7 +388,8 @@
                 sessionStorage.setItem('mita_chat_prefill', JSON.stringify({
                     categoria_id: data.categoria_id || null, area: data.area || null, problema: data.problema || null,
                     direccion: [dir.calle, dir.numero].filter(Boolean).join(' '), distrito: dir.distrito || null,
-                    referencia: dir.referencia || null
+                    referencia: dir.referencia || null,
+                    fecha_programada: (this.estado && this.estado.horario_elegido) || null
                 }));
             } catch (e) {}
             window.location.href = '/#servicios';

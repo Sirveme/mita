@@ -202,7 +202,7 @@ const MitaVoz = (function () {
             const data = await resp.json();
             const inp = getInput();
             if (data.motivo === 'sin_voz') { showStatus(MIC_MSG, 'error'); return; }
-            if (data.texto && inp) { inp.value = data.texto; showStatus('✓ Listo — revisa y presiona Enviar', 'success'); inp.focus(); }
+            if (data.texto && inp) { inp.value = data.texto; marcarDictado(); showStatus('✓ Listo — revisa y presiona Enviar', 'success'); inp.focus(); }
             else showStatus(MIC_MSG, 'error');
         } catch (error) {
             console.error('[MitaVoz] error Whisper', error);
@@ -220,6 +220,7 @@ const MitaVoz = (function () {
     function startRecording(mode) {
         console.log('[MitaVoz] start ' + mode);
         const inp = getInput(); if (!inp) return;
+        detenerVoz();   // cortar cualquier audio del asistente al empezar a grabar
         isRecording = true; currentMode = mode; recInicio = Date.now();
         textoBase = (inp.value || '').trim();     // no borramos lo ya escrito
         if (textoBase) textoBase += ' ';
@@ -238,7 +239,7 @@ const MitaVoz = (function () {
             stopMeter(true);
             if (btnEstandar) btnEstandar.classList.remove('recording');
             const val = (inp && inp.value || '').trim();
-            if (val) { showStatus('✓ Listo — revisa y presiona Enviar', 'success'); if (inp) inp.focus(); }
+            if (val) { marcarDictado(); showStatus('✓ Listo — revisa y presiona Enviar', 'success'); if (inp) inp.focus(); }
             else { showStatus('No te escuché, intenta de nuevo', 'error'); }
             setTimeout(hideStatus, 2500);
         } else if (mode === 'premium') {
@@ -258,7 +259,59 @@ const MitaVoz = (function () {
     }
     function hideStatus() { if (voiceStatus) voiceStatus.classList.add('hidden'); }
 
-    return { init, stop: stopRecording, isRecording: () => isRecording, _initCount: () => initCount };
+    // ====== Voz de salida (el asistente habla) ======
+    let ttsAudio = null;
+    let ultimoDictadoTs = 0;
+
+    function marcarDictado() { ultimoDictadoTs = Date.now(); }
+    function ultimoDictado() { return ultimoDictadoTs; }
+
+    function detenerVoz() {
+        if (ttsAudio) { try { ttsAudio.pause(); } catch (e) {} ttsAudio = null; }
+        try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {}
+    }
+
+    function _vozEstandar(texto, onEnd) {
+        try {
+            if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
+            const u = new SpeechSynthesisUtterance(texto);
+            const voces = speechSynthesis.getVoices() || [];
+            u.voice = voces.find(v => /es-PE/i.test(v.lang)) || voces.find(v => /es-419|es-US/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang)) || null;
+            u.lang = (u.voice && u.voice.lang) || 'es-PE';
+            u.rate = 1.0;
+            if (onEnd) { u.onend = onEnd; u.onerror = onEnd; }
+            speechSynthesis.speak(u);
+        } catch (e) { if (onEnd) onEnd(); }
+    }
+
+    async function hablar(texto, opts) {
+        texto = (texto || '').trim(); if (!texto) return;
+        opts = opts || {};
+        detenerVoz();
+        // Premium (OpenAI TTS); si falla, Estándar en silencio
+        try {
+            const r = await fetch('/api/v1/chat-ia/hablar', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texto })
+            });
+            if (r.ok) {
+                const blob = await r.blob();
+                const url = URL.createObjectURL(blob);
+                ttsAudio = new Audio(url);
+                if (opts.onPlay) ttsAudio.addEventListener('play', opts.onPlay);
+                if (opts.onEnded) ttsAudio.addEventListener('ended', opts.onEnded);
+                ttsAudio.addEventListener('ended', () => { try { URL.revokeObjectURL(url); } catch (e) {} });
+                try { await ttsAudio.play(); return; }
+                catch (e) { if (opts.onBlocked) opts.onBlocked(); return; }  // autoplay bloqueado
+            }
+        } catch (e) { /* cae a estándar */ }
+        if (opts.onPlay) opts.onPlay();
+        _vozEstandar(texto, opts.onEnded);
+    }
+
+    return {
+        init, stop: stopRecording, isRecording: () => isRecording, _initCount: () => initCount,
+        hablar, detenerVoz, ultimoDictado
+    };
 })();
 
 window.MitaVoz = MitaVoz;
