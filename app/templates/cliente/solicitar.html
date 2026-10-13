@@ -3,7 +3,7 @@
 {% block title %}Solicitar Servicio - MITA{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/solicitar-visa.css">
+<link rel="stylesheet" href="/static/css/solicitar-visa.css?v={{ STATIC_V }}">
 {% endblock %}
 
 {% block content %}
@@ -26,10 +26,10 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="/static/js/areas-data.js"></script>
-<script src="/static/js/google-maps-direccion.js"></script>
+<script src="/static/js/areas-data.js?v={{ STATIC_V }}"></script>
+<script src="/static/js/google-maps-direccion.js?v={{ STATIC_V }}"></script>
 {% if GOOGLE_MAPS_API_KEY %}
 <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places&v=weekly&callback=initAutocomplete" async defer></script>
 {% endif %}
-<script src="/static/js/solicitar-visa.js"></script>
+<script src="/static/js/solicitar-visa.js?v={{ STATIC_V }}"></script>
 {% endblock %}

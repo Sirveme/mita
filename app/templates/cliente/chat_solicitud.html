@@ -6,7 +6,7 @@
     <title>Asistente MITA</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap">
-    <link rel="stylesheet" href="/static/css/chat-solicitud.css">
+    <link rel="stylesheet" href="/static/css/chat-solicitud.css?v={{ STATIC_V }}">
     <style>
         :root { --bg:#0e0e1a; }
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -29,8 +29,8 @@
     </div>
     <div id="chat-container" class="chat-solicitud"></div>
 </div>
-<script src="/static/js/mita-voz.js"></script>
-<script src="/static/js/chat-solicitud.js"></script>
+<script src="/static/js/mita-voz.js?v={{ STATIC_V }}"></script>
+<script src="/static/js/chat-solicitud.js?v={{ STATIC_V }}"></script>
 <script>document.addEventListener('DOMContentLoaded', () => ChatSolicitud.init('chat-container'));</script>
 </body>
 </html>

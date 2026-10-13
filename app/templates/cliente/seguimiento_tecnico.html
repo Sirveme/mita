@@ -30,7 +30,7 @@
     {% if GOOGLE_MAPS_API_KEY %}
     <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places"></script>
     {% endif %}
-    <script src="/static/js/cliente-seguimiento.js" defer></script>
+    <script src="/static/js/cliente-seguimiento.js?v={{ STATIC_V }}" defer></script>
 </head>
 <body>
 <div class="seg">
