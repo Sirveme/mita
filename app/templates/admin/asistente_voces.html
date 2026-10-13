@@ -1,0 +1,82 @@
+{% extends "admin/layout.html" %}
+{% block title %}Voces del asistente{% endblock %}
+{% block page_title %}Laboratorio de voces{% endblock %}
+{% block extra_css %}
+<style>
+    .lab { max-width: 760px; }
+    .lab .frase { width:100%; background:#0d1117; border:1px solid var(--mita-border,#2a2a3a); border-radius:10px; color:var(--mita-text,#fff); padding:12px 14px; font-size:14px; }
+    .lab .controls { display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin:14px 0; }
+    .lab label { color:var(--mita-text-secondary,#8b949e); font-size:13px; display:block; margin-bottom:4px; }
+    .lab input[type=range] { vertical-align:middle; }
+    .lab textarea { width:100%; min-height:54px; background:#0d1117; border:1px solid var(--mita-border,#2a2a3a); border-radius:8px; color:#e9edef; padding:8px 10px; font-size:13px; }
+    .voz { display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--mita-card,#161b22); border:1px solid var(--mita-border,#2a2a3a); border-radius:12px; margin-bottom:10px; }
+    .voz .meta { flex:1; min-width:0; } .voz .meta b { color:#fff; font-size:14px; } .voz .meta span { display:block; color:var(--mita-text-secondary,#8b949e); font-size:12px; }
+    .voz .lat { font-size:12px; color:#8b949e; min-width:110px; }
+    .btn { border:none; border-radius:8px; padding:9px 14px; font-weight:600; cursor:pointer; font-size:13px; }
+    .btn-play { background:#1f2630; color:#fff; border:1px solid var(--mita-border,#2a2a3a); }
+    .btn-usar { background:var(--mita-primary,#FFCD11); color:#000; }
+    .voz.activa { border-color:var(--mita-primary,#FFCD11); }
+    .nota { color:var(--mita-text-secondary,#8b949e); font-size:12px; margin-top:14px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="lab">
+    <label>Frase de prueba</label>
+    <textarea id="frase" class="frase">Hola, soy el asistente de MITA. Cuéntame qué problema tienes y te envío un técnico a tu domicilio.</textarea>
+    <div class="controls">
+        <div><label>Velocidad: <span id="velval">1.0</span></label><input id="vel" type="range" min="0.9" max="1.2" step="0.05" value="1.0"></div>
+        <div style="flex:1; min-width:260px;"><label>Instrucciones de estilo (solo OpenAI)</label><textarea id="instr">Habla en español peruano de Lima, tono cálido y profesional, ritmo natural, cercano, sin sonar a locutor de radio.</textarea></div>
+    </div>
+    <div id="voces"><p class="nota">Cargando voces…</p></div>
+    <p class="nota">Las voces de Azure/ElevenLabs aparecen solo si configuras sus API keys en Railway. Al tocar "Usar esta voz" el chat la usará de inmediato.</p>
+</div>
+<audio id="player" style="display:none;"></audio>
+<script>
+const esc=(t)=>{const d=document.createElement('div');d.textContent=t==null?'':t;return d.innerHTML;};
+let VOCES=[];
+document.getElementById('vel').addEventListener('input', e=>document.getElementById('velval').textContent=(+e.target.value).toFixed(2));
+function cfgActual(){ return { velocidad: parseFloat(document.getElementById('vel').value), instrucciones: document.getElementById('instr').value }; }
+async function cargar(){
+    const cont=document.getElementById('voces');
+    let data;
+    try{ const r=await fetch('/api/v1/chat-ia/voces'); if(!r.ok) throw 0; data=await r.json(); }
+    catch(e){ cont.innerHTML='<p class="nota">No autorizado o error. Inicia sesión como admin.</p>'; return; }
+    VOCES=data.voces||[];
+    if(!VOCES.length){ cont.innerHTML='<p class="nota">No hay proveedores de voz configurados (falta OPENAI_API_KEY).</p>'; return; }
+    cont.innerHTML=VOCES.map((v,i)=>`
+        <div class="voz" data-i="${i}">
+            <div class="meta"><b>${esc(v.label)}</b><span>${esc(v.proveedor)} · ${esc(v.voz)} · costo ${esc(v.costo)}</span></div>
+            <span class="lat" data-lat>—</span>
+            <button class="btn btn-play" data-play>▶ Escuchar</button>
+            <button class="btn btn-usar" data-usar>Usar esta voz</button>
+        </div>`).join('');
+    cont.querySelectorAll('.voz').forEach(el=>{
+        const v=VOCES[+el.dataset.i];
+        el.querySelector('[data-play]').addEventListener('click',()=>escuchar(v, el));
+        el.querySelector('[data-usar]').addEventListener('click',()=>usar(v, el));
+    });
+}
+async function escuchar(v, el){
+    const lat=el.querySelector('[data-lat]'); lat.textContent='generando…';
+    const c=cfgActual();
+    try{
+        const r=await fetch('/api/v1/chat-ia/voces/probar',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({texto:document.getElementById('frase').value, proveedor:v.proveedor, voz:v.voz, velocidad:c.velocidad, instrucciones:c.instrucciones})});
+        if(!r.ok){ lat.textContent='error'; return; }
+        const ms=r.headers.get('X-Latencia-Ms'), bytes=r.headers.get('X-Bytes');
+        lat.textContent=`${ms} ms · ${Math.round((+bytes||0)/1024)} KB`;
+        const blob=await r.blob(); const p=document.getElementById('player'); p.src=URL.createObjectURL(blob); p.play().catch(()=>{});
+    }catch(e){ lat.textContent='error'; }
+}
+async function usar(v, el){
+    const c=cfgActual();
+    try{
+        const r=await fetch('/api/v1/chat-ia/voces/usar',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({proveedor:v.proveedor, voz:v.voz, velocidad:c.velocidad, instrucciones:c.instrucciones})});
+        if(!r.ok) throw 0;
+        document.querySelectorAll('.voz').forEach(x=>x.classList.remove('activa')); el.classList.add('activa');
+    }catch(e){ alert('No se pudo guardar.'); }
+}
+document.addEventListener('DOMContentLoaded', cargar);
+</script>
+{% endblock %}
