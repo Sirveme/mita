@@ -202,10 +202,15 @@ def _en_cobertura(db: Session, distrito: Optional[str]):
 
 
 def _marcar_cobertura(db: Session, data: dict) -> dict:
+    """Decide la cobertura por el distrito actual. Un distrito EN cobertura manda sobre
+    un flag viejo (así una corrección de dirección reabre el flujo; zMita-31 Parte B)."""
     distrito = (data.get("direccion") or {}).get("distrito")
     fuera = bool(data.get("fuera_cobertura"))
-    if not fuera and distrito:
-        if _en_cobertura(db, distrito) is False:
+    if distrito:
+        en = _en_cobertura(db, distrito)
+        if en is True:
+            fuera = False
+        elif en is False:
             fuera = True
     data["fuera_cobertura"] = fuera
     return data
@@ -266,6 +271,17 @@ def _conocimiento(db: Session):
     return txt, faltantes, validos
 
 
+def _conocimiento_valor(db: Session, clave: str) -> Optional[str]:
+    """Contenido de una clave de chat_conocimiento si está activa y no vacía."""
+    try:
+        row = db.query(ChatConocimiento).filter(ChatConocimiento.clave == clave,
+                                                ChatConocimiento.activo == True).first()
+        v = (row.contenido or "").strip() if row else ""
+        return v or None
+    except Exception:
+        return None
+
+
 def _merge_dir(cur: dict, new: dict) -> dict:
     cur = dict(cur or {}); new = new or {}
     for k in ("texto_original", "calle", "numero", "interior", "distrito", "referencia"):
@@ -297,8 +313,8 @@ def _fusionar(estado: dict, data: dict) -> dict:
 
 _PREGUNTA_KW = ("cuanto", "cuánto", "cobran", "cobra", "precio", "tarifa", "cuesta", "vale",
                 "como ", "cómo ", "cuando", "cuándo", "donde", "dónde", "atienden", "atiende",
-                "garantia", "garantía", "cancel", "demora", "demoran", "tardan", "horario",
-                "pagar", "pago", "medios de pago", "si cancelo", "que pasa", "qué pasa", "qué sucede", "que sucede")
+                "garantia", "garantía", "cancel", "demora", "demoran", "tardan",
+                "medios de pago", "si cancelo", "que pasa", "qué pasa", "qué sucede", "que sucede")
 
 
 def _es_pregunta(mensaje: str) -> bool:
@@ -307,6 +323,30 @@ def _es_pregunta(mensaje: str) -> bool:
     if "?" in (mensaje or "") or "¿" in (mensaje or ""):
         return True
     return any(k.strip() in m for k in _PREGUNTA_KW)
+
+
+_ASAP_KW = ("ahora mismo", "ahora", "ya mismo", "cuanto antes", "lo antes posible",
+            "de inmediato", "inmediato", "en este momento", "emergencia", "urgente", "urgencia")
+_VER_OTROS_KW = ("ver otros", "otros horarios", "otro horario", "mas horarios", "más horarios",
+                 "otra hora", "ver mas", "ver más")
+_CORRIGE_KW = ("no, ", "no es", "no era", "mejor ", "me equivoque", "me equivoque,", "equivoca",
+               "perdon", "perdón", "disculpa", "corrige", "corrijo", "cambia", "cambiar",
+               "en realidad", "es en ", "mas bien", "más bien", "queria decir", "quería decir")
+
+
+def _es_asap(mensaje: str) -> bool:
+    m = _norm_txt(mensaje or "")
+    return any(k.strip() in m for k in (_norm_txt(x) for x in _ASAP_KW))
+
+
+def _quiere_otros(mensaje: str) -> bool:
+    m = _norm_txt(mensaje or "")
+    return any(_norm_txt(k) in m for k in _VER_OTROS_KW)
+
+
+def _es_correccion(mensaje: str) -> bool:
+    m = _norm_txt(mensaje or "")
+    return any(k.strip() in m for k in (_norm_txt(x) for x in _CORRIGE_KW))
 
 
 def _reformular_problema(area: Optional[str]) -> str:
@@ -427,7 +467,31 @@ async def _procesar_interpretacion(db, data, estado_prev, mensaje=""):
     # 1) Fusionar estado (la memoria vive en el backend)
     estado = _fusionar(estado_prev, data)
     estado = _enriquecer_categoria(db, estado)      # categoria_id a partir de estado.area
-    estado = _marcar_cobertura(db, estado)          # fuera_cobertura según distrito en cobertura
+
+    # Parte B: corregir un dato dicho antes, o dar una nueva dirección tras "fuera de cobertura".
+    # El mensaje actual REEMPLAZA lo que trae y obliga a revalidar.
+    nueva_dir = data.get("direccion") or {}
+    nueva_loc = data.get("localidad_mencionada")
+    hay_ubic_nueva = bool(nueva_dir.get("calle") or nueva_dir.get("distrito") or nueva_loc)
+    corrige = _es_correccion(mensaje)
+    if corrige or (estado_prev.get("fuera_cobertura") and hay_ubic_nueva):
+        d = dict(estado.get("direccion") or {})
+        for k in ("texto_original", "calle", "numero", "interior", "distrito", "referencia"):
+            v = nueva_dir.get(k)
+            if v:
+                d[k] = v                     # reemplaza (no conserva el valor viejo)
+        for k in ("validada", "lat", "lng", "direccion_formateada"):
+            d.pop(k, None)                   # revalidar la dirección corregida
+        estado["direccion"] = d
+        if nueva_loc:
+            estado["localidad_mencionada"] = nueva_loc
+        elif nueva_dir.get("distrito"):
+            estado["localidad_mencionada"] = nueva_dir.get("distrito")
+        estado.pop("fuera_cobertura", None)  # se recalcula este turno
+
+    # Cobertura POR TURNO: parte del flag fresco de la IA (no del estado viejo)
+    estado["fuera_cobertura"] = bool(data.get("fuera_cobertura")) and not corrige
+    estado = _marcar_cobertura(db, estado)          # refina según distrito en cobertura
 
     # 2) Intención SOLO por el mensaje actual (no por el historial)
     es_pregunta = _es_pregunta(mensaje)
@@ -509,21 +573,42 @@ async def _procesar_interpretacion(db, data, estado_prev, mensaje=""):
 
     # ----- Agenda: antes de confirmar, elegir fecha/hora (Parte C) -----
     from app.services.agenda import opciones_horarios, ahora_lima
+    from app.services.texto import hora_coloquial, dia_coloquial
     horarios = None
+    asap = False
+    asap_msg = None
     horario_elegido = estado.get("horario_elegido")
+    if _quiere_otros(mensaje):
+        estado["mostrar_todos"] = True
     if listo and not horario_elegido:
         pref = data.get("preferencia_horaria") or estado.get("preferencia_horaria") or {}
         if not isinstance(pref, dict):
             pref = {}
         urg = estado.get("urgencia") or (data.get("detalles") or {}).get("urgencia")
-        if urg == "alta":
+        asap = (_es_asap(mensaje) or urg == "alta" or bool(pref.get("lo_antes_posible"))) \
+            and not estado.get("mostrar_todos")
+        if urg == "alta" or asap:
             pref["lo_antes_posible"] = True
         estado["preferencia_horaria"] = pref
+        _now = ahora_lima()
         try:
-            horarios = opciones_horarios(db, ahora_lima(), pref, n=3)
+            horarios = opciones_horarios(db, _now, pref, n=3)
         except Exception:
             logger.exception("[chat-ia] agenda falló; se confirma sin horario")
             horarios = []
+        if asap and horarios:
+            h0 = horarios[0]
+            dia = dia_coloquial(h0["iso"], _now)
+            hora = hora_coloquial(h0["iso"])
+            if dia == "hoy":
+                asap_msg = f"El primer técnico disponible puede llegar hoy a las {hora}. ¿Te lo reservo?"
+            else:
+                asap_msg = (f"Hoy ya no tengo cupos. El primero disponible es {dia} a las {hora}. "
+                            "¿Te lo reservo?")
+                contacto = _conocimiento_valor(db, "contacto_emergencias")
+                if contacto:
+                    asap_msg += f" Si es una emergencia, comunícate ya: {contacto}."
+            horarios = [h0]   # ofrecer el primero; "Ver otros horarios" muestra el resto
 
     # Agenda sin cupos/datos (A.5): no bloquear; permitir confirmar sin horario
     agenda_pendiente = bool(listo and not horario_elegido and not horarios)
@@ -535,15 +620,25 @@ async def _procesar_interpretacion(db, data, estado_prev, mensaje=""):
         siguiente = None
     elif pregunta_confirmar_distrito:
         siguiente = pregunta_confirmar_distrito
+    elif asap_msg:
+        siguiente = asap_msg
     elif listo and not horario_elegido:
         siguiente = "¿Para cuándo lo necesitas? Elige un horario o dime otro momento (ej. mañana en la tarde)."
     else:
         siguiente = _siguiente_pregunta(estado)
 
-    # No repetir textualmente la misma pregunta dos turnos seguidos: reformular según el área
-    if siguiente and siguiente == estado.get("_ultima_pregunta"):
-        if "está pasando" in siguiente or "qué necesitas" in siguiente.lower():
+    # No repetir textualmente el MISMO mensaje dos turnos seguidos (Parte C): reformular/avanzar.
+    ultimo_bot = estado_prev.get("_ultimo_bot")
+    if siguiente and siguiente == ultimo_bot and not horarios:
+        bajo = siguiente.lower()
+        if "está pasando" in siguiente or "qué necesitas" in bajo:
             siguiente = _reformular_problema(estado.get("area"))
+        elif "para cuándo" in bajo or "horario" in bajo:
+            siguiente = "Cuéntame, ¿a qué hora te viene bien? Puedes elegir uno de los horarios de abajo."
+        elif "dirección" in bajo or "distrito" in bajo or "calle" in bajo:
+            siguiente = "Para ubicarte, dime la calle, el número y el distrito, por favor."
+        else:
+            siguiente = siguiente.rstrip(". ") + " (cuéntame para avanzar)."
     if siguiente:
         estado["_ultima_pregunta"] = siguiente
 
@@ -569,6 +664,14 @@ async def _procesar_interpretacion(db, data, estado_prev, mensaje=""):
         respuesta_consulta = respuesta_consulta.rstrip(" .") + ". " + siguiente
         siguiente = None
 
+    # Recordar el mensaje principal de este turno (para no repetirlo en el siguiente)
+    if respuesta_consulta:
+        estado["_ultimo_bot"] = respuesta_consulta
+    elif not fuera and completo and confirmacion:
+        estado["_ultimo_bot"] = confirmacion
+    elif siguiente:
+        estado["_ultimo_bot"] = siguiente
+
     from app.services.catalogo import precio_visita_vigente
     # 3) Armar respuesta (incluye el estado fusionado para reenviar)
     resp = {
@@ -587,6 +690,7 @@ async def _procesar_interpretacion(db, data, estado_prev, mensaje=""):
         "fuera_cobertura": fuera,
         "completo": completo,
         "horarios": horarios,
+        "asap": asap,
         "fecha_programada": horario_elegido,
         "siguiente_pregunta": siguiente,
         "confirmacion": confirmacion,
