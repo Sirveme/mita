@@ -75,7 +75,7 @@
         @media (max-width: 768px) { .nav-links { display: none; } .hero { padding-top: 100px; } .problem-examples { justify-content: center; } }
     </style>
     <!-- Flujo de solicitud estilo VISA (integrado en la sección de servicios) -->
-    <link rel="stylesheet" href="/static/css/solicitar-visa.css">
+    <link rel="stylesheet" href="/static/css/solicitar-visa.css?v={{ STATIC_V }}">
     <style>
         /* Integración en la landing: preserva su fondo y tipografía */
         body { background: var(--mita-dark) !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; }
@@ -131,15 +131,15 @@
         <div class="footer-copy">© 2026 MITA - Servicios Técnicos a Domicilio. Todos los derechos reservados.</div>
     </footer>
 
-    <script src="/static/js/areas-data.js"></script>
-    <script src="/static/js/google-maps-direccion.js"></script>
+    <script src="/static/js/areas-data.js?v={{ STATIC_V }}"></script>
+    <script src="/static/js/google-maps-direccion.js?v={{ STATIC_V }}"></script>
     {% if GOOGLE_MAPS_API_KEY %}
     <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places&v=weekly&callback=initAutocomplete" async defer></script>
     {% endif %}
-    <script src="/static/js/solicitar-visa.js"></script>
+    <script src="/static/js/solicitar-visa.js?v={{ STATIC_V }}"></script>
 
     <!-- Burbuja de Chat IA (zMita-19) -->
-    <link rel="stylesheet" href="/static/css/chat-burbuja.css">
+    <link rel="stylesheet" href="/static/css/chat-burbuja.css?v={{ STATIC_V }}">
     <div id="chatBubble" class="chat-bubble">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -164,6 +164,7 @@
         <div class="chat-modal-body" id="chatModalBody"></div>
     </div>
     <div id="chatOverlay" class="chat-overlay hidden"></div>
-    <script src="/static/js/chat-burbuja.js"></script>
+    <script>window.STATIC_V = "{{ STATIC_V }}";</script>
+    <script src="/static/js/chat-burbuja.js?v={{ STATIC_V }}"></script>
 </body>
 </html>
