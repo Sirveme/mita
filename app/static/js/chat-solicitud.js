@@ -185,17 +185,30 @@
             this._interpretar('(el usuario eligió: ' + opcion + ')');
         },
 
+        _precioHtml(pv) {
+            if (!pv || typeof pv.precio !== 'number') return '';
+            if (pv.es_promo) {
+                return `<p><strong>Visita y diagnóstico:</strong> <span style="text-decoration:line-through;color:#8a8a9a">S/ ${pv.regular.toFixed(2)}</span> <b style="color:#22c55e">S/ ${pv.precio.toFixed(2)}</b>${pv.hasta ? ' (promo hasta ' + esc(pv.hasta) + ')' : ''}</p>`;
+            }
+            return `<p><strong>Visita y diagnóstico:</strong> S/ ${pv.precio.toFixed(2)}</p>`;
+        },
         mostrarConfirmacion(data) {
             const dir = data.direccion || {};
+            const servicio = data.categoria_nombre || NOMBRES_AREA[data.area] || data.area || 'Servicio';
+            const dirLinea = dir.direccion_formateada || [dir.calle, dir.numero].filter(Boolean).join(' ');
+            const urg = data.urgencia === 'alta' ? 'urgente' : (data.urgencia === 'normal' ? 'normal' : '');
             const c = document.getElementById('chat-confirmacion');
             c.style.display = 'block';
             c.innerHTML = `
                 <div class="confirmacion-card">
-                    <h4>✅ ${esc(data.confirmacion)}</h4>
+                    <h4>✅ ${esc(data.confirmacion || 'Confirmemos tu solicitud')}</h4>
                     <div class="confirmacion-detalles">
-                        <p><strong>Servicio:</strong> ${esc(NOMBRES_AREA[data.area] || data.area || '—')}</p>
+                        <p><strong>Servicio:</strong> ${esc(servicio)}</p>
                         <p><strong>Problema:</strong> ${esc(data.problema || '—')}</p>
-                        <p><strong>Dirección:</strong> ${esc([dir.calle, dir.numero].filter(Boolean).join(' '))}${dir.distrito ? ', ' + esc(dir.distrito) : ''}</p>
+                        <p><strong>Dirección:</strong> ${esc(dirLinea || '—')}</p>
+                        ${dir.distrito ? `<p><strong>Distrito:</strong> ${esc(dir.distrito)}</p>` : ''}
+                        ${this._precioHtml(data.precio_visita)}
+                        ${urg ? `<p><strong>Prioridad:</strong> ${urg}</p>` : ''}
                     </div>
                     <div class="confirmacion-acciones">
                         <button class="btn-confirmar" id="chat-confirmar">✓ Confirmar y buscar técnico</button>
@@ -212,10 +225,15 @@
             const btn = document.getElementById('chat-confirmar'); if (btn) btn.disabled = true;
             const direccionCompleta = [dir.calle, dir.numero].filter(Boolean).join(' ') + (dir.distrito ? ', ' + dir.distrito : '');
             let geo = null;
-            try { geo = await (await fetch('/api/v1/chat-ia/validar-direccion', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ direccion: direccionCompleta }) })).json();
-            } catch (e) { /* sigue con lo extraído */ }
+            if (dir.validada && dir.lat && dir.lng) {
+                // Ya validada por el backend: no re-geocodificar
+                geo = { valida: true, lat: dir.lat, lng: dir.lng, distrito: dir.distrito, direccion_formateada: dir.direccion_formateada || direccionCompleta };
+            } else {
+                try { geo = await (await fetch('/api/v1/chat-ia/validar-direccion', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ direccion: direccionCompleta }) })).json();
+                } catch (e) { /* sigue con lo extraído */ }
+            }
             if (geo && geo.valida === false) { if (btn) btn.disabled = false; this.agregarMensajeBot('No pude validar la dirección. ¿Puedes verificarla?'); return; }
 
             if (!data.categoria_id) {
