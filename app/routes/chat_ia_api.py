@@ -278,7 +278,7 @@ def _fusionar(estado: dict, data: dict) -> dict:
 
 
 def _siguiente_pregunta(estado: dict) -> Optional[str]:
-    """Decide la siguiente pregunta según lo que falta (problema/área -> dirección)."""
+    """Decide la siguiente pregunta según lo que falta. NUNCA devuelve None si falta algo."""
     d = estado.get("direccion") or {}
     if not estado.get("problema") and not estado.get("area"):
         return "¿Qué necesitas y qué está pasando? (por ejemplo: una fuga de agua, un cortocircuito, la refri que no enfría)"
@@ -288,12 +288,11 @@ def _siguiente_pregunta(estado: dict) -> Optional[str]:
         if d.get("distrito"):
             return f"¿En qué calle y número de {d['distrito']}?"
         return "¿Cuál es tu dirección? (calle, número y distrito)"
+    if not d.get("distrito"):
+        return "¿En qué distrito queda esa dirección?"
+    if not d.get("validada"):
+        return "¿Me confirmas la dirección exacta? (calle, número y distrito)"
     return None
-
-
-def _esta_completo(estado: dict) -> bool:
-    d = estado.get("direccion") or {}
-    return bool(estado.get("area") and estado.get("problema") and d.get("calle"))
 
 
 def _enriquecer_categoria(db: Session, data: dict) -> dict:
@@ -397,6 +396,11 @@ async def _procesar_interpretacion(db, data, estado_prev):
     if localidad:
         estado["localidad_mencionada"] = localidad
 
+    # Parte D: guardar la preferencia horaria aunque aún falte otro dato
+    pref_ia = data.get("preferencia_horaria")
+    if isinstance(pref_ia, dict) and any(pref_ia.get(k) for k in ("fecha", "franja", "hora", "lo_antes_posible")):
+        estado["preferencia_horaria"] = {**(estado.get("preferencia_horaria") or {}), **pref_ia}
+
     # Si el usuario nombró una localidad que NO está en cobertura (p.ej. Iquitos),
     # es fuera de cobertura aunque Geocoding sesgue el resultado a Lima.
     if not fuera and localidad and _en_cobertura(db, localidad) is False:
@@ -433,14 +437,25 @@ async def _procesar_interpretacion(db, data, estado_prev):
                             and _norm_txt(g_distrito) not in _norm_txt(localidad) \
                             and _en_cobertura(db, localidad) is not False:
                         pregunta_confirmar_distrito = f"Encontré esa dirección en {g_distrito}. ¿Es correcto?"
-        # si no hubo geocoding (sin clave/sin resultado), no marcamos validada -> no completará
+        else:
+            # Geocoding NO disponible (p.ej. API key restringida a navegador / sin red):
+            # no bloquear. Si hay un distrito en cobertura, aceptamos la dirección (sin lat/lng;
+            # el horario/ubicación se confirman luego). Iquitos ya quedó marcado fuera arriba.
+            dd = dir_.get("distrito")
+            if dd and _en_cobertura(db, dd) is True:
+                dir_["validada"] = True
+                dir_["direccion_formateada"] = dir_.get("texto_original") or \
+                    " ".join([x for x in (dir_.get("calle"), dir_.get("numero"), dd) if x])
+                estado["direccion"] = dir_
+                logger.warning("[chat-ia] geocoding no disponible; dirección aceptada por distrito en cobertura: %s", dd)
 
     estado["fuera_cobertura"] = fuera
     dir_ = estado.get("direccion") or {}
 
-    # "listo" = área + problema + dirección validada en cobertura (sin confirmación pendiente)
+    # "listo" = área + problema + dirección validada (lat/lng opcional: el geocoding puede
+    # no estar disponible en el servidor) en cobertura y sin confirmación de distrito pendiente
     listo = (bool(estado.get("area") and estado.get("problema")
-                  and dir_.get("validada") and dir_.get("lat") and dir_.get("distrito"))
+                  and dir_.get("validada") and dir_.get("distrito"))
              and not fuera and not pregunta_confirmar_distrito)
 
     # ----- Agenda: antes de confirmar, elegir fecha/hora (Parte C) -----
@@ -476,6 +491,13 @@ async def _procesar_interpretacion(db, data, estado_prev):
     else:
         siguiente = _siguiente_pregunta(estado)
 
+    # Parte D: no repetir textualmente la misma pregunta dos turnos seguidos
+    if siguiente and siguiente == estado.get("_ultima_pregunta"):
+        if "está pasando" in siguiente or "qué necesitas" in siguiente.lower():
+            siguiente = "Cuéntame un poco más: ¿no prende nada, salta la llave, hay olor a quemado, hay fuga de agua…?"
+    if siguiente:
+        estado["_ultima_pregunta"] = siguiente
+
     # Ambigüedad/opciones son transitorias (no se guardan en el estado): tómalas del turno actual
     iad = data.get("direccion") or {}
     dir_ = dict(dir_)
@@ -495,7 +517,7 @@ async def _procesar_interpretacion(db, data, estado_prev):
 
     from app.services.catalogo import precio_visita_vigente
     # 3) Armar respuesta (incluye el estado fusionado para reenviar)
-    return {
+    resp = {
         "estado": estado,
         "intencion": intencion,
         "respuesta_consulta": respuesta_consulta,
@@ -515,6 +537,21 @@ async def _procesar_interpretacion(db, data, estado_prev):
         "siguiente_pregunta": siguiente,
         "confirmacion": confirmacion,
     }
+    return _asegurar_mensaje(resp, estado)
+
+
+def _asegurar_mensaje(resp: dict, estado: dict) -> dict:
+    """Contrato 'nunca vacío': si no hay nada renderizable, construye un mensaje desde el
+    estado y loguea un WARNING (llegar aquí es un bug de alguna rama)."""
+    tiene = (resp.get("respuesta_consulta") or resp.get("fuera_cobertura") or resp.get("horarios")
+             or (resp.get("completo") and resp.get("confirmacion")) or resp.get("siguiente_pregunta")
+             or resp.get("mensaje"))
+    if not tiene:
+        sp = _siguiente_pregunta(estado) or "¿Me confirmas tu dirección? (calle, número y distrito)"
+        resp["siguiente_pregunta"] = sp
+        logger.warning("[chat-ia] respuesta vacía reconstruida -> %r | estado=%s",
+                       sp, json.dumps(estado, ensure_ascii=False)[:400])
+    return resp
 
 
 _LOG_CLIENTE = {"ventana": 0, "n": 0}
