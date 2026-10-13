@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     # OpenAI (chat IA de solicitudes)
     OPENAI_API_KEY: Optional[str] = None
 
+    # Token para incluir traceback en respuestas de error del chat (header X-Debug-Token)
+    DEBUG_TOKEN: Optional[str] = None
+
     # Environment
     ENVIRONMENT: str = "production"
     DEBUG: bool = False
