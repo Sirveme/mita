@@ -28,6 +28,7 @@ class SolicitudCreate(BaseModel):
     telefono: Optional[str] = None
     lat: Optional[float] = None
     lng: Optional[float] = None
+    fecha_programada: Optional[str] = None   # cita agendada (ISO) desde el chat/formulario
     # zMita-13: catálogo + pago adelantado
     tipo_servicio_id: Optional[int] = None
     precio_servicio: Optional[float] = None
@@ -35,6 +36,15 @@ class SolicitudCreate(BaseModel):
     metodo_pago: Optional[str] = None
     referencia_pago: Optional[str] = None
     pago_adelantado: Optional[bool] = False
+
+
+def _parse_fecha(s):
+    if not s:
+        return None
+    try:
+        return datetime.fromisoformat(s.replace("Z", ""))
+    except (ValueError, AttributeError):
+        return None
 
 
 @router.post("")
@@ -62,6 +72,7 @@ def crear_solicitud(data: SolicitudCreate, db: Session = Depends(get_db)):
         cliente_telefono=data.telefono,
         cliente_lat=data.lat,
         cliente_lng=data.lng,
+        fecha_programada=_parse_fecha(data.fecha_programada),
         estado="ASIGNADA" if asignada else "PENDIENTE",
         fecha_solicitud=datetime.utcnow(),
         costo_visita=50.0,

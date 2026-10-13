@@ -17,7 +17,9 @@ import time
 import logging
 from typing import Optional, List
 
+from hashlib import sha256
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Body
+from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -66,6 +68,7 @@ RESPONDE SIEMPRE EN JSON (sin texto fuera del JSON):
     "ambigua": true/false, "opciones": ["Av Larco, Miraflores", "Av Larco, Trujillo"] | null
   },
   "detalles": { "ambiente": null, "urgencia": "alta" | "normal" | null, "otros": null },
+  "preferencia_horaria": { "fecha": "YYYY-MM-DD" | null, "franja": "manana"|"tarde"|"noche"|null, "hora": "HH:MM"|null, "lo_antes_posible": true/false } | null,
   "fuera_cobertura": true/false,
   "completo": true/false,
   "siguiente_pregunta": "..." | null,
@@ -318,6 +321,13 @@ async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)
     conocimiento, _faltantes, _validos = _conocimiento(db)
     system = SYSTEM_PROMPT_BASE.replace("__CONOCIMIENTO__", conocimiento)
 
+    from app.services.agenda import ahora_lima as _ahora_lima
+    _now = _ahora_lima()
+    system += (f"\n\nFECHA Y HORA ACTUAL (America/Lima): {_now.strftime('%Y-%m-%d %H:%M')} "
+               f"({['lunes','martes','miércoles','jueves','viernes','sábado','domingo'][_now.weekday()]}). "
+               "Interpreta 'hoy', 'mañana', 'el sábado', 'en la tarde' respecto a esta fecha y "
+               "llena preferencia_horaria. No propongas tú los horarios concretos; el sistema los calcula.")
+
     mensajes = [{"role": "system", "content": system}]
     estado_prev = dict(datos.estado or {})
     if estado_prev:
@@ -398,16 +408,33 @@ async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)
     estado["fuera_cobertura"] = fuera
     dir_ = estado.get("direccion") or {}
 
-    # completo exige dirección VALIDADA por Geocoding (lat/lng + distrito en cobertura)
-    # y que no haya una confirmación de distrito pendiente
-    completo = (bool(estado.get("area") and estado.get("problema")
-                     and dir_.get("validada") and dir_.get("lat") and dir_.get("distrito"))
-                and not fuera and not pregunta_confirmar_distrito)
+    # "listo" = área + problema + dirección validada en cobertura (sin confirmación pendiente)
+    listo = (bool(estado.get("area") and estado.get("problema")
+                  and dir_.get("validada") and dir_.get("lat") and dir_.get("distrito"))
+             and not fuera and not pregunta_confirmar_distrito)
+
+    # ----- Agenda: antes de confirmar, elegir fecha/hora (Parte C) -----
+    from app.services.agenda import opciones_horarios, ahora_lima
+    horarios = None
+    horario_elegido = estado.get("horario_elegido")
+    if listo and not horario_elegido:
+        pref = data.get("preferencia_horaria") or estado.get("preferencia_horaria") or {}
+        if not isinstance(pref, dict):
+            pref = {}
+        urg = estado.get("urgencia") or (data.get("detalles") or {}).get("urgencia")
+        if urg == "alta":
+            pref["lo_antes_posible"] = True
+        estado["preferencia_horaria"] = pref
+        horarios = opciones_horarios(db, ahora_lima(), pref, n=3)
+
+    completo = bool(listo and horario_elegido)
 
     if fuera or completo:
         siguiente = None
     elif pregunta_confirmar_distrito:
         siguiente = pregunta_confirmar_distrito
+    elif listo and not horario_elegido:
+        siguiente = "¿Para cuándo lo necesitas? Elige un horario o dime otro momento (ej. mañana en la tarde)."
     else:
         siguiente = _siguiente_pregunta(estado)
 
@@ -419,7 +446,7 @@ async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)
 
     confirmacion = data.get("confirmacion")
     if completo and not confirmacion:
-        area_txt = (estado.get("area") or "servicio").replace("_", " ")
+        area_txt = (estado.get("categoria_nombre") or estado.get("area") or "servicio").replace("_", " ")
         d = estado.get("direccion") or {}
         dir_txt = " ".join([x for x in (d.get("calle"), d.get("numero")) if x])
         if d.get("distrito"):
@@ -443,6 +470,8 @@ async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)
         "precio_visita": precio_visita_vigente(db),
         "fuera_cobertura": fuera,
         "completo": completo,
+        "horarios": horarios,
+        "fecha_programada": horario_elegido,
         "siguiente_pregunta": siguiente,
         "confirmacion": confirmacion,
     }
@@ -481,6 +510,46 @@ async def actualizar_conocimiento(clave: str, data: dict = Body(...), db: Sessio
     db.commit()
     limpiar_cache_conocimiento()
     return {"ok": True, "clave": clave, "activo": bool(row.activo)}
+
+
+_TTS_CACHE = {}   # hash -> bytes (memoria)
+
+
+@router.post("/hablar")
+async def hablar(data: dict = Body(...), db: Session = Depends(get_db)):
+    """OpenAI TTS -> audio/mpeg (modo Premium). Cachea por texto+voz. 503 si no hay cliente."""
+    import re
+    texto = (data.get("texto") or "").strip()
+    if not texto:
+        raise HTTPException(status_code=400, detail="texto vacío")
+    if len(texto) > 600:
+        partes = re.split(r"(?<=[.!?])\s", texto)
+        texto = (partes[0] if partes else texto[:200]).strip() + " Te dejo el detalle en pantalla."
+    client = _openai_client()
+    if client is None:
+        raise HTTPException(status_code=503, detail="Voz Premium no disponible")
+    try:
+        row = db.query(ChatConocimiento).filter(ChatConocimiento.clave == "voz_asistente").first()
+        pref = (row.contenido if row and row.contenido else "femenina").lower()
+    except Exception:
+        pref = "femenina"
+    voice = "shimmer" if "fem" in pref else "onyx"
+    key = sha256((voice + "|" + texto).encode("utf-8")).hexdigest()
+    if key in _TTS_CACHE:
+        return Response(content=_TTS_CACHE[key], media_type="audio/mpeg", headers={"X-Cache": "hit"})
+    try:
+        try:
+            resp = client.audio.speech.create(model="gpt-4o-mini-tts", voice=voice, input=texto)
+        except Exception:
+            resp = client.audio.speech.create(model="tts-1", voice=voice, input=texto)
+        audio = resp.read() if hasattr(resp, "read") else (resp.content if hasattr(resp, "content") else bytes(resp))
+    except Exception:
+        logger.exception("Error TTS")
+        raise HTTPException(status_code=502, detail="Error de síntesis de voz")
+    if len(_TTS_CACHE) > 200:
+        _TTS_CACHE.clear()
+    _TTS_CACHE[key] = audio
+    return Response(content=audio, media_type="audio/mpeg", headers={"X-Cache": "miss"})
 
 
 @router.post("/transcribir")
