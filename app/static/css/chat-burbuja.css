@@ -1,5 +1,24 @@
 /* Burbuja + modal del chat IA — aspecto premium (zMita-20 Parte C) */
 
+/* ===== Aislar el chat de los estilos globales del landing (zMita-31 Parte A) =====
+   Evita que `input{width:100%}`, paddings sin box-sizing o word-wrap del landing
+   corten el botón Enviar o desborden las burbujas. */
+.chat-modal, .chat-modal * { box-sizing: border-box; }
+/* El cuerpo del modal recibe la clase .chat-solicitud (margin:0 auto; max-width:520px).
+   En un flex item, `margin:0 auto` ANULA el stretch y el cuerpo se dimensiona a su
+   contenido, desbordando el modal (corta el botón Enviar y las burbujas). Forzar stretch. */
+.chat-modal .chat-modal-body, .chat-modal .chat-modal-body.chat-solicitud {
+    width: 100%; max-width: 100%; margin: 0; align-self: stretch; min-width: 0;
+}
+.chat-modal .chat-mensajes { overflow-x: hidden; }
+.chat-modal .mensaje { max-width: 90%; }
+.chat-modal .mensaje.usuario { max-width: 85%; }
+.chat-modal .burbuja { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+.chat-modal .chat-input-container { width: 100%; flex-wrap: nowrap; }
+.chat-modal .chat-input-container input { flex: 1 1 auto; min-width: 0; width: auto !important; }
+.chat-modal .chat-input-container .btn-enviar,
+.chat-modal .chat-input-container .btn-voice { flex: 0 0 auto; }
+
 /* ===== Burbuja ===== */
 .chat-bubble {
     position: fixed; bottom: 24px; right: 24px; width: 64px; height: 64px;
