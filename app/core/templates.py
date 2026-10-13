@@ -13,3 +13,21 @@ try:
     templates.env.globals["GOOGLE_MAPS_API_KEY"] = settings.GOOGLE_MAPS_API_KEY or ""
 except Exception:
     templates.env.globals["GOOGLE_MAPS_API_KEY"] = ""
+
+
+def _static_version() -> str:
+    """Hash corto del commit para cache-busting de estáticos; fallback al tiempo de arranque."""
+    import subprocess, os, time
+    try:
+        v = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"],
+                                    cwd=os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                                    stderr=subprocess.DEVNULL, timeout=3).decode().strip()
+        if v:
+            return v
+    except Exception:
+        pass
+    return os.getenv("RAILWAY_GIT_COMMIT_SHA", "")[:8] or str(int(time.time()))
+
+
+STATIC_V = _static_version()
+templates.env.globals["STATIC_V"] = STATIC_V
