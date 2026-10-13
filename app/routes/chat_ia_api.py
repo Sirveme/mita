@@ -609,47 +609,97 @@ async def actualizar_conocimiento(clave: str, data: dict = Body(...), db: Sessio
     return {"ok": True, "clave": clave, "activo": bool(row.activo)}
 
 
-_TTS_CACHE = {}   # hash -> bytes (memoria)
+def _voz_config(db) -> dict:
+    """Lee la voz elegida de chat_conocimiento (con defaults de Lima)."""
+    cfg = {"proveedor": "openai", "voz": "coral", "velocidad": 1.0, "instrucciones": None}
+    try:
+        filas = {r.clave: (r.contenido or "") for r in db.query(ChatConocimiento).all()}
+        if filas.get("voz_proveedor"): cfg["proveedor"] = filas["voz_proveedor"].strip().lower()
+        if filas.get("voz_id"): cfg["voz"] = filas["voz_id"].strip()
+        if filas.get("voz_velocidad"):
+            try: cfg["velocidad"] = float(filas["voz_velocidad"])
+            except ValueError: pass
+        if filas.get("voz_instrucciones"): cfg["instrucciones"] = filas["voz_instrucciones"].strip()
+    except Exception:
+        pass
+    return cfg
+
+
+def _recortar_voz(texto: str) -> str:
+    import re
+    texto = (texto or "").strip()
+    if len(texto) > 600:
+        partes = re.split(r"(?<=[.!?])\s", texto)
+        texto = (partes[0] if partes else texto[:200]).strip() + " Te dejo el detalle en pantalla."
+    return texto
 
 
 @router.post("/hablar")
 async def hablar(data: dict = Body(...), db: Session = Depends(get_db)):
-    """OpenAI TTS -> audio/mpeg (modo Premium). Cachea por texto+voz. 503 si no hay cliente."""
-    import re
-    texto = (data.get("texto") or "").strip()
+    """TTS (proveedor configurable) -> audio/mpeg. 503 si no hay proveedor; 422 si el cuerpo es inválido."""
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=422, detail="Cuerpo inválido: se espera JSON {\"texto\": \"...\"}")
+    texto = _recortar_voz(str(data.get("texto") or ""))
     if not texto:
-        raise HTTPException(status_code=400, detail="texto vacío")
-    if len(texto) > 600:
-        partes = re.split(r"(?<=[.!?])\s", texto)
-        texto = (partes[0] if partes else texto[:200]).strip() + " Te dejo el detalle en pantalla."
-    client = _openai_client()
-    if client is None:
+        raise HTTPException(status_code=422, detail="Falta 'texto' (JSON UTF-8).")
+    from app.services import tts
+    if not tts.proveedores_activos():
         raise HTTPException(status_code=503, detail="Voz Premium no disponible")
+    cfg = _voz_config(db)
     try:
-        row = db.query(ChatConocimiento).filter(ChatConocimiento.clave == "voz_asistente").first()
-        pref = (row.contenido if row and row.contenido else "femenina").lower()
+        audio = tts.sintetizar(texto, cfg)
     except Exception:
-        pref = "femenina"
-    voice = "shimmer" if "fem" in pref else "onyx"
-    key = sha256((voice + "|" + texto).encode("utf-8")).hexdigest()
-    if key in _TTS_CACHE:
-        return Response(content=_TTS_CACHE[key], media_type="audio/mpeg", headers={"X-Cache": "hit"})
-    try:
-        try:
-            resp = client.audio.speech.create(model="gpt-4o-mini-tts", voice=voice, input=texto, speed=1.1)
-        except Exception:
-            try:
-                resp = client.audio.speech.create(model="tts-1", voice=voice, input=texto, speed=1.1)
-            except Exception:
-                resp = client.audio.speech.create(model="tts-1", voice=voice, input=texto)
-        audio = resp.read() if hasattr(resp, "read") else (resp.content if hasattr(resp, "content") else bytes(resp))
-    except Exception:
-        logger.exception("Error TTS")
+        logger.exception("Error TTS (%s/%s)", cfg.get("proveedor"), cfg.get("voz"))
         raise HTTPException(status_code=502, detail="Error de síntesis de voz")
-    if len(_TTS_CACHE) > 200:
-        _TTS_CACHE.clear()
-    _TTS_CACHE[key] = audio
-    return Response(content=audio, media_type="audio/mpeg", headers={"X-Cache": "miss"})
+    return Response(content=audio, media_type="audio/mpeg",
+                    headers={"X-Proveedor": cfg.get("proveedor", ""), "X-Voz": cfg.get("voz", "")})
+
+
+@router.get("/voces")
+async def listar_voces(_=Depends(_require_admin)):
+    """Voces disponibles según las keys configuradas (laboratorio admin)."""
+    from app.services import tts
+    cfg = None
+    return {"voces": tts.voces_disponibles(), "proveedores": tts.proveedores_activos()}
+
+
+@router.post("/voces/probar")
+async def probar_voz(data: dict = Body(...), _=Depends(_require_admin)):
+    """Sintetiza la frase de prueba con una voz dada (devuelve audio + latencia)."""
+    from app.services import tts
+    texto = _recortar_voz(str(data.get("texto") or "Hola, soy el asistente de MITA."))
+    cfg = {"proveedor": (data.get("proveedor") or "openai").lower(), "voz": data.get("voz") or "coral",
+           "velocidad": data.get("velocidad") or 1.0, "instrucciones": data.get("instrucciones")}
+    t0 = time.monotonic()
+    try:
+        audio = tts.sintetizar(texto, cfg)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"No se pudo generar la voz: {e}")
+    ms = int((time.monotonic() - t0) * 1000)
+    return Response(content=audio, media_type="audio/mpeg",
+                    headers={"X-Latencia-Ms": str(ms), "X-Bytes": str(len(audio)),
+                             "X-Proveedor": cfg["proveedor"], "X-Voz": str(cfg["voz"])})
+
+
+@router.post("/voces/usar")
+async def usar_voz(data: dict = Body(...), db: Session = Depends(get_db), _=Depends(_require_admin)):
+    """Guarda la voz elegida en chat_conocimiento + invalida cache + historial."""
+    from app.services.catalogo import invalidar_conocimiento, registrar_historial
+    mapa = {"voz_proveedor": (data.get("proveedor") or "openai").lower(),
+            "voz_id": str(data.get("voz") or "coral"),
+            "voz_velocidad": str(data.get("velocidad") or "1.0"),
+            "voz_instrucciones": (data.get("instrucciones") or "").strip()}
+    for clave, valor in mapa.items():
+        row = db.query(ChatConocimiento).filter(ChatConocimiento.clave == clave).first()
+        if not row:
+            row = ChatConocimiento(clave=clave, titulo=clave, activo=True)
+            db.add(row)
+        if (row.contenido or "") != valor:
+            registrar_historial(db, "chat_conocimiento", clave, clave, row.contenido, valor)
+        row.contenido = valor; row.activo = True
+    db.commit()
+    invalidar_conocimiento()
+    return {"ok": True, "proveedor": mapa["voz_proveedor"], "voz": mapa["voz_id"]}
 
 
 @router.post("/transcribir")

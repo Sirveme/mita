@@ -133,6 +133,13 @@ async def admin_asistente_precios(request: Request, db: Session = Depends(get_db
     if redir: return redir
     return templates.TemplateResponse("admin/asistente_precios.html", {"request": request, "active": "asistente"})
 
+# Laboratorio de voces del asistente (admin — zMita-29)
+@router.get("/admin/asistente/voces", response_class=HTMLResponse)
+async def admin_asistente_voces(request: Request, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir: return redir
+    return templates.TemplateResponse("admin/asistente_voces.html", {"request": request, "active": "asistente"})
+
 # Base de conocimiento del chat IA (admin — zMita-22)
 @router.get("/admin/chat-conocimiento", response_class=HTMLResponse)
 async def admin_chat_conocimiento(request: Request, db: Session = Depends(get_db)):
