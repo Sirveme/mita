@@ -1,0 +1,60 @@
+{% extends "admin/layout.html" %}
+{% block title %}Precios y promociones{% endblock %}
+{% block page_title %}Precios y promociones{% endblock %}
+{% block extra_css %}
+<style>
+    .pf { max-width: 520px; }
+    .pf .g { margin-bottom: 16px; }
+    .pf label { display:block; color: var(--mita-text-secondary,#8b949e); font-size:13px; margin-bottom:6px; }
+    .pf input { width:100%; background:#0d1117; border:1px solid var(--mita-border,#2a2a3a); border-radius:8px; color:var(--mita-text,#fff); padding:10px 12px; }
+    .pf .hint { color:#8b949e; font-size:12px; margin-top:4px; }
+    .pf .row { display:flex; gap:14px; } .pf .row .g { flex:1; }
+    .btn { background: var(--mita-primary,#FFCD11); color:#000; border:none; border-radius:8px; padding:11px 18px; font-weight:700; cursor:pointer; }
+    .ok { display:none; margin-top:12px; color:#22c55e; font-size:14px; }
+    .ok.show { display:block; } .ok a { color:#FFCD11; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="pf">
+    <div class="g">
+        <label>Tarifa de la visita / diagnóstico (S/)</label>
+        <input id="tarifa" type="number" step="0.01" inputmode="decimal">
+        <div class="hint">Lo que ve el cliente en el chat y en el formulario. La reparación se cotiza en sitio.</div>
+    </div>
+    <div class="g">
+        <label>Precio promocional (S/) — 0 para desactivar</label>
+        <input id="promo" type="number" step="0.01" inputmode="decimal">
+    </div>
+    <div class="row">
+        <div class="g"><label>Promo desde</label><input id="desde" type="date"></div>
+        <div class="g"><label>Promo hasta</label><input id="hasta" type="date"></div>
+    </div>
+    <button class="btn" id="guardar"><i class="fas fa-floppy-disk"></i> Guardar</button>
+    <div class="ok" id="ok">Guardado — el asistente ya lo sabe. <a href="/admin/asistente/probar">Probar</a></div>
+</div>
+<script>
+async function cargar() {
+    try {
+        const c = await (await fetch('/api/v1/admin/config-mita')).json();
+        document.getElementById('tarifa').value = c.tarifa_visita_default ?? 50;
+        document.getElementById('promo').value = c.tarifa_visita_promo ?? 0;
+        document.getElementById('desde').value = c.tarifa_visita_promo_desde || '';
+        document.getElementById('hasta').value = c.tarifa_visita_promo_hasta || '';
+    } catch(e) {}
+}
+document.getElementById('guardar').addEventListener('click', async () => {
+    const body = {
+        tarifa_visita_default: document.getElementById('tarifa').value || '50',
+        tarifa_visita_promo: document.getElementById('promo').value || '0',
+        tarifa_visita_promo_desde: document.getElementById('desde').value || '',
+        tarifa_visita_promo_hasta: document.getElementById('hasta').value || ''
+    };
+    try {
+        const r = await fetch('/api/v1/admin/config-mita', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        if (!r.ok) throw 0;
+        const ok = document.getElementById('ok'); ok.classList.add('show');
+    } catch(e) { alert('No se pudo guardar (¿sesión de admin?).'); }
+});
+document.addEventListener('DOMContentLoaded', cargar);
+</script>
+{% endblock %}

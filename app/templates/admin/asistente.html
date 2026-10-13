@@ -1,0 +1,57 @@
+{% extends "admin/layout.html" %}
+{% block title %}Asistente MITA{% endblock %}
+{% block page_title %}Asistente MITA{% endblock %}
+{% block extra_css %}
+<style>
+    .ast-top { color: var(--mita-text-secondary,#8b949e); font-size: 13px; margin-bottom: 18px; }
+    .ast-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 16px; }
+    .ast-card { display: block; text-decoration: none; background: var(--mita-card,#161b22); border: 1px solid var(--mita-border,#2a2a3a); border-radius: 14px; padding: 18px; transition: border-color .15s, transform .15s; }
+    .ast-card:hover { border-color: var(--mita-primary,#FFCD11); transform: translateY(-2px); }
+    .ast-card .ic { width: 42px; height: 42px; border-radius: 10px; background: rgba(255,205,17,.12); color: var(--mita-primary,#FFCD11); display:flex; align-items:center; justify-content:center; font-size:18px; margin-bottom:12px; }
+    .ast-card h3 { color: var(--mita-text,#fff); font-size: 15px; margin-bottom: 4px; }
+    .ast-card p { color: var(--mita-text-secondary,#8b949e); font-size: 13px; margin: 0; }
+    .ast-card .ind { margin-top: 10px; font-size: 12px; color: #22c55e; }
+    .ast-card .ind.warn { color: #fbbf24; }
+</style>
+{% endblock %}
+{% block content %}
+<p class="ast-top" id="ast-actualizado">Cargando estado…</p>
+<div class="ast-grid">
+    <a class="ast-card" href="/admin/asistente/precios"><div class="ic"><i class="fas fa-tag"></i></div><h3>Precios y promociones</h3><p>Tarifa de la visita y promociones con vigencia.</p><div class="ind" id="ind-precio"></div></a>
+    <a class="ast-card" href="/admin/catalogo"><div class="ic"><i class="fas fa-tools"></i></div><h3>Servicios</h3><p>Alta, baja, nombre y descripción de categorías.</p><div class="ind" id="ind-serv"></div></a>
+    <a class="ast-card" href="/admin/distritos"><div class="ic"><i class="fas fa-map-marker-alt"></i></div><h3>Zonas de cobertura</h3><p>Habilitar o deshabilitar distritos.</p><div class="ind" id="ind-dist"></div></a>
+    <a class="ast-card" href="/admin/chat-conocimiento"><div class="ic"><i class="fas fa-book"></i></div><h3>Políticas y respuestas</h3><p>Horario, llegada, garantía, pagos, diagnóstico.</p><div class="ind warn" id="ind-pol">—</div></a>
+    <a class="ast-card" href="/admin/asistente/probar"><div class="ic"><i class="fas fa-flask"></i></div><h3>Probar el asistente</h3><p>Chatea en modo prueba y mira qué sabe.</p></a>
+    <a class="ast-card" href="/admin/historial"><div class="ic"><i class="fas fa-clock-rotate-left"></i></div><h3>Historial de cambios</h3><p>Auditoría de precios, servicios y zonas.</p></a>
+</div>
+<script>
+async function cargar() {
+    try {
+        const d = await (await fetch('/api/v1/chat-ia/conocimiento-bloque')).json();
+        if (d.actualizado) document.getElementById('ast-actualizado').textContent = 'El asistente usa la información actualizada al ' + d.actualizado.replace('T',' ').slice(0,16) + '.';
+    } catch(e) {}
+    try {
+        const rows = await (await fetch('/api/v1/chat-ia/conocimiento')).json();
+        const total = rows.length, ok = rows.filter(r => r.activo && (r.contenido||'').trim()).length;
+        const el = document.getElementById('ind-pol');
+        el.textContent = `Políticas: ${ok} de ${total} completas`;
+        el.className = 'ind' + (ok < total ? ' warn' : '');
+    } catch(e) {}
+    try {
+        const pv = await (await fetch('/api/v1/chat-ia/precio-visita')).json();
+        if (pv && typeof pv.precio === 'number') document.getElementById('ind-precio').textContent = 'Visita: S/ ' + pv.precio.toFixed(2) + (pv.es_promo ? ' (promo)' : '');
+    } catch(e) {}
+    try {
+        const d = await (await fetch('/api/v1/admin/distritos')).json();
+        const items = d.items || []; const hab = items.filter(x => x.habilitado).length;
+        document.getElementById('ind-dist').textContent = hab + ' distritos activos';
+    } catch(e) {}
+    try {
+        const d = await (await fetch('/api/v1/admin/categorias')).json();
+        const items = d.items || []; const act = items.filter(x => x.activo).length;
+        document.getElementById('ind-serv').textContent = act + ' servicios activos';
+    } catch(e) {}
+}
+document.addEventListener('DOMContentLoaded', cargar);
+</script>
+{% endblock %}
