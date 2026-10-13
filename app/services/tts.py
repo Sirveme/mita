@@ -15,7 +15,9 @@ from app.core.config import settings
 logger = logging.getLogger("mita.tts")
 
 INSTRUCCIONES_DEFAULT = ("Habla en español peruano de Lima, tono cálido y profesional, "
-                         "ritmo natural, cercano, sin sonar a locutor de radio.")
+                         "ritmo natural, cercano, sin sonar a locutor de radio. "
+                         "Habla exclusivamente en español; nunca cambies a inglés.")
+_ES_ONLY = "Habla exclusivamente en español; nunca cambies a inglés."
 
 # Voces por proveedor (las de OpenAI gpt-4o-mini-tts son neutras/multilingües)
 OPENAI_VOCES = ["coral", "nova", "sage", "shimmer", "ash", "alloy", "onyx"]
@@ -86,6 +88,8 @@ def _openai_tts(texto, cfg, modelo):
     # gpt-4o-mini-tts admite instrucciones de estilo; tts-1 admite speed
     if modelo == "gpt-4o-mini-tts":
         instr = cfg.get("instrucciones") or INSTRUCCIONES_DEFAULT
+        if "espa" not in instr.lower():   # reforzar español aunque el admin ponga instrucciones propias
+            instr = instr.rstrip(". ") + ". " + _ES_ONLY
         try:
             resp = client.audio.speech.create(instructions=instr, **kwargs)
             return _leer(resp)
@@ -142,6 +146,8 @@ def _elevenlabs_tts(texto, cfg):
 def sintetizar(texto, cfg) -> bytes:
     """Devuelve MP3. Lanza excepción si el proveedor falla/no está configurado."""
     cfg = cfg or {}
+    from app.services.texto import texto_para_voz
+    texto = texto_para_voz(texto)      # Parte D: voz siempre en español y bien leída
     prov = (cfg.get("proveedor") or "openai").lower()
     k = _clave(cfg, texto)
     if k in _CACHE:
