@@ -64,6 +64,7 @@ SQL_FILES = [
     "22_sin_cobertura.sql",               # registro de distritos sin cobertura (análisis)
     "23_chat_conocimiento.sql",           # base de conocimiento editable del chat IA
     "24_catalogo_historial.sql",          # historial de catálogo + promoción de visita
+    "25_agenda.sql",                      # fecha_programada + voz del asistente
 ]
 
 # (etiqueta, módulo, función)
