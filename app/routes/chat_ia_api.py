@@ -19,7 +19,7 @@ import logging
 from typing import Optional, List
 
 from hashlib import sha256
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Body
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Body, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -312,19 +312,27 @@ def _enriquecer_categoria(db: Session, data: dict) -> dict:
     return data
 
 
-def _err_chat(estado, mensaje):
-    """Respuesta de error legible (nunca deja al usuario sin texto). Loguea con request_id."""
+def _err_chat(estado, mensaje, request=None):
+    """Respuesta de error legible (nunca deja al usuario sin texto). Loguea con request_id.
+    Incluye traceback solo si la request trae X-Debug-Token == settings.DEBUG_TOKEN."""
+    import traceback as _tb
     eid = uuid.uuid4().hex[:8]
-    logger.exception("[chat-ia][%s] %s", eid, mensaje)
-    return {"mensaje": mensaje, "error_id": eid, "estado": estado or {},
-            "siguiente_pregunta": None, "completo": False, "fuera_cobertura": False}
+    tb = _tb.format_exc()
+    logger.error("[chat-ia][%s] %s\n%s", eid, mensaje, tb)
+    out = {"mensaje": mensaje, "error_id": eid, "estado": estado or {},
+           "siguiente_pregunta": None, "completo": False, "fuera_cobertura": False}
+    tok = settings.DEBUG_TOKEN
+    if request is not None and tok and request.headers.get("X-Debug-Token") == tok:
+        out["traceback"] = tb
+    return out
 
 
 @router.post("/interpretar")
-async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)):
+async def interpretar_mensaje(datos: MensajeInput, request: Request, db: Session = Depends(get_db)):
     """Interpreta el mensaje con memoria: fusiona el estado y decide la siguiente pregunta.
     NUNCA falla en silencio: ante cualquier error devuelve un JSON con `mensaje` y `error_id`."""
     estado_prev = dict(datos.estado or {})
+    t_ini = time.monotonic()
     client = _openai_client()
     if client is None:
         return {"mensaje": "El asistente no está disponible ahora. Intenta por el formulario.",
@@ -349,6 +357,7 @@ async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)
             mensajes.append({"role": msg["role"], "content": str(msg["content"])})
     mensajes.append({"role": "user", "content": datos.mensaje})
 
+    t_oai = time.monotonic()
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -359,14 +368,17 @@ async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)
         )
         data = json.loads(response.choices[0].message.content)
     except Exception:
-        return _err_chat(estado_prev, "Tuve un problema con el asistente, ¿me lo repites?")
+        return _err_chat(estado_prev, "Tuve un problema con el asistente, ¿me lo repites?", request)
     if not isinstance(data, dict):
-        return _err_chat(estado_prev, "Tuve un problema entendiéndote, ¿me lo repites?")
+        return _err_chat(estado_prev, "Tuve un problema entendiéndote, ¿me lo repites?", request)
+    dt_oai = time.monotonic() - t_oai
 
     try:
-        return await _procesar_interpretacion(db, data, estado_prev)
+        res = await _procesar_interpretacion(db, data, estado_prev)
+        logger.info("[chat-ia] turno OK: openai=%.2fs total=%.2fs", dt_oai, time.monotonic() - t_ini)
+        return res
     except Exception:
-        return _err_chat(estado_prev, "Tuve un problema procesando tu mensaje, ¿me lo repites?")
+        return _err_chat(estado_prev, "Tuve un problema procesando tu mensaje, ¿me lo repites?", request)
 
 
 async def _procesar_interpretacion(db, data, estado_prev):
@@ -443,9 +455,17 @@ async def _procesar_interpretacion(db, data, estado_prev):
         if urg == "alta":
             pref["lo_antes_posible"] = True
         estado["preferencia_horaria"] = pref
-        horarios = opciones_horarios(db, ahora_lima(), pref, n=3)
+        try:
+            horarios = opciones_horarios(db, ahora_lima(), pref, n=3)
+        except Exception:
+            logger.exception("[chat-ia] agenda falló; se confirma sin horario")
+            horarios = []
 
-    completo = bool(listo and horario_elegido)
+    # Agenda sin cupos/datos (A.5): no bloquear; permitir confirmar sin horario
+    agenda_pendiente = bool(listo and not horario_elegido and not horarios)
+    completo = bool(listo and (horario_elegido or agenda_pendiente))
+    if agenda_pendiente:
+        estado["agenda_pendiente"] = True
 
     if fuera or completo:
         siguiente = None
@@ -470,6 +490,8 @@ async def _procesar_interpretacion(db, data, estado_prev):
         if d.get("distrito"):
             dir_txt = (dir_txt + ", " + d["distrito"]).strip(", ")
         confirmacion = f"Entendí: {area_txt} por {estado.get('problema')} en {dir_txt}".strip()
+    if completo and estado.get("agenda_pendiente") and confirmacion:
+        confirmacion += " · Te confirmamos el horario por WhatsApp en minutos."
 
     from app.services.catalogo import precio_visita_vigente
     # 3) Armar respuesta (incluye el estado fusionado para reenviar)
@@ -577,9 +599,12 @@ async def hablar(data: dict = Body(...), db: Session = Depends(get_db)):
         return Response(content=_TTS_CACHE[key], media_type="audio/mpeg", headers={"X-Cache": "hit"})
     try:
         try:
-            resp = client.audio.speech.create(model="gpt-4o-mini-tts", voice=voice, input=texto)
+            resp = client.audio.speech.create(model="gpt-4o-mini-tts", voice=voice, input=texto, speed=1.1)
         except Exception:
-            resp = client.audio.speech.create(model="tts-1", voice=voice, input=texto)
+            try:
+                resp = client.audio.speech.create(model="tts-1", voice=voice, input=texto, speed=1.1)
+            except Exception:
+                resp = client.audio.speech.create(model="tts-1", voice=voice, input=texto)
         audio = resp.read() if hasattr(resp, "read") else (resp.content if hasattr(resp, "content") else bytes(resp))
     except Exception:
         logger.exception("Error TTS")
@@ -631,23 +656,34 @@ async def transcribir_audio(audio: UploadFile = File(...)):
         raise HTTPException(status_code=502, detail="Error al transcribir el audio")
 
 
+_GEO_CACHE = {}   # direccion_norm -> (ts, dict|None)
+
+
 async def _geocode(direccion: str) -> Optional[dict]:
     """Geocodifica en Perú (sin forzar Lima). Devuelve lat/lng, distrito, provincia y
-    región (administrative_area_level_1), o None si no hay resultado/clave."""
+    región (administrative_area_level_1), o None. Cachea 10 min y nunca bloquea >6s."""
     import httpx
     api_key = settings.GOOGLE_MAPS_API_KEY or os.getenv("GOOGLE_MAPS_API_KEY")
     if not api_key:
         return None
+    clave = _norm_txt(direccion)
+    hit = _GEO_CACHE.get(clave)
+    if hit and (time.time() - hit[0] < 600):
+        return hit[1]
     url = "https://maps.googleapis.com/maps/api/geocode/json"
     params = {"address": direccion, "components": "country:PE", "key": api_key, "language": "es", "region": "pe"}
+    t0 = time.monotonic()
     try:
-        async with httpx.AsyncClient(timeout=10) as http_client:
+        async with httpx.AsyncClient(timeout=6) as http_client:
             resp = await http_client.get(url, params=params)
             data = resp.json()
+        logger.info("[chat-ia] geocoding %.2fs status=%s", time.monotonic() - t0, data.get("status"))
     except Exception as e:
-        logger.warning("[chat-ia] geocoding error: %s", e)
+        logger.warning("[chat-ia] geocoding error en %.2fs: %s", time.monotonic() - t0, e)
+        _GEO_CACHE[clave] = (time.time(), None)
         return None
     if data.get("status") != "OK" or not data.get("results"):
+        _GEO_CACHE[clave] = (time.time(), None)
         return None
     result = data["results"][0]
     distrito = provincia = region = None
@@ -660,9 +696,11 @@ async def _geocode(direccion: str) -> Optional[dict]:
         if not region and "administrative_area_level_1" in t:
             region = comp.get("long_name")
     loc = result["geometry"]["location"]
-    return {"lat": loc["lat"], "lng": loc["lng"], "distrito": distrito,
-            "provincia": provincia, "region": region,
-            "direccion_formateada": result.get("formatted_address")}
+    out = {"lat": loc["lat"], "lng": loc["lng"], "distrito": distrito,
+           "provincia": provincia, "region": region,
+           "direccion_formateada": result.get("formatted_address")}
+    _GEO_CACHE[clave] = (time.time(), out)
+    return out
 
 
 @router.post("/validar-direccion")
