@@ -31,8 +31,18 @@ from app.models.auth_mita import UsuarioMita
 from app.models.ubigeo import Ubigeo
 from app.services.config_service import ConfigService
 from app.routes.admin_postulantes import require_admin_gerente
+from fastapi import Request
 
-router = APIRouter(prefix="/api/v1/admin", tags=["Admin"])
+
+async def _guard_escritura(request: Request, db: Session = Depends(get_db)):
+    """Dependencia a nivel de router: exige admin/gerente en métodos de escritura
+    (POST/PUT/PATCH/DELETE). Los GET quedan abiertos porque el flujo público lee
+    distritos/config-mita. Así ninguna ruta de escritura nueva queda abierta por olvido."""
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        await require_admin_gerente(request, db)
+
+
+router = APIRouter(prefix="/api/v1/admin", tags=["Admin"], dependencies=[Depends(_guard_escritura)])
 
 
 # ============================================

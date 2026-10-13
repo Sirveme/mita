@@ -114,20 +114,40 @@ async def cliente_seguimiento(request: Request, solicitud_id: int):
 async def solicitar_chat(request: Request):
     return templates.TemplateResponse("cliente/chat_solicitud.html", {"request": request})
 
+# Hub "Asistente MITA" (admin — zMita-24)
+@router.get("/admin/asistente", response_class=HTMLResponse)
+async def admin_asistente(request: Request, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir: return redir
+    return templates.TemplateResponse("admin/asistente.html", {"request": request, "active": "asistente"})
+
+# Precios y promociones del asistente (admin — zMita-24)
+@router.get("/admin/asistente/precios", response_class=HTMLResponse)
+async def admin_asistente_precios(request: Request, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir: return redir
+    return templates.TemplateResponse("admin/asistente_precios.html", {"request": request, "active": "asistente"})
+
 # Base de conocimiento del chat IA (admin — zMita-22)
 @router.get("/admin/chat-conocimiento", response_class=HTMLResponse)
-async def admin_chat_conocimiento(request: Request):
-    return templates.TemplateResponse("admin/chat_conocimiento.html", {"request": request, "active": "chat-conocimiento"})
+async def admin_chat_conocimiento(request: Request, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir: return redir
+    return templates.TemplateResponse("admin/chat_conocimiento.html", {"request": request, "active": "asistente"})
 
 # Sandbox para probar el asistente (admin — zMita-23)
 @router.get("/admin/asistente/probar", response_class=HTMLResponse)
-async def admin_asistente_probar(request: Request):
+async def admin_asistente_probar(request: Request, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir: return redir
     return templates.TemplateResponse("admin/asistente_probar.html", {"request": request, "active": "asistente"})
 
 # Historial de cambios del catálogo (admin — zMita-23)
 @router.get("/admin/historial", response_class=HTMLResponse)
-async def admin_historial(request: Request):
-    return templates.TemplateResponse("admin/historial.html", {"request": request, "active": "historial"})
+async def admin_historial(request: Request, db: Session = Depends(get_db)):
+    redir = await _guard_admin(request, db)
+    if redir: return redir
+    return templates.TemplateResponse("admin/historial.html", {"request": request, "active": "asistente"})
 
 # Chat individual (una sala)
 @router.get("/cliente/chat/{sala_id}", response_class=HTMLResponse)

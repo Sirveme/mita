@@ -58,6 +58,7 @@ RESPONDE SIEMPRE EN JSON (sin texto fuera del JSON):
   "respuesta_consulta": "respuesta breve a lo que preguntó (precio/horario/garantía/pagos/cobertura) usando SOLO el bloque CONOCIMIENTO, o null",
   "area": "<slug de una categoría válida del bloque>" | null,
   "problema": "descripción corta del problema" | null,
+  "localidad_mencionada": "ciudad o distrito que nombró el usuario (Iquitos, Miraflores…)" | null,
   "direccion": {
     "texto_original": "lo que dijo el usuario" | null,
     "calle": "nombre de calle/avenida" | null, "numero": "435" | null, "interior": "dpto 201" | null,
@@ -346,17 +347,68 @@ async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)
     estado = _enriquecer_categoria(db, estado)      # categoria_id a partir de estado.area
     estado = _marcar_cobertura(db, estado)          # fuera_cobertura según distrito en cobertura
 
-    # 2) Decidir intención / respuesta de consulta / completitud / siguiente pregunta (backend)
+    # 2) Decidir intención / consulta
     intencion = (data.get("intencion") or "solicitar").lower()
     respuesta_consulta = data.get("respuesta_consulta") or None
+    # El flag de la IA prevalece
     fuera = bool(estado.get("fuera_cobertura"))
+    # Localidad mencionada por el usuario (si la IA la devolvió)
+    localidad = data.get("localidad_mencionada") or estado.get("localidad_mencionada")
+    if localidad:
+        estado["localidad_mencionada"] = localidad
+
+    # Si el usuario nombró una localidad que NO está en cobertura (p.ej. Iquitos),
+    # es fuera de cobertura aunque Geocoding sesgue el resultado a Lima.
+    if not fuera and localidad and _en_cobertura(db, localidad) is False:
+        fuera = True
+        estado["fuera_cobertura"] = True
+
     dir_ = estado.get("direccion") or {}
-    completo = _esta_completo(estado) and not fuera
+    pregunta_confirmar_distrito = None
+
+    # 3) Geocodificar en el backend cuando hay calle y aún no está validada
+    if not fuera and dir_.get("calle") and not dir_.get("validada"):
+        texto_dir = dir_.get("texto_original") or " ".join(
+            [x for x in (dir_.get("calle"), dir_.get("numero"), dir_.get("distrito") or localidad) if x])
+        g = await _geocode(texto_dir)
+        if g:
+            region = _norm_txt(g.get("region") or "")
+            g_distrito = g.get("distrito")
+            # Resultado fuera de la región de Lima -> fuera de cobertura
+            if region and "lima" not in region:
+                fuera = True
+            else:
+                en_cob = _en_cobertura(db, g_distrito)
+                if en_cob is False:
+                    fuera = True
+                else:
+                    # Distrito válido y en cobertura: lo damos por validado
+                    dir_["lat"] = g["lat"]; dir_["lng"] = g["lng"]
+                    dir_["distrito"] = g_distrito or dir_.get("distrito")
+                    dir_["direccion_formateada"] = g.get("direccion_formateada")
+                    dir_["validada"] = True
+                    estado["direccion"] = dir_
+                    # Si el usuario mencionó otro distrito de Lima, pedir confirmación
+                    if localidad and g_distrito and _norm_txt(localidad) not in _norm_txt(g_distrito) \
+                            and _norm_txt(g_distrito) not in _norm_txt(localidad) \
+                            and _en_cobertura(db, localidad) is not False:
+                        pregunta_confirmar_distrito = f"Encontré esa dirección en {g_distrito}. ¿Es correcto?"
+        # si no hubo geocoding (sin clave/sin resultado), no marcamos validada -> no completará
+
+    estado["fuera_cobertura"] = fuera
+    dir_ = estado.get("direccion") or {}
+
+    # completo exige dirección VALIDADA por Geocoding (lat/lng + distrito en cobertura)
+    # y que no haya una confirmación de distrito pendiente
+    completo = (bool(estado.get("area") and estado.get("problema")
+                     and dir_.get("validada") and dir_.get("lat") and dir_.get("distrito"))
+                and not fuera and not pregunta_confirmar_distrito)
 
     if fuera or completo:
         siguiente = None
+    elif pregunta_confirmar_distrito:
+        siguiente = pregunta_confirmar_distrito
     else:
-        # El backend decide QUÉ falta; preferimos la redacción del modelo si apunta a lo mismo
         siguiente = _siguiente_pregunta(estado)
 
     # Ambigüedad/opciones son transitorias (no se guardan en el estado): tómalas del turno actual
@@ -374,6 +426,7 @@ async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)
             dir_txt = (dir_txt + ", " + d["distrito"]).strip(", ")
         confirmacion = f"Entendí: {area_txt} por {estado.get('problema')} en {dir_txt}".strip()
 
+    from app.services.catalogo import precio_visita_vigente
     # 3) Armar respuesta (incluye el estado fusionado para reenviar)
     return {
         "estado": estado,
@@ -386,6 +439,8 @@ async def interpretar_mensaje(datos: MensajeInput, db: Session = Depends(get_db)
         "urgencia": estado.get("urgencia"),
         "categoria_id": estado.get("categoria_id"),
         "categoria_codigo": estado.get("categoria_codigo"),
+        "categoria_nombre": estado.get("categoria_nombre"),
+        "precio_visita": precio_visita_vigente(db),
         "fuera_cobertura": fuera,
         "completo": completo,
         "siguiente_pregunta": siguiente,
@@ -468,37 +523,48 @@ async def transcribir_audio(audio: UploadFile = File(...)):
         raise HTTPException(status_code=502, detail="Error al transcribir el audio")
 
 
-@router.post("/validar-direccion")
-async def validar_direccion_maps(datos: DireccionInput):
-    """Valida la dirección con Google Geocoding API y devuelve lat/lng + distrito."""
+async def _geocode(direccion: str) -> Optional[dict]:
+    """Geocodifica en Perú (sin forzar Lima). Devuelve lat/lng, distrito, provincia y
+    región (administrative_area_level_1), o None si no hay resultado/clave."""
     import httpx
     api_key = settings.GOOGLE_MAPS_API_KEY or os.getenv("GOOGLE_MAPS_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=503, detail="Google Maps no configurado")
-
+        return None
     url = "https://maps.googleapis.com/maps/api/geocode/json"
-    params = {"address": f"{datos.direccion}, Lima, Peru", "key": api_key, "language": "es", "region": "pe"}
+    params = {"address": direccion, "components": "country:PE", "key": api_key, "language": "es", "region": "pe"}
     try:
         async with httpx.AsyncClient(timeout=10) as http_client:
             resp = await http_client.get(url, params=params)
             data = resp.json()
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Error de geocodificación: {e}")
-
+        logger.warning("[chat-ia] geocoding error: %s", e)
+        return None
     if data.get("status") != "OK" or not data.get("results"):
-        return {"valida": False, "mensaje": "No se encontró la dirección"}
-
+        return None
     result = data["results"][0]
-    distrito = None
+    distrito = provincia = region = None
     for comp in result.get("address_components", []):
         t = comp.get("types", [])
-        if "locality" in t or "sublocality_level_1" in t:
+        if not distrito and ("locality" in t or "sublocality_level_1" in t):
             distrito = comp.get("long_name")
-            break
+        if not provincia and "administrative_area_level_2" in t:
+            provincia = comp.get("long_name")
+        if not region and "administrative_area_level_1" in t:
+            region = comp.get("long_name")
     loc = result["geometry"]["location"]
-    return {
-        "valida": True,
-        "direccion_formateada": result.get("formatted_address"),
-        "lat": loc["lat"], "lng": loc["lng"],
-        "distrito": distrito,
-    }
+    return {"lat": loc["lat"], "lng": loc["lng"], "distrito": distrito,
+            "provincia": provincia, "region": region,
+            "direccion_formateada": result.get("formatted_address")}
+
+
+@router.post("/validar-direccion")
+async def validar_direccion_maps(datos: DireccionInput):
+    """Valida la dirección con Google Geocoding API y devuelve lat/lng + distrito."""
+    api_key = settings.GOOGLE_MAPS_API_KEY or os.getenv("GOOGLE_MAPS_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Google Maps no configurado")
+    g = await _geocode(datos.direccion)
+    if not g:
+        return {"valida": False, "mensaje": "No se encontró la dirección"}
+    return {"valida": True, "direccion_formateada": g["direccion_formateada"],
+            "lat": g["lat"], "lng": g["lng"], "distrito": g["distrito"], "region": g.get("region")}
