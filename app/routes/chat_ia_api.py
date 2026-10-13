@@ -123,6 +123,22 @@ def _openai_client():
         return None
 
 
+_GSRV_OK = {"t": 0.0, "ok": None}
+
+
+async def _google_server_ok() -> Optional[bool]:
+    """Prueba un geocode de una dirección fija de Miraflores (cacheado 10 min)."""
+    if _GSRV_OK["ok"] is not None and (time.time() - _GSRV_OK["t"] < 600):
+        return _GSRV_OK["ok"]
+    try:
+        g = await _geocode("Av Larco 100, Miraflores")
+        ok = bool(g and g.get("lat"))
+    except Exception:
+        ok = False
+    _GSRV_OK.update(t=time.time(), ok=ok)
+    return ok
+
+
 @router.get("/estado")
 async def estado_ia():
     """Diagnóstico del chat IA (sin exponer el secreto completo)."""
@@ -134,6 +150,8 @@ async def estado_ia():
         "key_prefijo": (key[:7] + "…") if key else None,
         "cliente_ok": _openai_client() is not None,
         "google_maps": bool(settings.GOOGLE_MAPS_API_KEY or os.getenv("GOOGLE_MAPS_API_KEY")),
+        "google_server_key": bool(settings.GOOGLE_MAPS_SERVER_KEY or os.getenv("GOOGLE_MAPS_SERVER_KEY")),
+        "google_server_ok": await _google_server_ok(),
     }
 
 
@@ -277,6 +295,31 @@ def _fusionar(estado: dict, data: dict) -> dict:
     return estado
 
 
+_PREGUNTA_KW = ("cuanto", "cuánto", "cobran", "cobra", "precio", "tarifa", "cuesta", "vale",
+                "como ", "cómo ", "cuando", "cuándo", "donde", "dónde", "atienden", "atiende",
+                "garantia", "garantía", "cancel", "demora", "demoran", "tardan", "horario",
+                "pagar", "pago", "medios de pago", "si cancelo", "que pasa", "qué pasa", "qué sucede", "que sucede")
+
+
+def _es_pregunta(mensaje: str) -> bool:
+    """¿El mensaje ACTUAL del usuario pregunta algo? (para decidir intención por turno)."""
+    m = _norm_txt(mensaje or "")
+    if "?" in (mensaje or "") or "¿" in (mensaje or ""):
+        return True
+    return any(k.strip() in m for k in _PREGUNTA_KW)
+
+
+def _reformular_problema(area: Optional[str]) -> str:
+    a = (area or "").lower()
+    if a == "electricidad":
+        return "Cuéntame un poco más: ¿no prende nada, salta la llave o hay olor a quemado?"
+    if a == "gasfiteria":
+        return "Cuéntame un poco más: ¿hay una fuga, está atorado o no sale agua?"
+    if a == "linea_blanca":
+        return "Cuéntame un poco más: ¿no enfría, hace ruido raro o no enciende?"
+    return "¿Qué está pasando en tu casa?"
+
+
 def _siguiente_pregunta(estado: dict) -> Optional[str]:
     """Decide la siguiente pregunta según lo que falta. NUNCA devuelve None si falta algo."""
     d = estado.get("direccion") or {}
@@ -373,22 +416,28 @@ async def interpretar_mensaje(datos: MensajeInput, request: Request, db: Session
     dt_oai = time.monotonic() - t_oai
 
     try:
-        res = await _procesar_interpretacion(db, data, estado_prev)
+        res = await _procesar_interpretacion(db, data, estado_prev, datos.mensaje)
         logger.info("[chat-ia] turno OK: openai=%.2fs total=%.2fs", dt_oai, time.monotonic() - t_ini)
         return res
     except Exception:
         return _err_chat(estado_prev, "Tuve un problema procesando tu mensaje, ¿me lo repites?", request)
 
 
-async def _procesar_interpretacion(db, data, estado_prev):
+async def _procesar_interpretacion(db, data, estado_prev, mensaje=""):
     # 1) Fusionar estado (la memoria vive en el backend)
     estado = _fusionar(estado_prev, data)
     estado = _enriquecer_categoria(db, estado)      # categoria_id a partir de estado.area
     estado = _marcar_cobertura(db, estado)          # fuera_cobertura según distrito en cobertura
 
-    # 2) Decidir intención / consulta
-    intencion = (data.get("intencion") or "solicitar").lower()
+    # 2) Intención SOLO por el mensaje actual (no por el historial)
+    es_pregunta = _es_pregunta(mensaje)
     respuesta_consulta = data.get("respuesta_consulta") or None
+    if not es_pregunta:
+        respuesta_consulta = None          # consulta "pegada" de turnos anteriores -> descartar
+    elif not respuesta_consulta:
+        # El usuario preguntó algo y la IA no lo respondió (p.ej. cancelación sin dato cargado)
+        respuesta_consulta = "Con gusto: esa información te la confirma nuestro equipo al agendar."
+    intencion = "consulta" if (respuesta_consulta and not (estado.get("area") or estado.get("problema"))) else "solicitar"
     # El flag de la IA prevalece
     fuera = bool(estado.get("fuera_cobertura"))
     # Localidad mencionada por el usuario (si la IA la devolvió)
@@ -491,10 +540,10 @@ async def _procesar_interpretacion(db, data, estado_prev):
     else:
         siguiente = _siguiente_pregunta(estado)
 
-    # Parte D: no repetir textualmente la misma pregunta dos turnos seguidos
+    # No repetir textualmente la misma pregunta dos turnos seguidos: reformular según el área
     if siguiente and siguiente == estado.get("_ultima_pregunta"):
         if "está pasando" in siguiente or "qué necesitas" in siguiente.lower():
-            siguiente = "Cuéntame un poco más: ¿no prende nada, salta la llave, hay olor a quemado, hay fuga de agua…?"
+            siguiente = _reformular_problema(estado.get("area"))
     if siguiente:
         estado["_ultima_pregunta"] = siguiente
 
@@ -514,6 +563,11 @@ async def _procesar_interpretacion(db, data, estado_prev):
         confirmacion = f"Entendí: {area_txt} por {estado.get('problema')} en {dir_txt}".strip()
     if completo and estado.get("agenda_pendiente") and confirmacion:
         confirmacion += " · Te confirmamos el horario por WhatsApp en minutos."
+
+    # Parte A.3: si hubo consulta y hay una pregunta de texto pendiente, un solo mensaje.
+    if respuesta_consulta and siguiente:
+        respuesta_consulta = respuesta_consulta.rstrip(" .") + ". " + siguiente
+        siguiente = None
 
     from app.services.catalogo import precio_visita_vigente
     # 3) Armar respuesta (incluye el estado fusionado para reenviar)
@@ -750,7 +804,9 @@ async def _geocode(direccion: str) -> Optional[dict]:
     """Geocodifica en Perú (sin forzar Lima). Devuelve lat/lng, distrito, provincia y
     región (administrative_area_level_1), o None. Cachea 10 min y nunca bloquea >6s."""
     import httpx
-    api_key = settings.GOOGLE_MAPS_API_KEY or os.getenv("GOOGLE_MAPS_API_KEY")
+    # Preferir la key de servidor (sin restricción de referrer); nunca se expone al frontend
+    api_key = (settings.GOOGLE_MAPS_SERVER_KEY or os.getenv("GOOGLE_MAPS_SERVER_KEY")
+               or settings.GOOGLE_MAPS_API_KEY or os.getenv("GOOGLE_MAPS_API_KEY"))
     if not api_key:
         return None
     clave = _norm_txt(direccion)
