@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     
     # Google Maps
     GOOGLE_MAPS_API_KEY: Optional[str] = None
+    GOOGLE_MAPS_SERVER_KEY: Optional[str] = None   # key sin restricción de referrer, solo backend
 
     # OpenAI (chat IA de solicitudes)
     OPENAI_API_KEY: Optional[str] = None
