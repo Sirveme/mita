@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     # Token para incluir traceback en respuestas de error del chat (header X-Debug-Token)
     DEBUG_TOKEN: Optional[str] = None
 
+    # Proveedores de voz (TTS) opcionales
+    AZURE_SPEECH_KEY: Optional[str] = None
+    AZURE_SPEECH_REGION: Optional[str] = None
+    ELEVENLABS_API_KEY: Optional[str] = None
+
     # Environment
     ENVIRONMENT: str = "production"
     DEBUG: bool = False
