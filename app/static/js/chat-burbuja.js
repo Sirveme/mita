@@ -68,14 +68,15 @@ const MitaBurbuja = (function () {
         chatInitialized = true;
     }
 
+    const _v = () => (window.STATIC_V ? ('?v=' + window.STATIC_V) : '');
     function cargarCSS(href) {
         if (document.querySelector(`link[href*="${href}"]`)) return;
-        const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/static/css/' + href; document.head.appendChild(l);
+        const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/static/css/' + href + _v(); document.head.appendChild(l);
     }
     function cargarJS(src) {
         return new Promise((resolve) => {
             if (document.querySelector(`script[src*="${src}"]`)) { resolve(); return; }
-            const s = document.createElement('script'); s.src = '/static/js/' + src; s.onload = () => resolve(); s.onerror = () => resolve(); document.body.appendChild(s);
+            const s = document.createElement('script'); s.src = '/static/js/' + src + _v(); s.onload = () => resolve(); s.onerror = () => resolve(); document.body.appendChild(s);
         });
     }
 

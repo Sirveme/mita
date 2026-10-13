@@ -399,7 +399,8 @@
             if (this.cerrado) return;
             this.cerrado = true;
             const dir = data.direccion || {};
-            const distrito = dir.distrito || '';
+            const est = data.estado || this.estado || {};
+            const distrito = dir.distrito || est.localidad_mencionada || (est.direccion || {}).distrito || '';
             try {
                 await fetch('/api/v1/maps/sin-cobertura', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -411,7 +412,8 @@
                     })
                 });
             } catch (e) {}
-            const msgFuera = 'Por ahora atendemos solo en Lima Moderna. Ya registramos tu zona para avisarte apenas lleguemos.';
+            const zona = (distrito || 'tu zona').trim();
+            const msgFuera = `Por ahora no tenemos cobertura en ${zona}. Registramos tu solicitud y te avisaremos cuando ampliemos la cobertura a tu zona.`;
             this.agregarMensajeBot(msgFuera); this._hablar(msgFuera);
             const c = document.getElementById('chat-opciones');
             if (c) {

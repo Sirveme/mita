@@ -161,7 +161,7 @@
 
         // 1) Cobertura
         if (!tieneCobertura(gDistrito)) {
-            fail(`Sin cobertura en ${gDistrito || 'ese distrito'}. Registramos tu interés para expandirnos pronto.`, 'sin_cobertura');
+            fail(`Por ahora no tenemos cobertura en ${gDistrito || 'tu zona'}. Registramos tu solicitud y te avisaremos cuando ampliemos la cobertura a tu zona.`, 'sin_cobertura');
             registrarSinCobertura(gDistrito);
             return;
         }
