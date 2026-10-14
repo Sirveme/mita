@@ -168,12 +168,20 @@ WHISPER_PROMPT = ("Cliente en Lima describe un problema doméstico: gasfitería,
                   "electrodomésticos, refrigeradora, lavadora, fuga, cortocircuito, dirección, distrito.")
 
 
+_VALIDAS_CORTAS = ("si", "no", "ok", "okey", "dale", "claro", "ya", "listo", "correcto",
+                   "perfecto", "adelante", "bien")
+
+
 def _es_alucinacion(texto: str) -> bool:
     t = _norm_txt(texto)
     if not t:
         return True
     if any(b in t for b in WHISPER_BLACKLIST):
         return True
+    limpio = t.strip(" .!¡¿?")
+    # Afirmaciones/negaciones cortas válidas ("sí", "no", "ok dale") NO son alucinación (Parte C/D)
+    if limpio in _VALIDAS_CORTAS or _es_afirmacion(texto) or _es_negacion(texto):
+        return False
     palabras = [w for w in t.split() if len(w) > 1]
     return len(palabras) < 2
 
@@ -184,6 +192,36 @@ def _distritos_cobertura(db: Session):
         return [d.nombre for d in db.query(Distrito).filter(Distrito.habilitado == True).all() if d.nombre]
     except Exception:
         return []
+
+
+def _limpiar_distrito(nombre: Optional[str]) -> str:
+    """Normaliza un nombre de distrito: sin tildes, minúsculas y sin prefijos de barrio."""
+    n = _norm_txt(nombre or "")
+    for pref in ("urb ", "urbanizacion ", "cercado de ", "distrito de ", "cercado ", "barrio "):
+        if n.startswith(pref):
+            n = n[len(pref):]
+    return n.strip()
+
+
+def _distrito_oficial(db: Session, nombre: Optional[str]) -> Optional[str]:
+    """Devuelve el NOMBRE OFICIAL de la tabla distritos que corresponde a `nombre`
+    (comparando sin tildes/minúsculas y quitando prefijos 'Urb', 'Cercado de'...)."""
+    if not nombre:
+        return None
+    objetivo = _limpiar_distrito(nombre)
+    if not objetivo:
+        return None
+    try:
+        from app.models.personal import Distrito
+        for d in db.query(Distrito).all():
+            if not d.nombre:
+                continue
+            of = _limpiar_distrito(d.nombre)
+            if of and (of == objetivo or of in objetivo or objetivo in of):
+                return d.nombre
+    except Exception:
+        pass
+    return None
 
 
 def _en_cobertura(db: Session, distrito: Optional[str]):
@@ -282,6 +320,14 @@ def _conocimiento_valor(db: Session, clave: str) -> Optional[str]:
         return None
 
 
+def _fmt_dir(dir_: dict) -> str:
+    """Dirección para mostrar: '{calle} {número}, {distrito}' (sin código postal ni país)."""
+    base = " ".join([x for x in (dir_.get("calle"), dir_.get("numero")) if x]).strip()
+    if dir_.get("distrito"):
+        base = (base + ", " + dir_["distrito"]).strip(", ")
+    return base or (dir_.get("texto_original") or "")
+
+
 def _merge_dir(cur: dict, new: dict) -> dict:
     cur = dict(cur or {}); new = new or {}
     for k in ("texto_original", "calle", "numero", "interior", "distrito", "referencia"):
@@ -344,9 +390,73 @@ def _quiere_otros(mensaje: str) -> bool:
     return any(_norm_txt(k) in m for k in _VER_OTROS_KW)
 
 
+import re as _re
+
+_CORRIGE_LABEL = _re.compile(r"^\s*(distrito|direccion|direcci[oó]n|calle|avenida|numero|n[uú]mero|referencia)\s*:",
+                             _re.IGNORECASE)
+
+
 def _es_correccion(mensaje: str) -> bool:
     m = _norm_txt(mensaje or "")
-    return any(k.strip() in m for k in (_norm_txt(x) for x in _CORRIGE_KW))
+    if any(k.strip() in m for k in (_norm_txt(x) for x in _CORRIGE_KW)):
+        return True
+    return bool(_CORRIGE_LABEL.match(mensaje or ""))   # "Distrito: Miraflores", "Número: 369", ...
+
+
+# ----- Parte C: sí/no por voz o texto -----
+_AFIRMA_KW = ("si", "sí", "dale", "ok", "okey", "okay", "esta bien", "está bien", "de acuerdo",
+              "reservalo", "resérvalo", "reservalo", "confirmalo", "confírmalo", "confirmo",
+              "perfecto", "claro", "adelante", "correcto", "asi es", "así es", "hazlo", "ya")
+_NIEGA_KW = ("otro horario", "otros horarios", "cambiar", "mejor otro", "mejor no", "no gracias",
+             "ver otros")
+
+
+def _es_afirmacion(mensaje: str) -> bool:
+    m = _norm_txt(mensaje or "").strip(" .!¡¿?")
+    if not m:
+        return False
+    if _es_negacion(mensaje):
+        return False
+    if m in ("si", "sí", "ok", "ya", "dale", "claro"):
+        return True
+    return any(_norm_txt(k) in m for k in _AFIRMA_KW)
+
+
+def _es_negacion(mensaje: str) -> bool:
+    m = _norm_txt(mensaje or "").strip(" .!¡¿?")
+    if any(_norm_txt(k) in m for k in _NIEGA_KW):
+        return True
+    # "no" como palabra suelta al inicio (no "no hay luz" que es un problema)
+    return bool(_re.match(r"^no\b", m)) and len(m.split()) <= 3
+
+
+# ----- Parte D: saludos / presentaciones -----
+_SALUDO_KW = ("hola", "buenas", "buenos dias", "buenos días", "buenas tardes", "buenas noches",
+              "que tal", "qué tal", "como estas", "cómo estás", "como va", "saludos", "hey",
+              "mi nombre es", "me llamo", "soy ")
+_NOMBRE_RE = _re.compile(r"(?:mi nombre es|me llamo|soy)\s+([A-Za-zÁÉÍÓÚáéíóúÑñ]{2,20})", _re.IGNORECASE)
+
+
+def _es_saludo(mensaje: str) -> bool:
+    m = _norm_txt(mensaje or "")
+    return any(_norm_txt(k) in m for k in _SALUDO_KW)
+
+
+def _extraer_nombre(mensaje: str):
+    mt = _NOMBRE_RE.search(mensaje or "")
+    if not mt:
+        return None
+    nombre = mt.group(1).strip()
+    # Evitar falsos positivos tipo "soy de Miraflores"/"soy el dueño"
+    if _norm_txt(nombre) in ("de", "el", "la", "un", "una", "tu", "su", "cliente", "usuario"):
+        return None
+    return nombre[:1].upper() + nombre[1:]
+
+
+def _saludo_respuesta(nombre):
+    if nombre:
+        return f"¡Hola, {nombre}! ¿En qué te ayudamos hoy? Cuéntame qué problema tienes y dónde."
+    return "¡Hola! ¿En qué te ayudamos hoy? Cuéntame qué problema tienes y dónde."
 
 
 def _reformular_problema(area: Optional[str]) -> str:
@@ -493,15 +603,36 @@ async def _procesar_interpretacion(db, data, estado_prev, mensaje=""):
     estado["fuera_cobertura"] = bool(data.get("fuera_cobertura")) and not corrige
     estado = _marcar_cobertura(db, estado)          # refina según distrito en cobertura
 
+    # Parte C: "sí"/"no" a una pregunta de sí/no pendiente (p.ej. la oferta ASAP "¿Te lo reservo?")
+    asap_ofrecido = estado_prev.get("asap_ofrecido")
+    if asap_ofrecido and not estado.get("horario_elegido"):
+        if _es_afirmacion(mensaje):
+            estado["horario_elegido"] = asap_ofrecido      # reservar el horario ofrecido
+            estado.pop("asap_ofrecido", None)
+        elif _es_negacion(mensaje):
+            estado["mostrar_todos"] = True                 # ver otros horarios
+            estado.pop("asap_ofrecido", None)
+
+    # Parte D: saludo / presentación -> intencion "otro" (no respuesta de políticas)
+    nombre = _extraer_nombre(mensaje)
+    if nombre:
+        estado["nombre"] = nombre
+    tiene_contenido = bool(estado.get("area") or estado.get("problema")
+                           or (estado.get("direccion") or {}).get("calle"))
+    saludo_puro = _es_saludo(mensaje) and not tiene_contenido and not estado.get("horario_elegido")
+
     # 2) Intención SOLO por el mensaje actual (no por el historial)
-    es_pregunta = _es_pregunta(mensaje)
+    es_pregunta = _es_pregunta(mensaje) and not saludo_puro
     respuesta_consulta = data.get("respuesta_consulta") or None
-    if not es_pregunta:
-        respuesta_consulta = None          # consulta "pegada" de turnos anteriores -> descartar
+    if saludo_puro or not es_pregunta:
+        respuesta_consulta = None          # saludo o consulta "pegada" de turnos anteriores -> descartar
     elif not respuesta_consulta:
-        # El usuario preguntó algo y la IA no lo respondió (p.ej. cancelación sin dato cargado)
+        # El usuario preguntó algo REAL y la IA no lo respondió (p.ej. cancelación sin dato cargado)
         respuesta_consulta = "Con gusto: esa información te la confirma nuestro equipo al agendar."
-    intencion = "consulta" if (respuesta_consulta and not (estado.get("area") or estado.get("problema"))) else "solicitar"
+    if saludo_puro:
+        intencion = "otro"
+    else:
+        intencion = "consulta" if (respuesta_consulta and not (estado.get("area") or estado.get("problema"))) else "solicitar"
     # El flag de la IA prevalece
     fuera = bool(estado.get("fuera_cobertura"))
     # Localidad mencionada por el usuario (si la IA la devolvió)
@@ -522,43 +653,51 @@ async def _procesar_interpretacion(db, data, estado_prev, mensaje=""):
 
     dir_ = estado.get("direccion") or {}
     pregunta_confirmar_distrito = None
+    # El distrito que el usuario dijo explícitamente este turno prevalece sobre Google (Parte A/B)
+    distrito_usuario = (data.get("direccion") or {}).get("distrito") or nueva_loc
+    distrito_explicito = bool(distrito_usuario) or (corrige and bool(localidad))
 
     # 3) Geocodificar en el backend cuando hay calle y aún no está validada
     if not fuera and dir_.get("calle") and not dir_.get("validada"):
-        texto_dir = dir_.get("texto_original") or " ".join(
-            [x for x in (dir_.get("calle"), dir_.get("numero"), dir_.get("distrito") or localidad) if x])
+        texto_dir = " ".join([x for x in (dir_.get("calle"), dir_.get("numero"),
+                                          dir_.get("distrito") or localidad, "Lima, Perú") if x])
         g = await _geocode(texto_dir)
         if g:
             region = _norm_txt(g.get("region") or "")
-            g_distrito = g.get("distrito")
-            # Resultado fuera de la región de Lima -> fuera de cobertura
-            if region and "lima" not in region:
+            of = _distrito_oficial(db, g.get("distrito"))
+            usuario_of = _distrito_oficial(db, distrito_usuario or localidad)
+            # Parte A: el usuario nombró un distrito distinto al de Google -> re-geocodificar con el del usuario
+            if usuario_of and of and _limpiar_distrito(usuario_of) != _limpiar_distrito(of):
+                g2 = await _geocode(f"{dir_.get('calle')} {dir_.get('numero') or ''}, {usuario_of}, Lima, Perú".strip())
+                of2 = _distrito_oficial(db, g2.get("distrito")) if g2 else None
+                if g2 and "lima" in _norm_txt(g2.get("region") or "") and of2 \
+                        and _limpiar_distrito(of2) == _limpiar_distrito(usuario_of):
+                    g, of, region = g2, of2, _norm_txt(g2.get("region") or "")
+            # Si el usuario fue explícito, su distrito manda (aunque Google diga otra cosa)
+            distrito_final = (usuario_of if distrito_explicito and usuario_of else of) \
+                or usuario_of or of or dir_.get("distrito")
+            if region and "lima" not in region and not distrito_explicito:
+                fuera = True
+            elif _en_cobertura(db, distrito_final) is False:
                 fuera = True
             else:
-                en_cob = _en_cobertura(db, g_distrito)
-                if en_cob is False:
-                    fuera = True
-                else:
-                    # Distrito válido y en cobertura: lo damos por validado
-                    dir_["lat"] = g["lat"]; dir_["lng"] = g["lng"]
-                    dir_["distrito"] = g_distrito or dir_.get("distrito")
-                    dir_["direccion_formateada"] = g.get("direccion_formateada")
-                    dir_["validada"] = True
-                    estado["direccion"] = dir_
-                    # Si el usuario mencionó otro distrito de Lima, pedir confirmación
-                    if localidad and g_distrito and _norm_txt(localidad) not in _norm_txt(g_distrito) \
-                            and _norm_txt(g_distrito) not in _norm_txt(localidad) \
-                            and _en_cobertura(db, localidad) is not False:
-                        pregunta_confirmar_distrito = f"Encontré esa dirección en {g_distrito}. ¿Es correcto?"
-        else:
-            # Geocoding NO disponible (p.ej. API key restringida a navegador / sin red):
-            # no bloquear. Si hay un distrito en cobertura, aceptamos la dirección (sin lat/lng;
-            # el horario/ubicación se confirman luego). Iquitos ya quedó marcado fuera arriba.
-            dd = dir_.get("distrito")
-            if dd and _en_cobertura(db, dd) is True:
+                dir_["lat"] = g["lat"]; dir_["lng"] = g["lng"]
+                dir_["distrito"] = distrito_final
                 dir_["validada"] = True
-                dir_["direccion_formateada"] = dir_.get("texto_original") or \
-                    " ".join([x for x in (dir_.get("calle"), dir_.get("numero"), dd) if x])
+                dir_["direccion_formateada"] = _fmt_dir(dir_)
+                estado["direccion"] = dir_
+                # Pedir confirmación solo si el usuario NO fue explícito y Google eligió otro distrito de Lima
+                if not distrito_explicito and localidad and of and usuario_of \
+                        and _limpiar_distrito(of) != _limpiar_distrito(usuario_of) \
+                        and _en_cobertura(db, usuario_of) is not False:
+                    pregunta_confirmar_distrito = f"Encontré esa dirección en {distrito_final}. ¿Es correcto?"
+        else:
+            # Geocoding NO disponible: no bloquear. Si hay un distrito en cobertura, aceptar.
+            dd = _distrito_oficial(db, dir_.get("distrito")) or dir_.get("distrito")
+            if dd and _en_cobertura(db, dd) is True:
+                dir_["distrito"] = dd
+                dir_["validada"] = True
+                dir_["direccion_formateada"] = _fmt_dir(dir_)
                 estado["direccion"] = dir_
                 logger.warning("[chat-ia] geocoding no disponible; dirección aceptada por distrito en cobertura: %s", dd)
 
@@ -609,6 +748,9 @@ async def _procesar_interpretacion(db, data, estado_prev, mensaje=""):
                 if contacto:
                     asap_msg += f" Si es una emergencia, comunícate ya: {contacto}."
             horarios = [h0]   # ofrecer el primero; "Ver otros horarios" muestra el resto
+            estado["asap_ofrecido"] = h0["iso"]   # recordar la oferta para reconocer el "sí"
+        else:
+            estado.pop("asap_ofrecido", None)     # lista normal: ya no hay oferta ASAP pendiente
 
     # Agenda sin cupos/datos (A.5): no bloquear; permitir confirmar sin horario
     agenda_pendiente = bool(listo and not horario_elegido and not horarios)
@@ -618,6 +760,8 @@ async def _procesar_interpretacion(db, data, estado_prev, mensaje=""):
 
     if fuera or completo:
         siguiente = None
+    elif saludo_puro:
+        siguiente = _saludo_respuesta(estado.get("nombre"))
     elif pregunta_confirmar_distrito:
         siguiente = pregunta_confirmar_distrito
     elif asap_msg:
@@ -648,14 +792,12 @@ async def _procesar_interpretacion(db, data, estado_prev, mensaje=""):
     dir_["ambigua"] = bool(iad.get("ambigua"))
     dir_["opciones"] = iad.get("opciones")
 
-    confirmacion = data.get("confirmacion")
-    if completo and not confirmacion:
+    # Resumen propio (ignoramos el de la IA, que a veces dice "tu cita está confirmada")
+    confirmacion = None
+    if completo:
         area_txt = (estado.get("categoria_nombre") or estado.get("area") or "servicio").replace("_", " ")
-        d = estado.get("direccion") or {}
-        dir_txt = " ".join([x for x in (d.get("calle"), d.get("numero")) if x])
-        if d.get("distrito"):
-            dir_txt = (dir_txt + ", " + d["distrito"]).strip(", ")
-        confirmacion = f"Entendí: {area_txt} por {estado.get('problema')} en {dir_txt}".strip()
+        dir_txt = _fmt_dir(estado.get("direccion") or {})
+        confirmacion = f"{area_txt} por {estado.get('problema')} en {dir_txt}".strip()
     if completo and estado.get("agenda_pendiente") and confirmacion:
         confirmacion += " · Te confirmamos el horario por WhatsApp en minutos."
 
@@ -932,21 +1074,33 @@ async def _geocode(direccion: str) -> Optional[dict]:
     if data.get("status") != "OK" or not data.get("results"):
         _GEO_CACHE[clave] = (time.time(), None)
         return None
-    result = data["results"][0]
-    distrito = provincia = region = None
+    out = _distrito_de_componentes(data["results"][0])
+    _GEO_CACHE[clave] = (time.time(), out)
+    return out
+
+
+def _distrito_de_componentes(result: dict) -> dict:
+    """Extrae el distrito en el orden locality -> administrative_area_level_3 ->
+    sublocality_level_1. NUNCA usa neighborhood/urbanización (zMita-32 Parte A)."""
+    locality = aal3 = subloc1 = provincia = region = None
     for comp in result.get("address_components", []):
         t = comp.get("types", [])
-        if not distrito and ("locality" in t or "sublocality_level_1" in t):
-            distrito = comp.get("long_name")
+        nm = comp.get("long_name")
+        if not locality and "locality" in t:
+            locality = nm
+        if not aal3 and "administrative_area_level_3" in t:
+            aal3 = nm
+        if not subloc1 and "sublocality_level_1" in t:
+            subloc1 = nm
         if not provincia and "administrative_area_level_2" in t:
-            provincia = comp.get("long_name")
+            provincia = nm
         if not region and "administrative_area_level_1" in t:
-            region = comp.get("long_name")
+            region = nm
+    distrito = locality or aal3 or subloc1
     loc = result["geometry"]["location"]
     out = {"lat": loc["lat"], "lng": loc["lng"], "distrito": distrito,
            "provincia": provincia, "region": region,
            "direccion_formateada": result.get("formatted_address")}
-    _GEO_CACHE[clave] = (time.time(), out)
     return out
 
 
