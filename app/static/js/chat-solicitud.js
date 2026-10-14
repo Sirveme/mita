@@ -349,7 +349,7 @@
             c.style.display = 'block';
             c.innerHTML = `
                 <div class="confirmacion-card">
-                    <h4>✅ ${esc(data.confirmacion || 'Confirmemos tu solicitud')}</h4>
+                    <h4>📋 Revisa los datos de tu solicitud</h4>
                     <div class="confirmacion-detalles">
                         <p><strong>Servicio:</strong> ${esc(servicio)}</p>
                         <p><strong>Problema:</strong> ${esc(data.problema || '—')}</p>
@@ -404,8 +404,14 @@
                 const d = await r.json();
                 if (r.ok && d.id) {
                     if (d.id) fetch(`/api/v1/asignacion/iniciar/${d.id}`, { method: 'POST' }).catch(() => {});
+                    // Parte E: mensaje de registro (no "cita confirmada")
+                    const f = this._fmtFecha((this.estado && this.estado.horario_elegido) || data.fecha_programada);
+                    const listo = f
+                        ? `¡Listo! Tu solicitud quedó registrada para el ${f}. Te avisaremos cuando el técnico esté en camino.`
+                        : '¡Listo! Tu solicitud quedó registrada. Te avisaremos cuando el técnico esté en camino.';
+                    this.agregarMensajeBot(listo); this._hablar(listo);
                     if (this.onComplete) { try { this.onComplete({ id: d.id, ...data }); } catch (e) {} }
-                    window.location.href = `/cliente/servicio/${d.id}/chats`;
+                    setTimeout(() => { window.location.href = `/cliente/servicio/${d.id}/chats`; }, 1600);
                 } else { if (btn) btn.disabled = false; this.agregarMensajeBot('No se pudo crear la solicitud. Intenta por el menú.'); }
             } catch (e) { if (btn) btn.disabled = false; this.agregarMensajeBot('Error al crear la solicitud.'); }
         },

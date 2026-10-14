@@ -27,7 +27,7 @@ const MitaVoz = (function () {
     let audioCtx = null, analyser = null, meterStream = null, meterTimer = null, meterWarnTimer = null;
     let peakRMS = 0, meterInicio = 0, recInicio = 0;
     // Conversación por voz (manos libres)
-    let _onAutoEnviar = null, _ultimoModo = null, _reaperturas = 0;
+    let _onAutoEnviar = null, _ultimoModo = null, _reaperturas = 0, _reapertura = false;
     let _finalTimer = null, _vozDetectada = false, _silencioDesde = 0, _autoEnviarPremium = false;
     const UMBRAL_SILENCIO = 0.012, SILENCIO_MS = 1300, FINAL_MS = 1200, MAX_REC_MS = 30000;
     function onAutoEnviar(cb) { _onAutoEnviar = cb; }
@@ -75,8 +75,15 @@ const MitaVoz = (function () {
         if (isRecording || !_ultimoModo) return false;
         if (_reaperturas >= 2) { _reaperturas = 0; return false; }  // 2 reaperturas sin hablar -> parar
         _reaperturas += 1;
+        _reapertura = true;   // si no capta voz, cerrar en silencio (sin error en el hilo)
         startRecording(_ultimoModo);
         return true;
+    }
+
+    // Aviso de "sin voz": en una reapertura de conversación se cierra en silencio
+    function _avisoSinVoz(msg) {
+        if (_reapertura) { _reapertura = false; hideStatus(); return; }
+        showStatus(msg, 'error');
     }
 
     const MIC_MSG = 'Tu micrófono no capta sonido. Revisa cuál está seleccionado en el navegador (ícono 🎤 en la barra de direcciones).';
@@ -234,8 +241,8 @@ const MitaVoz = (function () {
                 const dur = (Date.now() - recInicio) / 1000;
                 const peak = stopMeter(false);     // leer pico antes de cerrar el stream
                 stream.getTracks().forEach(t => t.stop());
-                if (!audioChunks.length || dur < 0.8) { showStatus('Habla un poco más y vuelve a intentar.', 'error'); setTimeout(hideStatus, 2500); return; }
-                if (peak < UMBRAL_RMS) { showStatus(MIC_MSG, 'error'); setTimeout(hideStatus, 4000); return; }
+                if (!audioChunks.length || dur < 0.8) { _avisoSinVoz('Habla un poco más y vuelve a intentar.'); setTimeout(hideStatus, 2500); return; }
+                if (peak < UMBRAL_RMS) { _avisoSinVoz(MIC_MSG); setTimeout(hideStatus, 4000); return; }
                 const blob = new Blob(audioChunks, { type: (mediaRecorder.mimeType || 'audio/webm') });
                 console.log('[MitaVoz] audio blob:', blob.size, 'bytes, dur', dur.toFixed(1), 's, peak', peak.toFixed(3));
                 await transcribeWithWhisper(blob);
@@ -264,13 +271,14 @@ const MitaVoz = (function () {
             if (!resp.ok) { const t = await resp.text(); throw new Error('HTTP ' + resp.status + ': ' + t); }
             const data = await resp.json();
             const inp = getInput();
-            if (data.motivo === 'sin_voz') { showStatus(MIC_MSG, 'error'); return; }
+            if (data.motivo === 'sin_voz') { _avisoSinVoz(MIC_MSG); return; }
             if (data.texto && inp) {
+                _reapertura = false;   // sí captó voz
                 inp.value = data.texto; marcarDictado();
                 if (_autoEnviarPremium) { _autoEnviarPremium = false; _programarAutoEnvio(inp); }
                 else { showStatus('✓ Listo — revisa y presiona Enviar', 'success'); inp.focus(); }
             }
-            else showStatus(MIC_MSG, 'error');
+            else _avisoSinVoz(MIC_MSG);
         } catch (error) {
             console.error('[MitaVoz] error Whisper', error);
             showStatus('Error al transcribir', 'error');
@@ -282,7 +290,7 @@ const MitaVoz = (function () {
     // ---------- Control ----------
     function toggleRecording(mode) {
         console.log('[MitaVoz] toggle ' + mode + ' (isRecording=' + isRecording + ')');
-        if (isRecording) stopRecording(); else startRecording(mode);
+        if (isRecording) stopRecording(); else { _reapertura = false; startRecording(mode); }
     }
     function startRecording(mode) {
         console.log('[MitaVoz] start ' + mode);
@@ -307,8 +315,8 @@ const MitaVoz = (function () {
             stopMeter(true);
             if (btnEstandar) btnEstandar.classList.remove('recording');
             const val = (inp && inp.value || '').trim();
-            if (val) { marcarDictado(); showStatus('✓ Listo — revisa y presiona Enviar', 'success'); if (inp) inp.focus(); }
-            else { showStatus('No te escuché, intenta de nuevo', 'error'); }
+            if (val) { _reapertura = false; marcarDictado(); showStatus('✓ Listo — revisa y presiona Enviar', 'success'); if (inp) inp.focus(); }
+            else { _avisoSinVoz('No te escuché, intenta de nuevo'); }
             setTimeout(hideStatus, 2500);
         } else if (mode === 'premium') {
             if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
