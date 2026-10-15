@@ -85,6 +85,17 @@ async def lifespan(app: FastAPI):
     print(f"🌐 Host: {settings.HOST}:{settings.PORT}")
     print("=" * 60)
     
+    # Asegurar la tabla de suscripciones push (idempotente). En Railway los SQL de
+    # app/sql/ NO se corren solos al desplegar (hay que ejecutar setup_railway a mano),
+    # así que garantizamos aquí que push_suscripciones exista para los avisos.
+    try:
+        from app.core.database import engine
+        from app.models.push_suscripcion import PushSuscripcion
+        PushSuscripcion.__table__.create(bind=engine, checkfirst=True)
+        print("✅ Tabla push_suscripciones verificada/creada")
+    except Exception as e:
+        print(f"⚠️  No se pudo verificar push_suscripciones: {e}")
+
     # Cron de reasignación por timeout de respuesta de técnico
     try:
         from app.tasks.timeout_tecnico import iniciar_scheduler
