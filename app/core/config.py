@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     AZURE_SPEECH_REGION: Optional[str] = None
     ELEVENLABS_API_KEY: Optional[str] = None
 
+    # Web Push (VAPID) — avisos sin costo (zMita-33)
+    VAPID_PUBLIC_KEY: Optional[str] = None
+    VAPID_PRIVATE_KEY: Optional[str] = None
+    VAPID_SUBJECT: str = "mailto:avisos@mita.pe"
+
     # Environment
     ENVIRONMENT: str = "production"
     DEBUG: bool = False
