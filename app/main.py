@@ -5,6 +5,8 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.requests import Request
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response as StarletteResponse
 
 from app.core.config import settings
 
@@ -59,6 +61,7 @@ from app.routes.reset_password_api import router as reset_password_api_router
 from app.routes.ubicacion_api import router as ubicacion_api_router
 from app.routes.maps_api import router as maps_api_router
 from app.routes.chat_ia_api import router as chat_ia_router
+from app.routes.push_api import router as push_router
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -128,6 +131,51 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ============================================
+# PWA: inyectar <link manifest> + pwa.js en TODAS las páginas HTML (zMita-33)
+# Evita editar decenas de plantillas. No toca JSON ni estáticos.
+# ============================================
+_APPLE_TAGS = (
+    '<link rel="apple-touch-icon" href="/static/img/mita/icon-180.png">'
+    '<meta name="apple-mobile-web-app-capable" content="yes">'
+    '<meta name="mobile-web-app-capable" content="yes">'
+    '<meta name="apple-mobile-web-app-title" content="MITA">'
+)
+_PWA_SCRIPT = '<script defer src="/static/js/pwa.js?v=33"></script>'
+
+
+class PWAHeadMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        ctype = response.headers.get("content-type", "")
+        if request.method != "GET" or "text/html" not in ctype:
+            return response
+        body = b""
+        async for chunk in response.body_iterator:
+            body += chunk
+        try:
+            text = body.decode("utf-8")
+        except Exception:
+            return StarletteResponse(content=body, status_code=response.status_code,
+                                     headers=dict(response.headers), media_type=ctype)
+        if "</head>" in text and "/static/js/pwa.js" not in text:
+            extra = ""
+            if 'rel="manifest"' not in text:
+                extra += '<link rel="manifest" href="/manifest.webmanifest">'
+            if 'name="theme-color"' not in text:
+                extra += '<meta name="theme-color" content="#12101a">'
+            extra += _APPLE_TAGS + _PWA_SCRIPT
+            text = text.replace("</head>", extra + "</head>", 1)
+        data = text.encode("utf-8")
+        headers = dict(response.headers)
+        headers.pop("content-length", None)
+        return StarletteResponse(content=data, status_code=response.status_code,
+                                 headers=headers, media_type=ctype)
+
+
+app.add_middleware(PWAHeadMiddleware)
 
 # Montar archivos estáticos
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -199,6 +247,7 @@ app.include_router(reset_password_api_router)
 app.include_router(ubicacion_api_router)
 app.include_router(maps_api_router)
 app.include_router(chat_ia_router)
+app.include_router(push_router)
 
 # Cuando estén listos:
 # from app.routes.clientes import router as clientes_router
@@ -380,15 +429,40 @@ async def root():
 
 
 
+@app.get("/manifest.webmanifest")
+async def manifest_webmanifest():
+    """Manifest PWA de MITA (servido desde la raíz)."""
+    return FileResponse("app/static/mita.webmanifest", media_type="application/manifest+json")
+
 @app.get("/manifest.json")
 async def manifest():
-    """Servir manifest.json"""
-    return FileResponse("app/static/manifest.json", media_type="application/json")
+    """Compatibilidad: redirige al nuevo manifest."""
+    return FileResponse("app/static/mita.webmanifest", media_type="application/manifest+json")
 
 @app.get("/sw.js")
 async def service_worker():
-    """Servir service worker"""
-    return FileResponse("app/sw.js", media_type="application/javascript")
+    """Service worker único, scope raíz."""
+    return FileResponse("app/sw.js", media_type="application/javascript",
+                        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"})
+
+@app.get("/prueba-avisos", response_class=HTMLResponse)
+async def prueba_avisos_page(request: Request):
+    """Página pública para probar instalación y avisos (sin datos personales)."""
+    return templates.TemplateResponse("prueba_avisos.html", {"request": request})
+
+@app.get("/admin/push", response_class=HTMLResponse)
+async def admin_push_page(request: Request):
+    """Panel admin: suscripciones push + enviar prueba por fila."""
+    from app.core.database import get_db
+    from app.routes.main import _guard_admin
+    db = next(get_db())
+    try:
+        redir = await _guard_admin(request, db)
+        if redir:
+            return redir
+    finally:
+        db.close()
+    return templates.TemplateResponse("admin/push.html", {"request": request})
 
 @app.get("/offline.html", response_class=HTMLResponse)
 async def offline_page(request: Request):
