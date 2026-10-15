@@ -68,6 +68,7 @@ SQL_FILES = [
     "26_voz_config.sql",                  # configuración de voz (laboratorio de voces)
     "27_politica_cancelacion.sql",        # política de cancelación editable
     "28_contacto_emergencias.sql",        # contacto de emergencias (ASAP sin cupos hoy)
+    "29_push_suscripciones.sql",          # suscripciones Web Push (VAPID) — avisos
 ]
 
 # (etiqueta, módulo, función)
