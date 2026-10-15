@@ -94,9 +94,7 @@
                 const r = await MitaPWA.activarAvisos();
                 if (r.ok) msg('Avisos activados ✓');
                 else if (r.motivo === 'ios-requiere-instalar') msg('En iPhone primero agrega MITA a inicio y ábrela desde el ícono.', 'error');
-                else if (r.motivo === 'denegado') msg('Permiso denegado. Actívalo en Ajustes del navegador para este sitio.', 'error');
-                else if (r.motivo === 'servidor-sin-vapid') msg('El servidor aún no tiene las claves de avisos (VAPID).', 'error');
-                else msg('No se pudo activar: ' + r.motivo, 'error');
+                else msg(r.error || ('No se pudo activar: ' + (r.motivo || 'error')), 'error');
                 setTimeout(refrescar, 600);
             };
             $('btn-prueba').onclick = async () => {
