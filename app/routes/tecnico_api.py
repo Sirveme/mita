@@ -209,6 +209,12 @@ def responder_notificacion(notif_id: int, data: dict = Body(...), db: Session = 
         s = db.query(Solicitud).get(s.id)
         sala = _crear_chats(db, s.id, _nombre(p), pid)
         db.commit()
+        # Aviso push al cliente: tu técnico está en camino (zMita-33)
+        try:
+            from app.services import push as _push
+            _push.avisar_servicio_aceptado(db, s, tecnico_nombre=_nombre(p))
+        except Exception:
+            logger.exception("push servicio_aceptado")
         return {"success": True, "estado": "ACEPTADA", "chat_id": sala.id, "solicitud_id": s.id}
 
     # Rechazo (PASO): sólo marca la propia; los demás siguen con su notificación.
@@ -255,6 +261,12 @@ def cambiar_estado(sid: int, data: dict = Body(...), db: Session = Depends(get_d
     s.estado = estado
     if estado == "EN_SITIO": s.fecha_llegada = datetime.utcnow()
     db.commit()
+    if estado == "EN_SITIO":
+        try:
+            from app.services import push as _push
+            _push.avisar_tecnico_llego(db, s)
+        except Exception:
+            logger.exception("push tecnico_llego")
     return {"success": True, "estado": s.estado}
 
 
@@ -304,6 +316,12 @@ def crear_adicional(sid: int, data: dict = Body(...), db: Session = Depends(get_
         db.add(ChatMensaje(sala_id=sala.id, emisor_id=pid, emisor_tipo="tecnico", emisor_nombre=_nombre(db.query(Personal).get(pid)),
                            mensaje=f"Propongo un servicio adicional: {desc} por S/ {monto:.2f}. Apruébalo desde tu app."))
         db.commit()
+    # Aviso push al cliente: presupuesto por revisar (zMita-33)
+    try:
+        from app.services import push as _push
+        _push.avisar_presupuesto(db, s)
+    except Exception:
+        logger.exception("push presupuesto")
     return {"success": True, "adicional": _adic_dict(a)}
 
 
@@ -346,5 +364,14 @@ def buscar_tecnico(sid: int, db: Session = Depends(get_db)):
         return {"success": True, "tecnicos": 0, "mensaje": "No hay técnicos EN SERVICIO ahora."}
     s.estado = "BUSCANDO_TECNICO"
     db.commit()
+    # Aviso push "Nuevo servicio disponible" (zMita-33). Sin dirección exacta en el texto.
+    try:
+        from app.services import push as _push
+        from app.models.models import CategoriaServicio
+        cat = db.query(CategoriaServicio).get(s.categoria_id) if s.categoria_id else None
+        _push.avisar_nuevo_servicio(db, s, especialidad=(cat.nombre if cat else ""),
+                                    distrito=getattr(s, "cliente_distrito", "") or getattr(s, "distrito", "") or "")
+    except Exception:
+        logger.exception("push nuevo_servicio")
     logger.info("Solicitud %s: notificados %s técnicos (intento 1). Notificación interna (no WhatsApp).", sid, n)
     return {"success": True, "tecnicos": n, "intento": 1}

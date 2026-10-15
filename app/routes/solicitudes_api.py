@@ -89,6 +89,13 @@ def crear_solicitud(data: SolicitudCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(solicitud)
 
+    # Aviso push al cliente: recibimos tu solicitud (zMita-33)
+    try:
+        from app.services import push as _push
+        _push.avisar_solicitud_registrada(db, solicitud)
+    except Exception:
+        pass
+
     return {
         "success": True,
         "id": solicitud.id,

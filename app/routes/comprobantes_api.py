@@ -148,6 +148,16 @@ def _emitir(db: Session, s: ServicioCompletado, tipo: str, cliente: dict):
         s.comprobante_emitido = True
         s.fecha_comprobante = datetime.utcnow()
         db.commit()
+        # Aviso push al cliente: tu comprobante está listo (zMita-33)
+        try:
+            from app.services import push as _push
+            from app.models.solicitud_mita import Solicitud
+            sid = getattr(s, "solicitud_id", None)
+            sol = db.query(Solicitud).get(sid) if sid else None
+            if sol:
+                _push.avisar_comprobante(db, sol)
+        except Exception:
+            pass
     return res
 
 
