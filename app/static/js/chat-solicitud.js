@@ -411,7 +411,7 @@
                         : '¡Listo! Tu solicitud quedó registrada. Te avisaremos cuando el técnico esté en camino.';
                     this.agregarMensajeBot(listo); this._hablar(listo);
                     if (this.onComplete) { try { this.onComplete({ id: d.id, ...data }); } catch (e) {} }
-                    setTimeout(() => { window.location.href = `/cliente/servicio/${d.id}/chats`; }, 1600);
+                    this._ofrecerAvisos(d.id);   // zMita-33: ofrecer avisos destacado tras confirmar
                 } else { if (btn) btn.disabled = false; this.agregarMensajeBot('No se pudo crear la solicitud. Intenta por el menú.'); }
             } catch (e) { if (btn) btn.disabled = false; this.agregarMensajeBot('Error al crear la solicitud.'); }
         },
@@ -419,6 +419,31 @@
         corregir() {
             document.getElementById('chat-confirmacion').style.display = 'none';
             this.agregarMensajeBot('¿Qué quieres corregir? Escríbelo y lo ajusto.');
+        },
+
+        // zMita-33: tras confirmar, ofrecer avisos de forma destacada y luego ir al servicio.
+        _ofrecerAvisos(solicitudId) {
+            const ir = () => { window.location.href = `/cliente/servicio/${solicitudId}/chats`; };
+            const c = document.getElementById('chat-opciones');
+            if (!c || !window.MitaPWA) { setTimeout(ir, 1600); return; }
+            c.style.display = 'block'; c.innerHTML = '';
+            const avisar = document.createElement('button');
+            avisar.className = 'btn-opcion'; avisar.type = 'button';
+            avisar.textContent = '🔔 Activar avisos (saber cuándo llega tu técnico)';
+            avisar.addEventListener('click', async () => {
+                avisar.disabled = true;
+                try {
+                    const res = await window.MitaPWA.activarAvisos({ solicitud_id: solicitudId, rol: 'cliente' });
+                    if (res.ok) this.agregarMensajeBot('Listo, te avisaremos aquí y en tu teléfono.');
+                    else if (res.motivo === 'ios-requiere-instalar') this.agregarMensajeBot('En iPhone, primero agrega MITA a tu inicio y ábrela desde el ícono para activar los avisos.');
+                    else this.agregarMensajeBot('Puedes activar los avisos más tarde desde /prueba-avisos.');
+                } catch (e) {}
+                ir();
+            });
+            const ver = document.createElement('button');
+            ver.className = 'btn-opcion'; ver.type = 'button'; ver.textContent = 'Ver mi servicio';
+            ver.addEventListener('click', ir);
+            c.appendChild(avisar); c.appendChild(ver);
         },
 
         async mostrarFueraCobertura(data) {
