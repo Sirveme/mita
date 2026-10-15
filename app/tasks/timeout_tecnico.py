@@ -52,6 +52,15 @@ def _procesar_una(db, s: Solicitud, max_reintentos: int):
         _log(db, f"Solicitud #{s.id}: {max_reintentos} intentos sin respuesta, SIN_TECNICO.",
              accion="sin-tecnico")
         logger.info("Solicitud %s: sin técnicos tras %s intentos", s.id, max_reintentos)
+        # Aviso push a la torre de control (admin): servicio sin aceptar (zMita-33)
+        try:
+            from app.services import push as _push
+            from app.models.models import CategoriaServicio
+            cat = db.query(CategoriaServicio).get(s.categoria_id) if s.categoria_id else None
+            _push.avisar_sin_aceptar(db, s, especialidad=(cat.nombre if cat else ""),
+                                     distrito=getattr(s, "cliente_distrito", "") or getattr(s, "distrito", "") or "")
+        except Exception:
+            logger.exception("push sin_aceptar")
         return
 
     # Reenviar a todos los técnicos EN_SERVICIO (nueva ronda)
