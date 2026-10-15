@@ -135,27 +135,41 @@
         }
         const permiso = await Notification.requestPermission();
         if (permiso !== 'granted') {
-            return { ok: false, motivo: permiso === 'denied' ? 'denegado' : 'sin-permiso' };
+            return { ok: false, motivo: permiso === 'denied' ? 'denegado' : 'sin-permiso',
+                     error: permiso === 'denied'
+                         ? 'Permiso denegado. Actívalo en los ajustes del navegador para este sitio.'
+                         : 'No se concedió el permiso de avisos.' };
         }
-        const reg = swReg || await navigator.serviceWorker.ready;
-        const r = await fetch('/api/v1/push/clave-publica');
-        const { clave, configurado } = await r.json();
-        if (!configurado || !clave) return { ok: false, motivo: 'servidor-sin-vapid' };
-        let sub = await reg.pushManager.getSubscription();
-        if (!sub) {
-            sub = await reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(clave)
+        try {
+            const reg = swReg || await navigator.serviceWorker.ready;
+            const r = await fetch('/api/v1/push/clave-publica');
+            const { clave, configurado } = await r.json();
+            if (!configurado || !clave) {
+                return { ok: false, motivo: 'servidor-sin-vapid',
+                         error: 'El servidor aún no tiene las claves de avisos (VAPID). Falta configurarlas en Railway.' };
+            }
+            let sub = await reg.pushManager.getSubscription();
+            if (!sub) {
+                sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(clave)
+                });
+            }
+            const body = { subscription: sub.toJSON(), plataforma: plataforma() };
+            if (opts.solicitud_id) body.solicitud_id = opts.solicitud_id;
+            if (opts.rol) body.rol = opts.rol;
+            const resp = await fetch('/api/v1/push/suscribir', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
             });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok || data.ok === false) {
+                return { ok: false, motivo: 'servidor',
+                         error: data.error || data.detail || data.detalle || ('No se pudo guardar la suscripción (HTTP ' + resp.status + ').') };
+            }
+            return { ok: true, suscripcion: sub.toJSON(), datos: data };
+        } catch (e) {
+            return { ok: false, motivo: 'excepcion', error: (e && e.message) ? e.message : 'No se pudo activar los avisos.' };
         }
-        const body = { subscription: sub.toJSON(), plataforma: plataforma() };
-        if (opts.solicitud_id) body.solicitud_id = opts.solicitud_id;
-        if (opts.rol) body.rol = opts.rol;
-        const resp = await fetch('/api/v1/push/suscribir', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
-        });
-        const data = await resp.json().catch(() => ({}));
-        return { ok: resp.ok, suscripcion: sub.toJSON(), datos: data };
     }
 
     async function suscripcionActual() {

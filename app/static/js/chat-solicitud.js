@@ -436,7 +436,7 @@
                     const res = await window.MitaPWA.activarAvisos({ solicitud_id: solicitudId, rol: 'cliente' });
                     if (res.ok) this.agregarMensajeBot('Listo, te avisaremos aquí y en tu teléfono.');
                     else if (res.motivo === 'ios-requiere-instalar') this.agregarMensajeBot('En iPhone, primero agrega MITA a tu inicio y ábrela desde el ícono para activar los avisos.');
-                    else this.agregarMensajeBot('Puedes activar los avisos más tarde desde /prueba-avisos.');
+                    else this.agregarMensajeBot(res.error || 'Puedes activar los avisos más tarde desde /prueba-avisos.');
                 } catch (e) {}
                 ir();
             });
