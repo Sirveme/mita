@@ -4,6 +4,8 @@ API de Web Push (zMita-33): clave pública, suscribir, desuscribir y envío de p
 import logging
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -13,6 +15,34 @@ from app.services import push as push_srv
 
 logger = logging.getLogger("mita.push")
 router = APIRouter(prefix="/api/v1/push", tags=["Push"])
+
+
+def _asegurar_tabla():
+    """Crea push_suscripciones si falta (idempotente). Auto-cura producción sin
+    tener que correr la migración a mano."""
+    try:
+        from app.core.database import engine
+        PushSuscripcion.__table__.create(bind=engine, checkfirst=True)
+        return True
+    except Exception:
+        logger.exception("[push] no se pudo asegurar la tabla push_suscripciones")
+        return False
+
+
+def _error_bd(e, db) -> JSONResponse:
+    try:
+        db.rollback()
+    except Exception:
+        pass
+    detalle = str(getattr(e, "orig", e))
+    bajo = detalle.lower()
+    if "push_suscripciones" in bajo and any(k in bajo for k in ("exist", "no existe", "relation", "undefined", "does not")):
+        msg = ("La tabla de avisos aún no está creada en el servidor. Vuelve a desplegar MITA "
+               "(se crea sola al arrancar) o corre la migración 29.")
+    else:
+        msg = "No se pudo guardar tu suscripción a los avisos."
+    logger.exception("[push] error de BD")
+    return JSONResponse(status_code=503, content={"ok": False, "error": msg, "detalle": detalle[:300]})
 
 
 def _plataforma(ua: str) -> str:
@@ -54,38 +84,54 @@ async def clave_publica():
 
 @router.post("/suscribir")
 async def suscribir(request: Request, data: dict = Body(...), db: Session = Depends(get_db)):
-    sub = data.get("subscription") or data
-    endpoint = sub.get("endpoint")
-    keys = sub.get("keys") or {}
-    p256dh, auth = keys.get("p256dh"), keys.get("auth")
-    if not endpoint or not p256dh or not auth:
-        raise HTTPException(status_code=422, detail="Suscripción incompleta")
-    ua = request.headers.get("user-agent", "")[:400]
-    plataforma = (data.get("plataforma") or _plataforma(ua)).lower()
-    usuario_id, rol = await _sesion(request, db)
-    rol = data.get("rol") or rol or "cliente"
-    solicitud_id = data.get("solicitud_id")
+    """Guarda/actualiza la suscripción. NUNCA devuelve un 500 mudo: ante error
+    de BD responde un JSON con 'error' legible (y 'detalle' para el log)."""
+    try:
+        sub = data.get("subscription") or data
+        endpoint = sub.get("endpoint")
+        keys = sub.get("keys") or {}
+        p256dh, auth = keys.get("p256dh"), keys.get("auth")
+        if not endpoint or not p256dh or not auth:
+            return JSONResponse(status_code=422,
+                                content={"ok": False, "error": "La suscripción llegó incompleta. Reintenta."})
+        ua = request.headers.get("user-agent", "")[:400]
+        plataforma = (data.get("plataforma") or _plataforma(ua)).lower()
+        usuario_id, rol = await _sesion(request, db)
+        rol = data.get("rol") or rol or "cliente"
+        solicitud_id = data.get("solicitud_id")
 
-    row = db.query(PushSuscripcion).filter(PushSuscripcion.endpoint == endpoint).first()
-    if not row:
-        row = PushSuscripcion(endpoint=endpoint)
-        db.add(row)
-    row.p256dh = p256dh
-    row.auth = auth
-    row.plataforma = plataforma
-    row.user_agent = ua
-    row.activo = True
-    if usuario_id:
-        row.usuario_id = usuario_id
-    if rol:
-        row.rol = rol
-    if solicitud_id:
+        _asegurar_tabla()   # auto-cura: crea la tabla si falta (idempotente)
+        row = db.query(PushSuscripcion).filter(PushSuscripcion.endpoint == endpoint).first()
+        if not row:
+            row = PushSuscripcion(endpoint=endpoint)
+            db.add(row)
+        row.p256dh = p256dh
+        row.auth = auth
+        row.plataforma = plataforma
+        row.user_agent = ua
+        row.activo = True
+        if usuario_id:
+            row.usuario_id = usuario_id
+        if rol:
+            row.rol = rol
+        if solicitud_id:
+            try:
+                row.solicitud_id = int(solicitud_id)
+            except (TypeError, ValueError):
+                pass
+        db.commit()
+        return {"ok": True, "id": row.id, "plataforma": plataforma, "rol": row.rol}
+    except SQLAlchemyError as e:
+        return _error_bd(e, db)
+    except Exception as e:
         try:
-            row.solicitud_id = int(solicitud_id)
-        except (TypeError, ValueError):
+            db.rollback()
+        except Exception:
             pass
-    db.commit()
-    return {"ok": True, "id": row.id, "plataforma": plataforma, "rol": row.rol}
+        logger.exception("[push] error inesperado al suscribir")
+        return JSONResponse(status_code=500,
+                            content={"ok": False, "error": "Error inesperado al activar los avisos.",
+                                     "detalle": str(e)[:300]})
 
 
 @router.post("/desuscribir")
