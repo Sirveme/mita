@@ -83,3 +83,36 @@ class Solicitud(Base):
     motivo_cancelacion = Column(Text)
     tarifa_cancelacion = Column(Float)
     calificado = Column(Boolean, default=False)
+    # Canal de avisos elegido por el cliente (zMita-35): push / whatsapp / ninguno
+    canal_avisos = Column(String(20), default="ninguno")
+    # Etapa 4 (zMita-37)
+    aceptada_en = Column(DateTime, nullable=True)
+    alerta_sin_aceptar_en = Column(DateTime, nullable=True)   # alerta a la torre (una vez)
+    aviso_cliente_en = Column(DateTime, nullable=True)        # "seguimos buscando" (una vez)
+    # Etapas 5-6 (zMita-38)
+    en_camino_desde = Column(DateTime, nullable=True)
+    cliente_no_esta_en = Column(DateTime, nullable=True)
+    eta_inicial_min = Column(Integer, nullable=True)
+    eta_actual_min = Column(Integer, nullable=True)
+    eta_calc_en = Column(DateTime, nullable=True)
+    eta_calc_lat = Column(Float, nullable=True)
+    eta_calc_lng = Column(Float, nullable=True)
+
+    # Etapa 2 — identificación del comprador (zMita-39)
+    celular_verificado = Column(Boolean, default=False)
+    celular_estado = Column(String(15), default="pendiente")   # verificado / no_verificado / pendiente
+    comprador_tipo_comprobante = Column(String(12))            # boleta / factura
+    comprador_doc_tipo = Column(String(12))                    # DNI / RUC / CE / PASAPORTE
+    comprador_doc_numero = Column(String(20))
+    comprador_nombre = Column(String(200))                     # nombres o razón social
+    comprador_direccion_fiscal = Column(String(255))
+
+    # Etapa 7 — cierre y cobro (zMita-39)
+    terminado_en = Column(DateTime, nullable=True)
+    monto_por_cobrar = Column(Float, nullable=True)
+    cobro_metodo = Column(String(12), nullable=True)           # digital / efectivo
+    cobrado_en = Column(DateTime, nullable=True)
+    cerrado_en = Column(DateTime, nullable=True)
+    conformidad_ok = Column(Boolean, nullable=True)            # ¿quedó resuelto?
+    conformidad_estrellas = Column(Integer, nullable=True)     # 1..5
+    conformidad_comentario = Column(Text, nullable=True)

@@ -56,4 +56,11 @@ from app.models.ubicacion_tecnico import UbicacionTecnico
 from app.models.solicitud_sin_cobertura import SolicitudSinCobertura
 from app.models.chat_conocimiento import ChatConocimiento
 from app.models.catalogo_historial import CatalogoHistorial
-from app.models.push_suscripcion import PushSuscripcion
+from app.models.push_suscripcion import PushSuscripcion, PushEnvio
+from app.models.pago_solicitud import PagoSolicitud
+from app.models.oferta_servicio import OfertaServicio
+from app.models.servicio_vivo import UbicacionServicio, MensajeServicio, Presupuesto
+from app.models.cierre import (
+    CodigoVerificacion, CompradorPreferido, ComprobanteEmitido, CobroEfectivo,
+)
+from app.models.liquidacion_mita import LiquidacionMita, LiquidacionItem, ConfiguracionHistorial

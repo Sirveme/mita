@@ -3,7 +3,7 @@ Pago por pasarela (IziPay/Culqi/...). Cierra el ciclo: pago → webhook → comp
 """
 
 from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime, Numeric, ForeignKey, func
-from sqlalchemy.dialects.postgresql import JSONB
+from app.models.tipos import jsonb
 
 from app.core.database import Base
 
@@ -28,7 +28,7 @@ class PagoPasarela(Base):
 
     respuesta_codigo = Column(String(50))
     respuesta_mensaje = Column(Text)
-    respuesta_json = Column(JSONB)
+    respuesta_json = Column(jsonb())
 
     cliente_email = Column(String(255))
     cliente_telefono = Column(String(20))

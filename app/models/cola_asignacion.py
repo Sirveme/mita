@@ -3,10 +3,10 @@ Cola de asignación automática de técnicos + historial de alertas. zMita-13.
 """
 
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Numeric
-from sqlalchemy.dialects.postgresql import ARRAY
 from datetime import datetime
 
 from app.core.database import Base
+from app.models.tipos import array_int
 
 
 class ColaAsignacion(Base):
@@ -19,9 +19,9 @@ class ColaAsignacion(Base):
     estado = Column(String(20), default="PENDIENTE", index=True)
     ronda = Column(Integer, default=1)
 
-    tecnicos_alertados = Column(ARRAY(Integer), default=list)
-    tecnicos_rechazaron = Column(ARRAY(Integer), default=list)
-    tecnicos_timeout = Column(ARRAY(Integer), default=list)
+    tecnicos_alertados = Column(array_int(), default=list)
+    tecnicos_rechazaron = Column(array_int(), default=list)
+    tecnicos_timeout = Column(array_int(), default=list)
 
     radio_km = Column(Numeric(5, 2))
     usar_rating = Column(Boolean, default=False)

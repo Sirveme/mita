@@ -8,7 +8,7 @@ declara qué documentos se enviaron. Al aprobar, el id se conserva como
 import enum
 
 from sqlalchemy import Column, Integer, String, Text, Boolean, Date, DateTime, func
-from sqlalchemy.dialects.postgresql import JSONB
+from app.models.tipos import jsonb
 
 from app.core.database import Base
 
@@ -56,9 +56,9 @@ class Postulante(Base):
     referencia = Column(String(200))
 
     # Especialidades / experiencia / formación
-    especialidades = Column(JSONB, default=list)          # ['ELECTRICIDAD', ...]
+    especialidades = Column(jsonb(), default=list)          # ['ELECTRICIDAD', ...]
     anios_experiencia = Column(Integer, default=0)
-    experiencia_laboral = Column(JSONB, default=list)     # [{empresa, cargo, periodo}]
+    experiencia_laboral = Column(jsonb(), default=list)     # [{empresa, cargo, periodo}]
     nivel_educativo = Column(String(100))
     institucion = Column(String(200))
     certificaciones = Column(Text)
@@ -74,9 +74,10 @@ class Postulante(Base):
     sol_usuario = Column(String(60))
     sol_clave_encriptada = Column(String(255))
     emision_automatica_rxh = Column(Boolean, default=False)
+    acepta_facturalo_pro = Column(Boolean, default=False)  # descuento S/15/mes comprobantes ilimitados
 
     # Documentos declarados (se envían por email)
-    documentos_enviados = Column(JSONB, default=list)     # [{tipo, nombre_archivo, enviado_email}]
+    documentos_enviados = Column(jsonb(), default=list)     # [{tipo, nombre_archivo, enviado_email}]
 
     # Revisión
     fecha_postulacion = Column(DateTime, server_default=func.now())

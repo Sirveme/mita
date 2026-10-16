@@ -5,7 +5,7 @@ cifradas (Fernet, misma SOL_ENCRYPTION_KEY).
 """
 
 from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime, func
-from sqlalchemy.dialects.postgresql import JSONB
+from app.models.tipos import jsonb
 
 from app.core.database import Base
 
@@ -24,7 +24,7 @@ class Integracion(Base):
     merchant_id = Column(String(100))
     api_key_encrypted = Column(Text)
     api_secret_encrypted = Column(Text)
-    config_json = Column(JSONB, default=dict)
+    config_json = Column(jsonb(), default=dict)
     actualizado_por = Column(String(100))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

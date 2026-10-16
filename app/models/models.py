@@ -8,10 +8,10 @@ from sqlalchemy import (
     Column, Integer, String, Boolean, DateTime, Date, Time, 
     Numeric, Text, Enum, ForeignKey, ARRAY, CheckConstraint, Index,TIMESTAMP
 )
-from sqlalchemy.dialects.postgresql import INET, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
+from app.models.tipos import array_int, array_text, jsonb, inet
 import enum
 
 
@@ -169,7 +169,7 @@ class Tecnico(Base):
     departamento = Column(String(100), default='Lima')
     provincia = Column(String(100), default='Lima')
     cv_url = Column(String(500))
-    certificados_urls = Column(ARRAY(Text))
+    certificados_urls = Column(array_text())
     verificado_admin = Column(Boolean, default=False)
     fecha_verificacion = Column(Date)
     rating_promedio = Column(Numeric(3, 2), default=0)
@@ -302,7 +302,7 @@ class EspecificacionVehiculo(Base):
     tipo_refrigerante = Column(String(100))
     capacidad_refrigerante = Column(Numeric(4, 2))
     tipo_liquido_frenos = Column(String(50))
-    especificaciones_json = Column(JSONB)
+    especificaciones_json = Column(jsonb())
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     __table_args__ = (
@@ -623,8 +623,8 @@ class Cupon(Base):
     usos_maximos = Column(Integer)
     usos_actuales = Column(Integer, default=0)
     usos_por_cliente = Column(Integer, default=1)
-    categorias_aplica = Column(ARRAY(Integer))
-    tipos_aplica = Column(ARRAY(Integer))
+    categorias_aplica = Column(array_int())
+    tipos_aplica = Column(array_int())
     fecha_inicio = Column(DateTime(timezone=True), nullable=False)
     fecha_fin = Column(DateTime(timezone=True))
     solo_primer_servicio = Column(Boolean, default=False)
@@ -668,13 +668,13 @@ class Pago(Base):
     culqi_charge_id = Column(String(255))
     comprobante_url = Column(String(500))
     numero_operacion = Column(String(100))
-    ip_address = Column(INET)
+    ip_address = Column(inet())
     user_agent = Column(Text)
     fecha_pago = Column(DateTime(timezone=True), index=True)
     confirmado_por_id = Column(Integer, ForeignKey("usuarios.id"))
     fecha_confirmacion = Column(DateTime(timezone=True))
     motivo_rechazo = Column(Text)
-    pago_metadata = Column(JSONB)
+    pago_metadata = Column(jsonb())
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
@@ -728,10 +728,10 @@ class LogCambio(Base):
     tabla = Column(String(100), nullable=False)
     registro_id = Column(Integer, nullable=False)
     accion = Column(Enum('INSERT', 'UPDATE', 'DELETE', name='accion_enum'))
-    campos_previos = Column(JSONB)
-    campos_nuevos = Column(JSONB)
+    campos_previos = Column(jsonb())
+    campos_nuevos = Column(jsonb())
     usuario_id = Column(Integer, ForeignKey("usuarios.id"))
-    ip_address = Column(INET)
+    ip_address = Column(inet())
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
 
 class SesionUsuario(Base):
@@ -741,7 +741,7 @@ class SesionUsuario(Base):
     id = Column(Integer, primary_key=True)
     usuario_id = Column(Integer, ForeignKey("usuarios.id"))
     token = Column(String(500), unique=True)
-    ip_address = Column(INET)
+    ip_address = Column(inet())
     user_agent = Column(Text)
     fecha_inicio = Column(DateTime(timezone=True), server_default=func.now())
     fecha_fin = Column(DateTime(timezone=True))
@@ -894,7 +894,7 @@ class RecomendacionAceite(Base):
     viscosidad = Column(String(20), nullable=False)  # '5W-30', '10W-40', etc
     especificacion = Column(String(100))  # 'API SN', 'ACEA A3/B4'
     capacidad_litros = Column(Numeric(4, 2), nullable=False)
-    marcas_aceite_recomendadas = Column(JSONB)  # Array de marcas: ["Mobil", "Castrol", "Shell"]
+    marcas_aceite_recomendadas = Column(jsonb())  # Array de marcas: ["Mobil", "Castrol", "Shell"]
     filtro_aceite_referencia = Column(String(100))
     filtro_aire_referencia = Column(String(100))
     filtro_combustible_referencia = Column(String(100))
@@ -905,7 +905,8 @@ class RecomendacionAceite(Base):
     created_by = Column(Integer, ForeignKey("usuarios.id"))
     
     __table_args__ = (
-        Index('idx_marca_modelo_anio', 'marca_vehiculo_id', 'modelo_vehiculo_id', 'anio_inicio', 'anio_fin'),
+        # Nombre único de índice (había colisión con el de models.py:284 -> rompía create_all)
+        Index('idx_compat_marca_modelo_anio', 'marca_vehiculo_id', 'modelo_vehiculo_id', 'anio_inicio', 'anio_fin'),
     )
     
     # Relationships
@@ -1028,7 +1029,7 @@ class ReporteTecnico(Base):
     # Costos adicionales
     monto_mano_obra = Column(Numeric(10, 2), default=0)
     monto_materiales = Column(Numeric(10, 2), default=0)
-    detalle_materiales = Column(JSONB)  # [{nombre, cantidad, precio}]
+    detalle_materiales = Column(jsonb())  # [{nombre, cantidad, precio}]
     monto_total_adicional = Column(Numeric(10, 2), default=0)
 
     # Forma de pago del adicional
@@ -1041,8 +1042,8 @@ class ReporteTecnico(Base):
     numero_comprobante_tecnico = Column(String(50))
 
     # Fotos del trabajo
-    fotos_antes = Column(ARRAY(Text))
-    fotos_despues = Column(ARRAY(Text))
+    fotos_antes = Column(array_text())
+    fotos_despues = Column(array_text())
 
     # Observaciones
     observaciones = Column(Text)

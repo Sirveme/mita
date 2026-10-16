@@ -15,6 +15,7 @@ from sqlalchemy import (
     Numeric, ForeignKey, JSON, Enum, Time, ARRAY
 )
 from sqlalchemy.orm import relationship
+from app.models.tipos import array_int
 from datetime import datetime
 import enum
 
@@ -130,7 +131,10 @@ class TecnicoPersonal(Base):
     ultima_ubicacion_at = Column(DateTime)
 
     # Especialidades (IDs de categorias_servicio)
-    especialidades = Column(ARRAY(Integer))
+    especialidades = Column(array_int())
+
+    # Disponibilidad "hoy" (zMita-38): decoupled de estar atendiendo un servicio
+    disponible_hoy = Column(Boolean, default=False)
 
     # Configuración
     radio_cobertura_km = Column(Numeric(5, 2), default=10)
@@ -171,7 +175,7 @@ class Secretaria(Base):
     turno = Column(Integer, default=1)  # 1, 2, 3...
     hora_inicio = Column(Time)
     hora_fin = Column(Time)
-    dias_trabajo = Column(ARRAY(Integer))  # 0=Lun, 6=Dom
+    dias_trabajo = Column(array_int())  # 0=Lun, 6=Dom
 
     # Estado
     en_linea = Column(Boolean, default=False)

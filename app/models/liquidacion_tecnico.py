@@ -13,7 +13,7 @@ from app.core.database import Base
 class LiquidacionTecnico(Base):
     __tablename__ = "liquidaciones_tecnico"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)   # PK ya está indexada; index=True colisionaba con ix_liquidaciones_tecnico_id
     tecnico_id = Column(Integer, ForeignKey("personal.id"), index=True)
 
     semana_inicio = Column(Date)

@@ -7,6 +7,7 @@ SIN RELACIONES (para evitar import circular)
 from sqlalchemy import Column, Integer, String, Text, DECIMAL, TIMESTAMP, Boolean, ARRAY, ForeignKey, CheckConstraint, Date
 from sqlalchemy.sql import func
 from app.core.database import Base
+from app.models.tipos import array_text
 
 
 class SolicitudServicio(Base):
@@ -41,7 +42,7 @@ class SolicitudServicio(Base):
     tipo_servicio_id = Column(Integer, ForeignKey('tipos_servicio.id'))
     descripcion_problema = Column(Text)
     urgencia = Column(String(20), default='normal')   # normal, urgente, programado
-    fotos_problema = Column(ARRAY(Text))              # Array de URLs
+    fotos_problema = Column(array_text())              # Array de URLs
     
     # Estado
     estado = Column(String(50), default='pendiente', index=True)
@@ -100,7 +101,7 @@ class MensajeChatSolicitud(Base):
     # Mensaje
     tipo_mensaje = Column(String(50), default='texto')
     contenido = Column(Text, nullable=False)
-    archivos_urls = Column(ARRAY(Text))
+    archivos_urls = Column(array_text())
     
     # Estado
     leido = Column(Boolean, default=False)
