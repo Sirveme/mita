@@ -412,8 +412,8 @@ class YapePaymentService:
         pago.comision_pasarela = comision
         pago.monto_neto = monto_neto
         pago.fecha_pago = datetime.utcnow()
-        pago.metadata = {
-            **(pago.metadata or {}),
+        pago.pago_metadata = {
+            **(pago.pago_metadata or {}),
             "tunki_confirmation": tunki_data
         }
 
