@@ -403,15 +403,10 @@
                 const r = await fetch('/api/v1/solicitudes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const d = await r.json();
                 if (r.ok && d.id) {
-                    if (d.id) fetch(`/api/v1/asignacion/iniciar/${d.id}`, { method: 'POST' }).catch(() => {});
-                    // Parte E: mensaje de registro (no "cita confirmada")
-                    const f = this._fmtFecha((this.estado && this.estado.horario_elegido) || data.fecha_programada);
-                    const listo = f
-                        ? `¡Listo! Tu solicitud quedó registrada para el ${f}. Te avisaremos cuando el técnico esté en camino.`
-                        : '¡Listo! Tu solicitud quedó registrada. Te avisaremos cuando el técnico esté en camino.';
-                    this.agregarMensajeBot(listo); this._hablar(listo);
                     if (this.onComplete) { try { this.onComplete({ id: d.id, ...data }); } catch (e) {} }
-                    this._ofrecerAvisos(d.id);   // zMita-33: ofrecer avisos destacado tras confirmar
+                    let pagoQR = false;
+                    try { pagoQR = !!(await (await fetch('/api/v1/pagos-qr/config')).json()).habilitado; } catch (e) {}
+                    this._elegirMetodoPago(d.id, pagoQR);   // zMita-37: método de pago (QR o efectivo)
                 } else { if (btn) btn.disabled = false; this.agregarMensajeBot('No se pudo crear la solicitud. Intenta por el menú.'); }
             } catch (e) { if (btn) btn.disabled = false; this.agregarMensajeBot('Error al crear la solicitud.'); }
         },
@@ -421,29 +416,39 @@
             this.agregarMensajeBot('¿Qué quieres corregir? Escríbelo y lo ajusto.');
         },
 
-        // zMita-33: tras confirmar, ofrecer avisos de forma destacada y luego ir al servicio.
+        // zMita-37: elegir método de pago. QR -> /pagar; efectivo -> difunde directo.
+        _elegirMetodoPago(solicitudId, pagoQR) {
+            this.agregarMensajeBot('¿Cómo quieres pagar la visita (S/ 50.00)?');
+            const c = document.getElementById('chat-opciones');
+            if (!c) { window.location.href = '/pagar/' + solicitudId; return; }
+            c.style.display = 'block'; c.innerHTML = '';
+            if (pagoQR) {
+                const qr = document.createElement('button');
+                qr.className = 'btn-opcion'; qr.type = 'button'; qr.textContent = '📲 Pagar con Yape o Plin';
+                qr.addEventListener('click', () => { window.location.href = '/pagar/' + solicitudId; });
+                c.appendChild(qr);
+            }
+            const ef = document.createElement('button');
+            ef.className = 'btn-opcion'; ef.type = 'button'; ef.textContent = '💵 Pagar en efectivo al técnico';
+            ef.addEventListener('click', async () => {
+                c.style.display = 'none';
+                try {
+                    await fetch('/api/v1/pagos/efectivo', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ solicitud_id: solicitudId })
+                    });
+                } catch (e) {}
+                this.agregarMensajeBot('¡Listo! Pagas en efectivo al técnico. Buscando un técnico para ti.');
+                this._ofrecerAvisos(solicitudId);
+            });
+            c.appendChild(ef);
+        },
+
+        // zMita-33/35: tras confirmar, paso de avisos (push / WhatsApp / guía iOS) y luego al servicio.
         _ofrecerAvisos(solicitudId) {
             const ir = () => { window.location.href = `/cliente/servicio/${solicitudId}/chats`; };
-            const c = document.getElementById('chat-opciones');
-            if (!c || !window.MitaPWA) { setTimeout(ir, 1600); return; }
-            c.style.display = 'block'; c.innerHTML = '';
-            const avisar = document.createElement('button');
-            avisar.className = 'btn-opcion'; avisar.type = 'button';
-            avisar.textContent = '🔔 Activar avisos (saber cuándo llega tu técnico)';
-            avisar.addEventListener('click', async () => {
-                avisar.disabled = true;
-                try {
-                    const res = await window.MitaPWA.activarAvisos({ solicitud_id: solicitudId, rol: 'cliente' });
-                    if (res.ok) this.agregarMensajeBot('Listo, te avisaremos aquí y en tu teléfono.');
-                    else if (res.motivo === 'ios-requiere-instalar') this.agregarMensajeBot('En iPhone, primero agrega MITA a tu inicio y ábrela desde el ícono para activar los avisos.');
-                    else this.agregarMensajeBot(res.error || 'Puedes activar los avisos más tarde desde /prueba-avisos.');
-                } catch (e) {}
-                ir();
-            });
-            const ver = document.createElement('button');
-            ver.className = 'btn-opcion'; ver.type = 'button'; ver.textContent = 'Ver mi servicio';
-            ver.addEventListener('click', ir);
-            c.appendChild(avisar); c.appendChild(ver);
+            if (!window.MitaPWA || !window.MitaPWA.pasoAvisos) { setTimeout(ir, 1600); return; }
+            window.MitaPWA.pasoAvisos({ solicitud_id: solicitudId, codigo: '#' + solicitudId, onListo: ir });
         },
 
         async mostrarFueraCobertura(data) {
