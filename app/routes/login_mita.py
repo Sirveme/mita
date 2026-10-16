@@ -63,6 +63,11 @@ async def login(request: Request, db: Session = Depends(get_db)):
     def _error(msg: str):
         return templates.TemplateResponse("auth/login.html", {"request": request, "error": msg})
 
+    # Rate limit por IP (zMita-40 A4): frena fuerza bruta además del bloqueo por usuario.
+    from app.services import ratelimit
+    if not ratelimit.permitido(f"login:{ratelimit._ip(request)}", 10, 300):
+        return _error("Demasiados intentos. Espera unos minutos e inténtalo de nuevo.")
+
     usuario = (
         db.query(UsuarioMita)
         .filter(UsuarioMita.dni == dni, UsuarioMita.activo == True)

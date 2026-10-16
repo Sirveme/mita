@@ -56,6 +56,14 @@ def set_estado_servicio(data: dict = Body(...), db: Session = Depends(get_db), p
         raise HTTPException(400, "estado inválido")
     p = db.query(Personal).get(pid)
     p.estado_servicio = estado
+    # zMita-38: el interruptor "Disponible hoy" mapea al flag propio (no a estar atendiendo)
+    try:
+        from app.models.personal import TecnicoPersonal
+        tp = db.query(TecnicoPersonal).filter(TecnicoPersonal.personal_id == pid).first()
+        if tp:
+            tp.disponible_hoy = (estado == "EN_SERVICIO")
+    except Exception:
+        pass
     db.commit()
     return {"success": True, "estado_servicio": estado}
 
@@ -239,6 +247,7 @@ def _detalle(db: Session, s: Solicitud) -> dict:
         "adicionales": [_adic_dict(a) for a in adic],
         "total": round(base + aprob, 2),
         "hay_pendientes": any(a.estado == "PENDIENTE" for a in adic),
+        "monto_por_cobrar": _f(s.monto_por_cobrar),   # etapa 7 (zMita-39)
     }
 
 
@@ -364,12 +373,14 @@ def buscar_tecnico(sid: int, db: Session = Depends(get_db)):
         return {"success": True, "tecnicos": 0, "mensaje": "No hay técnicos EN SERVICIO ahora."}
     s.estado = "BUSCANDO_TECNICO"
     db.commit()
-    # Aviso push "Nuevo servicio disponible" (zMita-33). Sin dirección exacta en el texto.
+    # Aviso push "Nuevo servicio disponible" SOLO a los técnicos candidatos (especialidad +
+    # disponibles hoy), zMita-35 Parte F. Sin dirección exacta en el texto.
     try:
         from app.services import push as _push
         from app.models.models import CategoriaServicio
         cat = db.query(CategoriaServicio).get(s.categoria_id) if s.categoria_id else None
-        _push.avisar_nuevo_servicio(db, s, especialidad=(cat.nombre if cat else ""),
+        _push.avisar_nuevo_servicio(db, s, tecnico_personal_ids=_candidatos_ids(db, s),
+                                    especialidad=(cat.nombre if cat else ""),
                                     distrito=getattr(s, "cliente_distrito", "") or getattr(s, "distrito", "") or "")
     except Exception:
         logger.exception("push nuevo_servicio")

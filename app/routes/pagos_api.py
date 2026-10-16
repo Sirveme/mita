@@ -106,6 +106,18 @@ def _aprobar_y_facturar(db: Session, p: Pago):
                         s.comprobante_numero = p.comprobante_numero
                         s.fecha_comprobante = datetime.utcnow()
         db.commit()
+        # Pasarela confirmada -> difundir a técnicos (etapa 4, zMita-37), sin pasar por /pagar
+        try:
+            if getattr(p, "solicitud_id", None):
+                from app.services import ofertas
+                from app.models.solicitud_mita import Solicitud
+                s = db.query(Solicitud).get(p.solicitud_id)
+                if s:
+                    s.estado = "PAGADA"
+                    db.commit()
+                    ofertas.difundir(db, s)
+        except Exception:
+            logger.exception("difusión tras pasarela")
     except Exception as e:
         db.rollback()
         logger.error("Error al aprobar/facturar pago %s: %s", getattr(p, "referencia", "?"), e)
