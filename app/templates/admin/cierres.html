@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es-PE">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MITA · Cierres</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #0e0e1a; color: #e9edef; font-family: system-ui, 'Segoe UI', sans-serif; padding: 24px 16px 48px; }
+        .wrap { max-width: 1000px; margin: 0 auto; }
+        h1 { font-size: 20px; margin: 0 0 4px; }
+        h2 { font-size: 15px; color: #c9bfe0; margin: 24px 0 10px; }
+        .sub { color: #8a8a9a; font-size: 14px; margin: 0 0 12px; }
+        .tot { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+        .tot .box { background: #12101a; border: 1px solid #2a2a4e; border-radius: 12px; padding: 12px 16px; flex: 1; min-width: 200px; }
+        .tot .box b { display: block; font-size: 22px; margin-top: 4px; }
+        .card { background: #12101a; border: 1px solid #2a2a4e; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+        .card.alerta { border-color: #ff6b6b; }
+        .card.oro { border-color: #d4af37; }
+        .row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; }
+        .pill { padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; background: rgba(212,175,55,.15); color: #d4af37; }
+        .meta { color: #8a8a9a; font-size: 13px; margin-top: 4px; }
+        button { background: #22c55e; color: #06210f; border: none; border-radius: 9px; padding: 6px 11px; font-weight: 700; cursor: pointer; font-size: 12px; margin-top: 8px; }
+        button.ghost { background: #181830; color: #e9edef; border: 1px solid #2a2a4e; }
+        .vacio { color: #8a8a9a; padding: 14px; text-align: center; }
+        .msg { color: #22c55e; font-size: 13px; min-height: 16px; margin: 6px 0; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>Cierres</h1>
+        <p class="sub">Por cobrar, efectivo por validar, comprobantes pendientes, conformidad negativa y totales del día.</p>
+        <div class="msg" id="msg"></div>
+
+        <h2>Totales del día</h2>
+        <div class="tot" id="totales"></div>
+
+        <h2>Por cobrar</h2>
+        <div id="por-cobrar"><p class="vacio">Cargando…</p></div>
+
+        <h2>Efectivo por validar</h2>
+        <div id="efectivo"><p class="vacio">Cargando…</p></div>
+
+        <h2>Comprobantes (pendientes / en SUNAT / rechazados)</h2>
+        <div id="fact-banner"></div>
+        <div id="comprobantes"><p class="vacio">Cargando…</p></div>
+        <div class="card" style="margin-top:10px;">
+            <b style="font-size:13px;">Anular un comprobante (Nota de Crédito motivo 01)</b>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+                <input id="anular-id" placeholder="ID comprobante" style="width:120px;">
+                <button class="ghost" onclick="anular()">Anular con NC</button>
+            </div>
+        </div>
+
+        <h2>Conformidad negativa</h2>
+        <div id="conformidad"><p class="vacio">Cargando…</p></div>
+    </div>
+    <script>
+        const money = (v) => 'S/ ' + (Number(v) || 0).toFixed(2);
+        const msg = (t) => document.getElementById('msg').textContent = t || '';
+        async function cargar() {
+            let d; try { const r = await fetch('/api/v1/admin/cierres'); if (!r.ok) { msg('No autorizado.'); return; } d = await r.json(); } catch (e) { return; }
+            const t = d.totales_dia || {};
+            document.getElementById('totales').innerHTML =
+                `<div class="box">Digital<b>${money(t.digital)}</b></div>` +
+                `<div class="box">Efectivo en poder de técnicos<b>${money(t.efectivo_en_poder_tecnicos)}</b></div>`;
+
+            const pc = d.por_cobrar || [];
+            document.getElementById('por-cobrar').innerHTML = pc.length ? pc.map(s =>
+                `<div class="card oro"><div class="row"><b>Solicitud #${s.solicitud_id}</b> <span class="pill">POR COBRAR</span> <span>${money(s.total)}</span></div>` +
+                `<div class="meta">Antigüedad: ${s.antiguedad_min != null ? s.antiguedad_min + ' min' : '—'}</div></div>`
+            ).join('') : '<p class="vacio">Nada por cobrar.</p>';
+
+            const ef = d.efectivo_por_validar || [];
+            document.getElementById('efectivo').innerHTML = ef.length ? ef.map(c =>
+                `<div class="card alerta"><div class="row"><b>Solicitud #${c.solicitud_id}</b> <span>técnico ${money(c.monto_tecnico)} · cliente ${money(c.monto_cliente)} · total ${money(c.monto_total)}</span></div>` +
+                `<button onclick="validar(${c.solicitud_id}, ${c.monto_total})">Validar efectivo</button></div>`
+            ).join('') : '<p class="vacio">Sin efectivo por validar.</p>';
+
+            document.getElementById('fact-banner').innerHTML = d.facturacion_configurada ? '' :
+                '<div class="card alerta" style="margin-bottom:10px;">⚠ Facturación no configurada: los comprobantes quedan pendientes. Carga FACTURALO_API_KEY/SECRET.</div>';
+            const ESTC = { pendiente: 'Pendiente', rechazado: 'Rechazado por SUNAT', enviando: 'En SUNAT (enviando)' };
+            const cp = d.comprobantes_pendientes || [];
+            document.getElementById('comprobantes').innerHTML = cp.length ? cp.map(c => {
+                const malo = c.estado === 'pendiente' || c.estado === 'rechazado';
+                return `<div class="card ${malo ? 'alerta' : 'oro'}"><div class="row"><b>Solicitud #${c.solicitud_id}</b> <span class="pill">${ESTC[c.estado] || c.estado}</span> <span>${c.concepto} · ${money(c.monto)}</span> ${c.numero_formato ? '<span>' + c.numero_formato + '</span>' : ''}</div>` +
+                (c.mensaje_sunat ? `<div class="meta">${(c.mensaje_sunat || '').replace(/</g, '&lt;')}</div>` : '') +
+                (malo ? `<button onclick="reintentar(${c.solicitud_id}, '${c.concepto}')">Reintentar emisión</button>` : '') + `</div>`;
+            }).join('') : '<p class="vacio">Sin comprobantes por atender.</p>';
+
+            const cn = d.conformidad_negativa || [];
+            document.getElementById('conformidad').innerHTML = cn.length ? cn.map(s =>
+                `<div class="card alerta"><div class="row"><b>Solicitud #${s.solicitud_id}</b> <span>${s.estrellas != null ? '★ ' + s.estrellas : 'no resuelto'}</span></div>` +
+                `<div class="meta">${(s.comentario || '').replace(/</g, '&lt;')}</div></div>`
+            ).join('') : '<p class="vacio">Sin reclamos.</p>';
+        }
+        async function validar(sid, total) {
+            const m = prompt('Monto final cobrado en efectivo (S/):', total);
+            if (m == null) return;
+            const motivo = prompt('Motivo / nota de la validación:') || '';
+            const r = await fetch('/api/v1/admin/servicios/' + sid + '/validar-efectivo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ monto: Number(m), motivo }) });
+            msg(r.ok ? 'Efectivo validado ✓' : 'No se pudo validar'); cargar();
+        }
+        async function reintentar(sid, concepto) {
+            const r = await fetch('/api/v1/admin/servicios/' + sid + '/reintentar-comprobante', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ concepto }) });
+            const d = await r.json().catch(() => ({}));
+            msg(r.ok && d.ok ? 'Comprobante emitido ✓' : 'Sigue pendiente (facturador)'); cargar();
+        }
+        async function anular(){
+            const id = document.getElementById('anular-id').value;
+            if (!id) { msg('Pon el ID del comprobante.'); return; }
+            const motivo = prompt('Motivo de la anulación (obligatorio):');
+            if (!motivo) return;
+            if (!confirm('¿Emitir una Nota de Crédito que anula el comprobante #' + id + '?')) return;
+            if (!confirm('Confirma de nuevo: esta acción emite una NC ante SUNAT.')) return;
+            const r = await fetch('/api/v1/admin/comprobantes/' + id + '/anular', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ motivo, confirmar: true }) });
+            const d = await r.json().catch(() => ({}));
+            msg(r.ok ? ('Anulado con NC ' + (d.nc_numero_formato || '')) : (d.detail || 'No se pudo anular')); cargar();
+        }
+        window.validar = validar; window.reintentar = reintentar; window.anular = anular;
+        cargar(); setInterval(cargar, 8000);
+    </script>
+</body>
+</html>
