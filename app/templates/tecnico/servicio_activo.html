@@ -3,32 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Servicio — MITA Técnico</title>
+    <title>Tu servicio — MITA Técnico</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="/static/css/tecnico.css?v={{ STATIC_V }}">
-    <script src="/static/js/tecnico-ubicacion.js?v={{ STATIC_V }}" defer></script>
+    <style>
+        .chat { background:#12101a; border:1px solid #2a2a4e; border-radius:14px; padding:10px; }
+        .chat .scroll { max-height:38vh; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:4px; }
+        .b { max-width:82%; padding:8px 11px; border-radius:12px; font-size:14px; line-height:1.35; word-wrap:break-word; }
+        .b.mio { align-self:flex-end; background:#22c55e; color:#06210f; }
+        .b.otro { align-self:flex-start; background:#1c1c30; color:#e9edef; }
+        .b.sis { align-self:center; background:transparent; color:#8a8a9a; font-size:12px; text-align:center; }
+        .b.oculto { border:1px dashed #d4af37; }
+        .tarjeta { align-self:stretch; background:#0e0e1a; border:1px solid #d4af37; border-radius:12px; padding:12px; color:#e9edef; }
+        .tarjeta b { color:#d4af37; }
+        .chat form { display:flex; gap:8px; margin-top:8px; }
+        .chat input[type=text]{ flex:1; }
+        .radio { display:flex; gap:14px; margin:6px 0 12px; }
+        .radio label { color:var(--t-tx2); font-size:14px; }
+    </style>
 </head>
 <body>
 <div class="t-wrap t-detalle">
     <div class="t-header">
         <a class="t-back" href="/tecnico/dashboard"><i class="fas fa-arrow-left"></i></a>
-        <div class="brand" style="margin-left:6px;"><b id="d-num">Servicio</b><small id="d-estado">—</small></div>
+        <div class="brand" style="margin-left:6px;"><b id="d-num">Tu servicio</b><small id="d-estado">—</small></div>
     </div>
     <div class="t-body" id="d-cont"><div class="card"><h3>Cargando...</h3></div></div>
-</div>
-
-<!-- Modal adicional -->
-<div class="t-modal" id="m-adic">
-    <div class="t-modal-box">
-        <h3 style="margin:0 0 14px;"><i class="fas fa-plus" style="color:var(--t-green)"></i> Servicio adicional</h3>
-        <div style="color:var(--t-tx2);font-size:13px;margin-bottom:6px;">Descripción</div>
-        <input class="t-input" id="ad-desc" placeholder="Ej: Cambio de llave térmica 20A" style="margin-bottom:12px;">
-        <div style="color:var(--t-tx2);font-size:13px;margin-bottom:6px;">Monto adicional (S/)</div>
-        <input class="t-input" id="ad-monto" type="number" inputmode="decimal" placeholder="80" style="margin-bottom:14px;">
-        <button class="t-btn aceptar full" onclick="enviarAdicional()"><i class="fas fa-paper-plane"></i> SOLICITAR APROBACIÓN</button>
-        <p style="color:var(--t-amber);font-size:13px;margin-top:10px;"><i class="fas fa-triangle-exclamation"></i> El cliente recibirá una notificación para aprobar.</p>
-        <button class="t-btn sec full" style="margin-top:8px;" onclick="cerrarAdic()">Cancelar</button>
-    </div>
 </div>
 <div class="t-toast" id="t-toast"></div>
 
@@ -37,8 +37,8 @@ const SID = {{ servicio_id }};
 const $ = (s) => document.querySelector(s);
 const esc = (t) => { const d = document.createElement('div'); d.textContent = t == null ? '' : t; return d.innerHTML; };
 const money = (v) => 'S/ ' + (Number(v) || 0).toFixed(2);
-function toast(m){ const t=$('#t-toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
-let DET = null;
+function toast(m){ const t=$('#t-toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+let DET = null, ultId = 0, geoTimer = null, chatTimer = null;
 
 async function cargar(){
     try {
@@ -49,84 +49,190 @@ async function cargar(){
     render();
 }
 
-function botonesEstado(est){
+function acciones(est){
     const dir = encodeURIComponent(DET.direccion||'');
     if(est==='ACEPTADA') return `
-        <a class="t-btn aceptar full" href="https://www.google.com/maps/search/?api=1&query=${dir}" target="_blank" style="text-decoration:none;margin-bottom:10px;"><i class="fas fa-location-arrow"></i> INICIAR NAVEGACIÓN</a>
-        <button class="t-btn sec full" onclick="cambiar('EN_CAMINO')"><i class="fas fa-car"></i> YA VOY EN CAMINO</button>`;
+        <a class="t-btn sec full" href="https://www.google.com/maps/search/?api=1&query=${dir}" target="_blank" style="text-decoration:none;margin-bottom:10px;"><i class="fas fa-location-arrow"></i> Abrir mapa</a>
+        <button class="t-btn aceptar full" onclick="voyEnCamino()"><i class="fas fa-car"></i> VOY EN CAMINO</button>`;
     if(est==='EN_CAMINO') return `
-        <button class="t-btn aceptar full" onclick="cambiar('EN_SITIO')" style="margin-bottom:10px;"><i class="fas fa-house"></i> LLEGUÉ / INICIANDO</button>
-        <a class="t-btn sec full" href="/cliente/servicio/${SID}/chats" style="text-decoration:none;"><i class="fas fa-comments"></i> CHAT CON CLIENTE</a>`;
-    return '';
+        <p style="color:var(--t-amber);font-size:13px;margin:0 0 10px;"><i class="fas fa-triangle-exclamation"></i> Mantén MITA abierta durante el traslado para que el cliente vea tu avance.</p>
+        <button class="t-btn aceptar full" onclick="llegue()" style="margin-bottom:10px;"><i class="fas fa-house"></i> LLEGUÉ</button>
+        <button class="t-btn sec full" onclick="clienteNoEsta()"><i class="fas fa-user-slash"></i> El cliente no está</button>`;
+    if(est==='EN_SITIO' || est==='EN_PROCESO') return `
+        <button class="t-btn aceptar full" onclick="abrirDiag()"><i class="fas fa-stethoscope"></i> REGISTRAR DIAGNÓSTICO</button>
+        <button class="t-btn sec full" style="margin-top:10px;" onclick="clienteNoEsta()"><i class="fas fa-user-slash"></i> El cliente no está</button>`;
+    if(est==='REPARACION_ACEPTADA' || est==='SOLO_DIAGNOSTICO') return `
+        <button class="t-btn aceptar full" onclick="terminar()"><i class="fas fa-flag-checkered"></i> TERMINÉ</button>`;
+    if(est==='POR_COBRAR') return `
+        <p style="color:var(--t-tx2);font-size:13px;margin:0 0 8px;">Monto a cobrar: <b style="color:var(--t-green)">S/ ${(Number(DET.monto_por_cobrar||0)).toFixed(2)}</b></p>
+        <div style="color:var(--t-tx2);font-size:13px;margin-bottom:4px;">Monto recibido en efectivo (S/)</div>
+        <input class="t-input" id="ef-monto" type="number" inputmode="decimal" placeholder="${(Number(DET.monto_por_cobrar||0)).toFixed(2)}">
+        <button class="t-btn aceptar full" style="margin-top:10px;" onclick="cobrarEfectivo()"><i class="fas fa-hand-holding-dollar"></i> MONTO RECIBIDO</button>
+        <p style="color:var(--t-tx2);font-size:12px;margin-top:8px;">Si el cliente paga por QR/app, se cobra desde su pantalla.</p>`;
+    if(est==='POR_CONFORMAR') return '<div style="color:var(--t-tx2)">Esperando la conformidad del cliente…</div>';
+    if(est==='CERRADO') return '<div style="color:var(--t-green)"><i class="fas fa-check"></i> Servicio cerrado. ¡Gracias!</div>';
+    return '<div style="color:var(--t-tx2)">Servicio en curso.</div>';
 }
 
 function render(){
-    $('#d-num').textContent = '#'+String(SID).padStart(5,'0');
+    $('#d-num').textContent = 'Tu servicio #'+String(SID).padStart(5,'0');
     $('#d-estado').textContent = DET.estado;
-    const enSitio = DET.estado==='EN_SITIO' || DET.estado==='EN_PROCESO';
-    const adic = (DET.adicionales||[]);
     $('#d-cont').innerHTML = `
         <div class="card">
             <h3><i class="fas fa-clipboard-list"></i> ${esc((DET.problema||'').match(/^\[(.*?)\]/)?RegExp.$1:'Servicio')}</h3>
             <div class="meta" style="color:var(--t-tx2);margin-bottom:8px;">${esc((DET.problema||'').replace(/^\[.*?\]\s*/,''))}</div>
             <div class="row"><span class="k"><i class="fas fa-location-dot"></i> Dirección</span><span>${esc(DET.direccion||'—')}</span></div>
-            ${DET.telefono?`<div class="row"><span class="k"><i class="fas fa-phone"></i> Teléfono</span><span>${esc(DET.telefono)}</span></div>`:''}
         </div>
-
-        <div class="card">${botonesEstado(DET.estado)||'<div style="color:var(--t-tx2)">Servicio en curso.</div>'}</div>
-
-        ${enSitio?`
-        <div class="card">
-            <h3><i class="fas fa-stethoscope"></i> Diagnóstico</h3>
-            <textarea class="t-input" id="d-diag" rows="3" placeholder="Describe el problema encontrado...">${esc(DET.diagnostico||'')}</textarea>
-            <button class="t-btn sec full" style="margin-top:10px;" onclick="guardarDiag()"><i class="fas fa-floppy-disk"></i> Guardar diagnóstico</button>
-            <button class="t-btn aceptar full" style="margin-top:10px;" onclick="abrirAdic()"><i class="fas fa-plus"></i> AGREGAR SERVICIO ADICIONAL</button>
-        </div>`:''}
-
-        <div class="card">
-            <h3><i class="fas fa-receipt"></i> Resumen</h3>
-            <div class="row"><span class="k">Base (visita)</span><span>${money(DET.base)}</span></div>
-            ${adic.map((a,i)=>`<div class="t-adic"><span>Adicional ${i+1}: ${esc(a.descripcion)}</span><span>${money(a.monto)} <span class="est ${a.estado}">${a.estado==='APROBADO'?'✓':(a.estado==='RECHAZADO'?'✗':'⏳')}</span></span></div>`).join('')}
-            <div class="row total"><span class="k">TOTAL</span><span>${money(DET.total)}</span></div>
-        </div>
-
-        ${enSitio?`<button class="t-btn aceptar full" ${DET.hay_pendientes?'disabled style="opacity:.5"':''} onclick="finalizar()"><i class="fas fa-check-double"></i> FINALIZAR SERVICIO</button>
-            ${DET.hay_pendientes?'<p style="color:var(--t-amber);text-align:center;font-size:13px;margin-top:8px;">Espera que el cliente apruebe los adicionales pendientes.</p>':''}`:''}
+        <div class="card">${acciones(DET.estado)}</div>
+        <div class="card" id="diag-card" style="display:none"></div>
+        <div class="t-label" style="color:var(--t-tx2);font-size:13px;margin:4px 2px;">Chat con el cliente</div>
+        <div class="chat"><div class="scroll" id="chat"></div>
+            <form onsubmit="return enviar(event)"><input type="text" class="t-input" id="msg" placeholder="Escribe un mensaje" autocomplete="off">
+            <button class="t-btn aceptar" style="width:auto;padding:0 16px;"><i class="fas fa-paper-plane"></i></button></form></div>
     `;
-    // Seguimiento GPS: se envía la ubicación sólo mientras va EN CAMINO
-    if (DET.estado === 'EN_CAMINO') { if (window.MitaUbicacion) MitaUbicacion.iniciar(SID); }
-    else if (window.MitaUbicacion) MitaUbicacion.detener();
+    // Ubicación: SOLO mientras va EN_CAMINO (no antes de "Voy en camino" ni después de "Llegué").
+    if (DET.estado === 'EN_CAMINO') iniciarGeo(); else detenerGeo();
+    if (!chatTimer) { cargarChat(); chatTimer = setInterval(cargarChat, 4000); }
 }
 
-async function cambiar(estado){
-    const r=await fetch('/api/v1/solicitudes/'+SID+'/estado',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({estado})});
-    if(r.ok){ toast('Estado: '+estado); cargar(); } else toast('Error');
+// --------- Parte A: estados ---------
+async function voyEnCamino(){
+    const r = await fetch('/api/v1/tecnico/servicios/'+SID+'/voy-en-camino',{method:'POST'});
+    if(r.ok){ const d=await r.json(); toast('Vas en camino'+(d.eta_min?` · ~${d.eta_min} min`:'')); cargar(); } else toast('No se pudo');
 }
-async function guardarDiag(){
-    const diag=$('#d-diag').value.trim();
-    await fetch('/api/v1/solicitudes/'+SID+'/diagnostico',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({diagnostico:diag})});
-    toast('Diagnóstico guardado');
+function iniciarGeo(){
+    if (geoTimer || !navigator.geolocation) return;
+    const enviar = () => navigator.geolocation.getCurrentPosition(async p => {
+        if (DET.estado !== 'EN_CAMINO') return;
+        try { await fetch('/api/v1/tecnico/servicios/'+SID+'/ubicacion',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({lat:p.coords.latitude,lng:p.coords.longitude,precision_m:p.coords.accuracy})}); } catch(e){}
+    }, ()=>{}, {enableHighAccuracy:true, timeout:10000, maximumAge:5000});
+    enviar(); geoTimer = setInterval(enviar, 18000);
 }
-function abrirAdic(){ $('#ad-desc').value=''; $('#ad-monto').value=''; $('#m-adic').classList.add('open'); }
-function cerrarAdic(){ $('#m-adic').classList.remove('open'); }
-async function enviarAdicional(){
-    const descripcion=$('#ad-desc').value.trim(); const monto=parseFloat($('#ad-monto').value);
-    if(!descripcion || !(monto>0)){ toast('Completa descripción y monto'); return; }
-    const r=await fetch('/api/v1/solicitudes/'+SID+'/adicionales',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({descripcion,monto})});
-    if(r.ok){ cerrarAdic(); toast('Enviado al cliente para aprobación'); cargar(); } else toast('Error');
+function detenerGeo(){ if(geoTimer){ clearInterval(geoTimer); geoTimer=null; } }
+function llegue(){
+    const envia = async (pos, confirmar) => {
+        const r = await fetch('/api/v1/tecnico/servicios/'+SID+'/llegue',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({lat:pos&&pos.lat,lng:pos&&pos.lng,confirmar:!!confirmar})});
+        const d = await r.json().catch(()=>({}));
+        if (d.ok){ detenerGeo(); toast('Avisamos al cliente que llegaste'); cargar(); }
+        else if (d.confirmar){ if (confirm(d.mensaje)) envia(pos, true); }
+        else toast('No se pudo');
+    };
+    if (navigator.geolocation)
+        navigator.geolocation.getCurrentPosition(p=>envia({lat:p.coords.latitude,lng:p.coords.longitude}, false), ()=>envia(null, true), {timeout:8000});
+    else envia(null, true);
 }
-async function finalizar(){
-    if(!confirm('¿Finalizar el servicio? Se capturará el monto total.')) return;
-    const r=await fetch('/api/v1/solicitudes/'+SID+'/finalizar',{method:'POST'});
-    const d=await r.json();
-    if(r.ok){
-        if(window.MitaUbicacion) MitaUbicacion.detener();
-        fetch('/api/v1/maps/solicitudes/'+SID+'/ubicacion-tecnico',{method:'DELETE'}).catch(()=>{});  // limpia el tracking
-        toast('Servicio finalizado · Total '+money(d.total)); setTimeout(()=>location.href='/tecnico/dashboard',1500);
+async function clienteNoEsta(){
+    if(!confirm('¿Avisar a la central que el cliente no está? No cancela el servicio.')) return;
+    const r = await fetch('/api/v1/tecnico/servicios/'+SID+'/cliente-no-esta',{method:'POST'});
+    toast(r.ok ? 'Avisamos a la central' : 'No se pudo');
+}
+
+// --------- Parte C: diagnóstico / presupuesto ---------
+function abrirDiag(){
+    const c = $('#diag-card'); c.style.display='block';
+    c.innerHTML = `
+        <h3><i class="fas fa-stethoscope"></i> Registrar diagnóstico</h3>
+        <div style="color:var(--t-tx2);font-size:13px;margin-bottom:4px;">Diagnóstico (obligatorio)</div>
+        <textarea class="t-input" id="p-diag" rows="3" placeholder="Qué encontraste"></textarea>
+        <div style="color:var(--t-tx2);font-size:13px;margin:12px 0 2px;">¿Requiere reparación?</div>
+        <div class="radio">
+            <label><input type="radio" name="rep" value="si" onchange="toggleRep(true)"> Sí</label>
+            <label><input type="radio" name="rep" value="no" checked onchange="toggleRep(false)"> No</label>
+        </div>
+        <div id="rep-campos" style="display:none">
+            <div style="color:var(--t-tx2);font-size:13px;margin-bottom:4px;">Descripción del trabajo</div>
+            <textarea class="t-input" id="p-trab" rows="2" placeholder="Qué harías"></textarea>
+            <div style="color:var(--t-tx2);font-size:13px;margin:12px 0 4px;">Monto total (S/)</div>
+            <input class="t-input" id="p-monto" type="number" inputmode="decimal" placeholder="180">
+            <label style="display:block;color:var(--t-tx2);font-size:13px;margin:12px 0 4px;"><input type="checkbox" id="p-mat"> Incluye materiales</label>
+            <input class="t-input" id="p-mat-det" placeholder="Detalle de materiales">
+            <div style="color:var(--t-tx2);font-size:13px;margin:12px 0 4px;">Tiempo estimado</div>
+            <input class="t-input" id="p-tiempo" placeholder="Ej: 2 horas">
+        </div>
+        <button class="t-btn aceptar full" style="margin-top:14px;" onclick="enviarDiag()"><i class="fas fa-paper-plane"></i> ENVIAR AL CLIENTE</button>`;
+    c.scrollIntoView({behavior:'smooth'});
+}
+function toggleRep(si){ $('#rep-campos').style.display = si ? 'block' : 'none'; }
+async function enviarDiag(){
+    const diag = $('#p-diag').value.trim();
+    if(!diag){ toast('El diagnóstico es obligatorio'); return; }
+    const requiere = document.querySelector('input[name=rep]:checked').value === 'si';
+    const body = { diagnostico: diag, requiere_reparacion: requiere };
+    if (requiere){
+        const monto = parseFloat($('#p-monto').value);
+        if(!(monto>0)){ toast('Falta el monto'); return; }
+        body.descripcion_trabajo = $('#p-trab').value.trim();
+        body.monto = monto;
+        body.incluye_materiales = $('#p-mat').checked;
+        body.materiales_detalle = $('#p-mat-det').value.trim();
+        body.tiempo_estimado = $('#p-tiempo').value.trim();
     }
-    else toast(d.detail||'No se pudo finalizar');
+    const r = await fetch('/api/v1/tecnico/servicios/'+SID+'/presupuesto',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d = await r.json().catch(()=>({}));
+    if(r.ok){ $('#diag-card').style.display='none'; toast(requiere?'Presupuesto enviado al cliente':'Diagnóstico registrado'); cargar(); }
+    else toast(d.detail || 'No se pudo enviar');
 }
-window.cambiar=cambiar; window.guardarDiag=guardarDiag; window.abrirAdic=abrirAdic; window.cerrarAdic=cerrarAdic; window.enviarAdicional=enviarAdicional; window.finalizar=finalizar;
+
+// --------- Parte B: chat (rol técnico) ---------
+function pintaMsg(m){
+    const w = document.createElement('div');
+    if (m.tipo === 'sistema'){ w.className='b sis'; w.textContent=m.contenido; return w; }
+    if (m.tipo === 'tarjeta'){ w.className='tarjeta'; let t={}; try{t=JSON.parse(m.contenido);}catch(e){}
+        w.innerHTML = `<b><i class="fas fa-file-invoice-dollar"></i> Presupuesto v${t.version||1}</b><div style="margin:6px 0;">${esc(t.diagnostico||'')}</div>`+
+            (t.requiere_reparacion ? `<div>${esc(t.descripcion_trabajo||'')}</div><div style="font-size:20px;font-weight:800;margin-top:6px;">${money(t.monto)}</div>`+
+             (t.incluye_materiales?`<div style="color:#8a8a9a;font-size:12px;">Incluye materiales: ${esc(t.materiales_detalle||'')}</div>`:'')+
+             (t.tiempo_estimado?`<div style="color:#8a8a9a;font-size:12px;">Tiempo: ${esc(t.tiempo_estimado)}</div>`:'')
+            : '<div style="color:#8a8a9a">Sin reparación necesaria.</div>');
+        return w; }
+    w.className = 'b ' + (m.autor_rol==='tecnico' ? 'mio' : 'otro') + (m.oculto_dato?' oculto':'');
+    w.textContent = m.contenido;
+    return w;
+}
+async function cargarChat(){
+    try {
+        const r = await fetch('/api/v1/servicios/'+SID+'/chat?rol=tecnico&desde='+ultId);
+        if(!r.ok) return;
+        const d = await r.json();
+        const cont = $('#chat'); if(!cont) return;
+        (d.mensajes||[]).forEach(m => { cont.appendChild(pintaMsg(m)); ultId = Math.max(ultId, m.id); });
+        if (d.mensajes && d.mensajes.length) cont.scrollTop = cont.scrollHeight;
+    } catch(e){}
+}
+async function enviar(ev){
+    ev.preventDefault();
+    const inp = $('#msg'); const txt = inp.value.trim(); if(!txt) return false;
+    inp.value='';
+    const r = await fetch('/api/v1/servicios/'+SID+'/chat?rol=tecnico',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo:'texto',contenido:txt})});
+    const d = await r.json().catch(()=>({}));
+    if (d.oculto_dato) toast(d.aviso || 'Ocultamos ese dato; usa el chat de MITA');
+    cargarChat();
+    return false;
+}
+
+// --------- Parte B (zMita-39): Terminé / cobro en efectivo ---------
+async function terminar(){
+    if(!confirm('¿Terminaste el servicio?')) return;
+    const r = await fetch('/api/v1/tecnico/servicios/'+SID+'/terminar',{method:'POST'});
+    const d = await r.json().catch(()=>({}));
+    if(r.ok){
+        if(d.desglose && d.desglose.total>0) toast('Por cobrar: S/ '+Number(d.desglose.total).toFixed(2));
+        else toast('Listo. Esperando la conformidad del cliente.');
+        cargar();
+    } else toast(d.detail || 'No se pudo');
+}
+async function cobrarEfectivo(){
+    const monto = parseFloat($('#ef-monto').value || DET.monto_por_cobrar);
+    if(!(monto>0)){ toast('Ingresa el monto recibido'); return; }
+    const r = await fetch('/api/v1/tecnico/servicios/'+SID+'/efectivo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monto})});
+    const d = await r.json().catch(()=>({}));
+    if(r.ok){ toast('Pedimos al cliente que confirme S/ '+monto.toFixed(2)); cargar(); } else toast(d.detail || 'No se pudo');
+}
+
+window.voyEnCamino=voyEnCamino; window.llegue=llegue; window.clienteNoEsta=clienteNoEsta;
+window.abrirDiag=abrirDiag; window.toggleRep=toggleRep; window.enviarDiag=enviarDiag; window.enviar=enviar;
+window.terminar=terminar; window.cobrarEfectivo=cobrarEfectivo;
 document.addEventListener('DOMContentLoaded', cargar);
 </script>
 </body>

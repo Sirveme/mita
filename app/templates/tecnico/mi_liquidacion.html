@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Tu liquidación — MITA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="/static/css/tecnico.css?v={{ STATIC_V }}">
+    <style>
+        .lq { background:#12101a; border:1px solid #2a2a4e; border-radius:14px; padding:16px; margin-bottom:12px; }
+        .lq h3 { margin:0 0 10px; font-size:16px; }
+        .row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #1c1c30; font-size:14px; }
+        .row:last-child { border-bottom:none; } .row .k { color:var(--t-tx2); }
+        .big { font-size:28px; font-weight:800; color:var(--t-green); }
+        .pill { padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; background:rgba(212,175,55,.15); color:#d4af37; }
+        .det { font-size:13px; } .det th, .det td { text-align:left; padding:6px 8px; border-bottom:1px solid #1c1c30; }
+        .det th { color:var(--t-tx2); font-weight:600; }
+        .nota { color:var(--t-amber); font-size:12px; margin-top:8px; }
+        input { background:#151520; border:1px solid #2a2a4e; color:#e9edef; border-radius:8px; padding:8px 10px; width:100%; margin-top:4px; }
+        .hist a { color:#c9bfe0; text-decoration:none; }
+    </style>
+</head>
+<body>
+<div class="t-wrap t-detalle">
+    <div class="t-header">
+        <a class="t-back" href="/tecnico/dashboard"><i class="fas fa-arrow-left"></i></a>
+        <div class="brand" style="margin-left:6px;"><b>Tu liquidación</b><small>Tu parte por los servicios cerrados</small></div>
+    </div>
+    <div class="t-body" id="cont"><div class="lq"><h3>Cargando…</h3></div></div>
+</div>
+<div class="t-toast" id="t-toast"></div>
+<script>
+const $ = (s)=>document.querySelector(s);
+const money = (v)=>'S/ '+(Number(v)||0).toFixed(2);
+const esc = (t)=>{const d=document.createElement('div');d.textContent=t==null?'':t;return d.innerHTML;};
+function toast(m){const t=$('#t-toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+const ESTADOS = {borrador:'En preparación', enviada:'Lista para tu Recibo por Honorarios', rxh_recibido:'Recibo recibido', aprobada:'Aprobada', pagada:'Pagada'};
+let ACTUAL = null;
+
+async function cargar(){
+    let d; try{ d = await (await fetch('/api/v1/tecnico/mi-liquidacion')).json(); }catch(e){ $('#cont').innerHTML='<div class="lq">No se pudo cargar.</div>'; return; }
+    ACTUAL = d.actual;
+    if(!d.actual){ $('#cont').innerHTML='<div class="lq"><h3>Aún no tienes una liquidación</h3><p style="color:var(--t-tx2)">Cuando se cierre el periodo verás aquí tu parte.</p></div>'; return; }
+    const l = d.actual;
+    const items = (d.items||[]).map(i=>`<tr><td>${esc(i.codigo)}</td><td>${money(i.total)}</td><td>${money(i.efectivo_tecnico)}</td><td>${money(i.parte_mita)}</td><td>${money(i.parte_tecnico)}</td></tr>`).join('');
+    const hist = (d.historial||[]).slice(1).map(h=>`<div class="row"><span class="k">${esc(h.periodo_inicio)} → ${esc(h.periodo_fin)}</span><span>${money(h.a_transferir)} · ${esc(ESTADOS[h.estado]||h.estado)}</span></div>`).join('') || '<div style="color:var(--t-tx2);font-size:13px;">Sin periodos anteriores.</div>';
+    $('#cont').innerHTML = `
+        <div class="lq">
+            <div class="row"><span class="k">Periodo</span><span>${esc(l.periodo_inicio)} → ${esc(l.periodo_fin)}</span></div>
+            <div class="row"><span class="k">Estado</span><span class="pill">${esc(ESTADOS[l.estado]||l.estado)}</span></div>
+            <div class="row"><span class="k">Servicios</span><span>${l.cantidad}</span></div>
+            <div class="row"><span class="k">Tu parte (bruto)</span><span>${money(l.parte_tecnico)}</span></div>
+            <div class="row"><span class="k">Efectivo que ya cobraste</span><span>${money(l.efectivo_en_poder_tecnico)}</span></div>
+            ${l.saldo_arrastrado?`<div class="row"><span class="k">Saldo del periodo anterior</span><span>${money(l.saldo_arrastrado)}</span></div>`:''}
+            <div class="row"><span class="k">A transferirte</span><span class="big">${money(l.a_transferir)}</span></div>
+            ${l.saldo_a_favor_mita?`<div class="row"><span class="k">Queda a favor de MITA (se arrastra)</span><span>${money(l.saldo_a_favor_mita)}</span></div>`:''}
+            ${l.retencion_monto?`<div class="row"><span class="k">Retención de 4ta (estimada)</span><span>${money(l.retencion_monto)}</span></div><div class="nota">Confirmar con el contador de MITA.</div>`:''}
+            ${l.pago_fecha?`<div class="row"><span class="k">Pagada</span><span>${esc(l.pago_medio||'')} ${esc(l.pago_operacion||'')}</span></div>`:''}
+        </div>
+        <div class="lq">
+            <h3><i class="fas fa-list"></i> Detalle por servicio</h3>
+            <table class="det" style="width:100%;border-collapse:collapse;">
+              <tr><th>Código</th><th>Total</th><th>Efectivo</th><th>MITA</th><th>Tu parte</th></tr>${items}
+            </table>
+        </div>
+        ${['enviada','rxh_recibido'].includes(l.estado)?`
+        <div class="lq">
+            <h3><i class="fas fa-file-invoice"></i> Tu Recibo por Honorarios</h3>
+            <p style="color:var(--t-tx2);font-size:13px;">Emítelo fuera de MITA, a nombre de MITA (RUC 20616219686), por tu parte bruta (${money(l.parte_tecnico)}) y súbelo en PDF.</p>
+            <div style="color:var(--t-tx2);font-size:13px;margin-top:8px;">Número de RxH</div>
+            <input id="rxh-num" placeholder="E001-123">
+            <div style="color:var(--t-tx2);font-size:13px;margin-top:8px;">Monto del RxH (S/)</div>
+            <input id="rxh-monto" type="number" inputmode="decimal" placeholder="${(Number(l.parte_tecnico)||0).toFixed(2)}">
+            <div style="color:var(--t-tx2);font-size:13px;margin-top:8px;">PDF del RxH</div>
+            <input id="rxh-pdf" type="file" accept="application/pdf">
+            <button class="t-btn aceptar full" style="margin-top:12px;" onclick="subirRxh()"><i class="fas fa-upload"></i> Subir mi Recibo por Honorarios</button>
+        </div>`:''}
+        <div class="lq hist"><h3><i class="fas fa-clock-rotate-left"></i> Historial</h3>${hist}</div>`;
+}
+async function subirRxh(){
+    const numero = $('#rxh-num').value.trim();
+    if(!numero){ toast('Ingresa el número de RxH'); return; }
+    const f = $('#rxh-pdf').files[0];
+    let pdf = '';
+    if(f){
+        if(f.type!=='application/pdf'){ toast('El archivo debe ser PDF'); return; }
+        if(f.size > 5*1024*1024){ toast('El PDF supera los 5 MB'); return; }
+        pdf = await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(f);});
+    }
+    const r = await fetch('/api/v1/tecnico/liquidaciones/'+ACTUAL.id+'/rxh',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({rxh_numero:numero, rxh_monto:Number($('#rxh-monto').value)||null, rxh_pdf_url:pdf})});
+    const d = await r.json().catch(()=>({}));
+    if(r.ok){ toast(d.aviso || 'Recibo recibido ✓'); cargar(); } else toast(d.detail||'No se pudo subir');
+}
+window.subirRxh=subirRxh;
+document.addEventListener('DOMContentLoaded', cargar);
+</script>
+</body>
+</html>
