@@ -69,6 +69,15 @@ SQL_FILES = [
     "27_politica_cancelacion.sql",        # política de cancelación editable
     "28_contacto_emergencias.sql",        # contacto de emergencias (ASAP sin cupos hoy)
     "29_push_suscripciones.sql",          # suscripciones Web Push (VAPID) — avisos
+    "30_push_envios_canal.sql",           # envíos/entrega + dedup + canal de avisos (zMita-35)
+    "31_pagos_solicitud.sql",             # pago QR Yape/Plin validado con PagoOK (zMita-34 v2)
+    "32_pagos_voucher.sql",               # hora del voucher (desempate) + puntaje (zMita-36)
+    "33_ofertas_servicio.sql",            # ofertas de servicio a técnicos (etapa 4, zMita-37)
+    "34_servicio_vivo.sql",               # en camino + chat de 3 + presupuesto (etapas 5-6, zMita-38)
+    "35_cierre_identificacion.sql",       # identificación (etapa 2) + cierre/comprobante (etapa 7, zMita-39)
+    "36_pago_concepto.sql",               # cobro QR por concepto visita/reparación (zMita-40)
+    "37_comprobante_sunat.sql",           # estado SUNAT real del comprobante + NC (zMita-41)
+    "38_liquidacion.sql",                 # liquidación a técnicos (etapa 8, zMita-41)
 ]
 
 # (etiqueta, módulo, función)
