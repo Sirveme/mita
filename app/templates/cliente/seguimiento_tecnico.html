@@ -7,85 +7,239 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap">
     <style>
-        :root { --bg:#0e0e1a; --panel:#181830; --panel2:#252542; --tx:#e9edef; --tx2:#8a8a9a; --green:#22c55e; --border:#2a2a4e; }
+        :root { --bg:#0e0e1a; --panel:#181830; --panel2:#252542; --tx:#e9edef; --tx2:#8a8a9a; --green:#22c55e; --gold:#d4af37; --border:#2a2a4e; }
         * { margin:0; padding:0; box-sizing:border-box; }
+        html,body { overflow-x:hidden; }
         body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--tx); }
         .seg { max-width:520px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; }
-        .seg-head { padding:18px 20px 10px; display:flex; align-items:center; gap:12px; }
-        .seg-head .back { color:var(--tx); font-size:18px; text-decoration:none; }
-        .seg-head h2 { font-size:18px; font-weight:700; flex:1; }
-        .eta { display:flex; gap:14px; font-size:16px; color:var(--green); font-weight:600; padding:0 20px 10px; }
-        #mapa-seguimiento { height:50vh; min-height:280px; margin:0 16px; border-radius:16px; overflow:hidden; background:var(--panel); }
-        .tecnico-card { display:flex; align-items:center; gap:14px; padding:16px; margin:14px 16px 0; background:var(--panel); border:1px solid var(--border); border-radius:14px; }
-        .tecnico-card .foto { width:52px; height:52px; border-radius:50%; background:var(--panel2); display:flex; align-items:center; justify-content:center; font-size:22px; color:var(--green); font-weight:700; overflow:hidden; }
-        .tecnico-card .foto img { width:100%; height:100%; object-fit:cover; }
-        .tecnico-card .datos { flex:1; }
-        .tecnico-card .datos b { font-size:16px; } .tecnico-card .datos span { display:block; color:var(--tx2); font-size:13px; margin-top:2px; }
-        .btn-chat { background:var(--green); color:#06210f; padding:10px 14px; border-radius:10px; text-decoration:none; font-weight:700; font-size:14px; }
-        .estados { display:flex; flex-direction:column; gap:8px; padding:16px; }
-        .estado { padding:12px 14px; border-radius:10px; background:var(--panel2); color:var(--tx2); font-size:14px; font-weight:500; }
-        .estado.done { color:var(--green); }
-        .estado.now { background:rgba(34,197,94,.14); border:1px solid var(--green); color:var(--green); font-weight:700; }
+        /* Cabecera fija */
+        .cab { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--border); padding:12px 16px 10px; }
+        .cab-top { display:flex; align-items:center; gap:12px; }
+        .cab .foto { width:46px; height:46px; border-radius:50%; background:var(--panel2); display:flex; align-items:center; justify-content:center; font-size:20px; color:var(--green); overflow:hidden; flex:0 0 auto; }
+        .cab .foto img { width:100%; height:100%; object-fit:cover; }
+        .cab .datos { flex:1; min-width:0; }
+        .cab .datos b { font-size:16px; } .cab .datos span { display:block; color:var(--tx2); font-size:13px; }
+        .cab .eta { text-align:right; color:var(--green); font-weight:700; font-size:15px; white-space:nowrap; }
+        #mapa { height:30vh; min-height:180px; margin:10px 0 0; border-radius:14px; overflow:hidden; background:var(--panel); }
+        .ubi-vieja { color:var(--tx2); font-size:12px; margin-top:6px; }
+        /* Chat */
+        .chat { flex:1; display:flex; flex-direction:column; gap:8px; padding:12px 16px 90px; }
+        .b { max-width:82%; padding:9px 12px; border-radius:13px; font-size:14px; line-height:1.4; word-wrap:break-word; }
+        .b.mio { align-self:flex-end; background:var(--green); color:#06210f; }
+        .b.otro { align-self:flex-start; background:var(--panel); border:1px solid var(--border); }
+        .b.sis { align-self:center; background:transparent; color:var(--tx2); font-size:12px; text-align:center; }
+        .b.oculto { border:1px dashed var(--gold); }
+        .tarjeta { align-self:stretch; background:var(--panel); border:1px solid var(--gold); border-radius:14px; padding:14px; }
+        .tarjeta h4 { color:var(--gold); font-size:14px; margin-bottom:8px; }
+        .tarjeta .monto { font-size:26px; font-weight:800; margin:8px 0; }
+        .tarjeta .acc { display:flex; gap:10px; margin-top:12px; }
+        .tarjeta .acc button { flex:1; border:none; border-radius:10px; padding:12px; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; }
+        .b-si { background:var(--green); color:#06210f; } .b-no { background:transparent; color:#ff6b6b; border:1px solid #ff6b6b !important; }
+        /* Barra de envío */
+        .barra { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:520px; background:var(--bg); border-top:1px solid var(--border); padding:10px 16px calc(10px + env(safe-area-inset-bottom)); display:flex; gap:8px; }
+        .barra input { flex:1; background:var(--panel); border:1px solid var(--border); color:var(--tx); border-radius:10px; padding:11px 13px; font-family:inherit; font-size:14px; }
+        .barra button { background:var(--green); color:#06210f; border:none; border-radius:10px; width:46px; font-size:16px; cursor:pointer; }
+        .barra.cerrado { opacity:.5; pointer-events:none; }
+        #toast { position:fixed; left:50%; bottom:80px; transform:translateX(-50%); background:#1e2a3a; color:#fff; padding:11px 16px; border-radius:12px; font-size:14px; opacity:0; transition:.25s; pointer-events:none; z-index:30; }
     </style>
     {% if GOOGLE_MAPS_API_KEY %}
     <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places"></script>
     {% endif %}
-    <script src="/static/js/cliente-seguimiento.js?v={{ STATIC_V }}" defer></script>
 </head>
 <body>
 <div class="seg">
-    <div class="seg-head">
-        <a class="back" href="/cliente/servicio/{{ solicitud_id }}/chats"><i class="fas fa-arrow-left"></i></a>
-        <h2 id="seg-titulo">Tu técnico viene en camino</h2>
+    <div class="cab">
+        <div class="cab-top">
+            <a href="/cliente/servicio/{{ solicitud_id }}/chats" style="color:var(--tx);font-size:18px;text-decoration:none;"><i class="fas fa-arrow-left"></i></a>
+            <div class="foto" id="foto"><i class="fas fa-user"></i></div>
+            <div class="datos"><b id="nombre">Tu técnico</b><span id="esp">—</span></div>
+            <div class="eta" id="eta">—</div>
+        </div>
+        <div id="mapa"></div>
+        <div class="ubi-vieja" id="ubi-vieja"></div>
     </div>
-    <div class="eta" id="eta-tecnico"><span class="eta-tiempo">🕐 Calculando…</span></div>
-    <div id="mapa-seguimiento"></div>
-
-    <div class="tecnico-card">
-        <div class="foto" id="t-foto"><i class="fas fa-user"></i></div>
-        <div class="datos"><b id="t-nombre">Técnico</b><span id="t-meta">⭐ —</span></div>
-        <a class="btn-chat" id="t-chat" href="#"><i class="fas fa-comment"></i> Chat</a>
-    </div>
-
-    <div class="estados" id="estados">
-        <div class="estado done"><i class="fas fa-check"></i> Técnico asignado</div>
-        <div class="estado" data-e="EN_CAMINO">🚗 En camino</div>
-        <div class="estado" data-e="EN_SITIO">🏠 En tu domicilio</div>
-        <div class="estado" data-e="FINALIZADO">✅ Servicio completado</div>
-    </div>
+    <div class="chat" id="chat"></div>
+    <div id="extra" style="padding:0 16px 90px;"></div>
 </div>
+<form class="barra" id="barra" onsubmit="return enviar(event)">
+    <input type="text" id="msg" placeholder="Escribe un mensaje" autocomplete="off">
+    <button type="submit"><i class="fas fa-paper-plane"></i></button>
+</form>
+<div id="toast"></div>
 
 <script>
 const SID = {{ solicitud_id }};
-const ORDEN = ['ASIGNADA','ACEPTADA','EN_CAMINO','EN_SITIO','EN_PROCESO','FINALIZADO'];
-function pintarEstados(estado){
-    const idx = Math.max(ORDEN.indexOf(estado), 0);
-    document.querySelectorAll('#estados .estado[data-e]').forEach(el=>{
-        const i = ORDEN.indexOf(el.dataset.e);
-        el.classList.remove('done','now');
-        if (i < idx) el.classList.add('done');
-        else if (el.dataset.e === estado || (estado==='EN_PROCESO' && el.dataset.e==='EN_SITIO')) el.classList.add('now');
-    });
+let HAY_MAPS = {{ 'true' if GOOGLE_MAPS_API_KEY else 'false' }};
+// Si la clave de Maps falla (dominio no permitido, cuota, etc.) ocultamos el mapa con elegancia.
+window.gm_authFailure = function(){ HAY_MAPS = false; const m = document.getElementById('mapa'); if (m) m.style.display = 'none'; };
+const esc = (t) => { const d=document.createElement('div'); d.textContent=t==null?'':t; return d.innerHTML; };
+const money = (v) => 'S/ ' + (Number(v)||0).toFixed(2);
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,2600); }
+let ultId = 0, mapa=null, mkTec=null, mkCli=null, decididos={};
+
+// -------- Cabecera + mapa (Parte A) --------
+async function cargarSeguimiento(){
+    let d; try { d = await (await fetch('/api/v1/servicios/'+SID+'/seguimiento')).json(); } catch(e){ return; }
+    window.PASARELA = !!d.pasarela_activa;
+    document.getElementById('nombre').textContent = d.tecnico_nombre || 'Tu técnico';
+    document.getElementById('esp').textContent = d.especialidad || '';
+    if (d.foto) document.getElementById('foto').innerHTML = '<img src="'+esc(d.foto)+'" alt="">';
+    const eta = document.getElementById('eta');
+    if (d.estado === 'EN_CAMINO') eta.textContent = d.eta_min ? ('🕐 ~'+d.eta_min+' min') : '🕐 calculando…';
+    else if (d.estado === 'EN_SITIO') eta.textContent = '🏠 en tu domicilio';
+    else eta.textContent = '';
+    const vieja = document.getElementById('ubi-vieja');
+    const u = d.tecnico_ubicacion;
+    if (u && u.hace_seg != null && u.hace_seg > 90) vieja.textContent = 'Última ubicación hace ' + Math.round(u.hace_seg/60) + ' min';
+    else vieja.textContent = '';
+    pintarMapa(d);
+    // Conformidad / cierre
+    const extra = document.getElementById('extra');
+    if (d.estado === 'POR_CONFORMAR' && !window._confHecha) { if (extra.dataset.k !== 'conf'){ extra.dataset.k='conf'; extra.innerHTML = conformidadHTML(); } }
+    else if (d.estado === 'CERRADO') { extra.innerHTML = '<div class="tarjeta"><h4><i class="fas fa-check"></i> Servicio cerrado</h4>¡Gracias por usar MITA!</div>'; document.getElementById('barra').classList.add('cerrado'); }
 }
-let seguimientoIniciado = false;
-async function cargar(){
-    let d; try { d = await (await fetch('/api/v1/solicitudes/estado/'+SID)).json(); } catch(e){ return; }
-    if (d.tecnico_nombre) {
-        document.getElementById('t-nombre').textContent = d.tecnico_nombre;
-        document.getElementById('seg-titulo').textContent = d.tecnico_nombre + ' viene en camino';
-    }
-    document.getElementById('t-meta').textContent = '⭐ ' + (d.tecnico_rating != null ? d.tecnico_rating.toFixed(1) : '—');
-    if (d.tecnico_foto) document.getElementById('t-foto').innerHTML = '<img src="'+d.tecnico_foto+'" alt="">';
-    const chat = document.getElementById('t-chat');
-    chat.href = d.sala_id ? ('/cliente/chat/'+d.sala_id) : ('/cliente/servicio/'+SID+'/chats');
-    pintarEstados(d.estado);
-    if (!seguimientoIniciado && window.MitaSeguimiento) {
-        seguimientoIniciado = true;
-        MitaSeguimiento.iniciar({ solicitudId: SID, clienteLat: d.cliente_lat, clienteLng: d.cliente_lng, mapaId: 'mapa-seguimiento', etaId: 'eta-tecnico' });
-    }
-    if (['FINALIZADO','CANCELADA'].includes(d.estado) && window.MitaSeguimiento) MitaSeguimiento.detener();
+
+let _estrellas = 0;
+function conformidadHTML(){
+    const star = (n)=>`<span onclick="setEstrellas(${n})" id="st-${n}" style="cursor:pointer;font-size:26px;color:#3a3a56;">★</span>`;
+    return `<div class="tarjeta"><h4><i class="fas fa-clipboard-check"></i> ¿Quedó resuelto?</h4>`+
+        `<div class="acc"><button class="b-si" onclick="conf(true)">Sí</button><button class="b-no" onclick="conf(false)">No</button></div>`+
+        `<div style="margin-top:12px;color:var(--tx2);font-size:13px;">Califica (1 a 5)</div>`+
+        `<div id="stars">${[1,2,3,4,5].map(star).join('')}</div>`+
+        `<textarea id="conf-com" rows="2" placeholder="Comentario (opcional)" style="width:100%;margin-top:8px;background:#0e0e1a;color:var(--tx);border:1px solid var(--border);border-radius:10px;padding:8px;font-family:inherit;"></textarea>`;
 }
-document.addEventListener('DOMContentLoaded', ()=>{ cargar(); setInterval(cargar, 8000); });
+function setEstrellas(n){ _estrellas = n; for(let i=1;i<=5;i++){ const el=document.getElementById('st-'+i); if(el) el.style.color = i<=n ? '#d4af37' : '#3a3a56'; } }
+async function conf(resuelto){
+    const comentario = (document.getElementById('conf-com')||{}).value || '';
+    const r = await fetch('/api/v1/servicios/'+SID+'/conformidad',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({resuelto,estrellas:_estrellas||null,comentario})});
+    if (r.ok){ window._confHecha = true; toast('¡Gracias por tu respuesta!'); cargarSeguimiento(); } else toast('No se pudo enviar');
+}
+window.setEstrellas=setEstrellas; window.conf=conf;
+function pintarMapa(d){
+    if (!HAY_MAPS || !window.google || !window.google.maps){ document.getElementById('mapa').style.display='none'; return; }
+    const cli = d.cliente, tec = d.tecnico_ubicacion;
+    if (!cli || cli.lat == null){ document.getElementById('mapa').style.display='none'; return; }
+    const centro = { lat: Number((tec&&tec.lat) || cli.lat), lng: Number((tec&&tec.lng) || cli.lng) };
+    if (!mapa){ mapa = new google.maps.Map(document.getElementById('mapa'), { center:centro, zoom:14, disableDefaultUI:true }); }
+    if (!mkCli) mkCli = new google.maps.Marker({ map:mapa, position:{lat:Number(cli.lat),lng:Number(cli.lng)}, label:'🏠' });
+    if (tec && tec.lat != null){
+        const p = { lat:Number(tec.lat), lng:Number(tec.lng) };
+        if (!mkTec) mkTec = new google.maps.Marker({ map:mapa, position:p, label:'🔧' }); else mkTec.setPosition(p);
+        const b = new google.maps.LatLngBounds(); b.extend(mkCli.getPosition()); b.extend(p); mapa.fitBounds(b, 60);
+    }
+}
+
+// -------- Chat (Parte B) + tarjeta presupuesto (Parte C) --------
+function tarjeta(t){
+    if (t.tipo === 'cobro') return tjCobro(t);
+    if (t.tipo === 'confirmar_efectivo') return tjConfirmarEfectivo(t);
+    if (t.tipo === 'comprobante') return tjComprobante(t);
+    return tjPresupuesto(t);
+}
+function tjPresupuesto(t){
+    const w = document.createElement('div'); w.className='tarjeta';
+    let html = `<h4><i class="fas fa-file-invoice-dollar"></i> Presupuesto · versión ${t.version||1}</h4>`+
+               `<div>${esc(t.diagnostico||'')}</div>`;
+    if (t.requiere_reparacion){
+        html += (t.descripcion_trabajo?`<div style="margin-top:6px;">${esc(t.descripcion_trabajo)}</div>`:'')+
+                `<div class="monto">${money(t.monto)}</div>`+
+                (t.incluye_materiales?`<div style="color:var(--tx2);font-size:13px;">Incluye materiales: ${esc(t.materiales_detalle||'sí')}</div>`:'<div style="color:var(--tx2);font-size:13px;">No incluye materiales</div>')+
+                (t.tiempo_estimado?`<div style="color:var(--tx2);font-size:13px;">Tiempo estimado: ${esc(t.tiempo_estimado)}</div>`:'')+
+                `<div class="acc" data-pid="${t.presupuesto_id}">
+                    <button class="b-si" onclick="decidir(${t.presupuesto_id},true,this)"><i class="fas fa-check"></i> Aceptar</button>
+                    <button class="b-no" onclick="decidir(${t.presupuesto_id},false,this)">No, gracias</button>
+                 </div>`;
+    } else {
+        html += `<div style="color:var(--tx2);margin-top:8px;">El técnico no encontró una reparación necesaria.</div>`;
+    }
+    w.innerHTML = html;
+    return w;
+}
+function tjCobro(t){
+    const w = document.createElement('div'); w.className='tarjeta';
+    const lineas = (t.reparacion>0?`<div style="color:var(--tx2);font-size:13px;">Reparación: ${money(t.reparacion)}</div>`:'')+
+                   (t.visita_efectivo>0?`<div style="color:var(--tx2);font-size:13px;">Visita: ${money(t.visita_efectivo)}</div>`:'');
+    // Yape/Plin (QR validado con PagoOK). "Tarjeta" solo si la pasarela está activa.
+    const tarjeta = window.PASARELA ? `<a class="b-no" style="text-align:center;text-decoration:none;" href="/pagar/${SID}?concepto=reparacion"><i class="fas fa-credit-card"></i> Tarjeta</a>` : '';
+    w.innerHTML = `<h4><i class="fas fa-cash-register"></i> Pagar ${money(t.total)}</h4>${lineas}`+
+        `<div class="monto">${money(t.total)}</div>`+
+        `<div class="acc"><a class="b-si" style="text-align:center;text-decoration:none;" href="/pagar/${SID}?concepto=reparacion"><i class="fas fa-qrcode"></i> Pagar con Yape/Plin</a>${tarjeta}</div>`+
+        `<div style="color:var(--tx2);font-size:12px;margin-top:8px;">Si pagas en efectivo al técnico, él registrará el monto y te pediremos confirmarlo aquí.</div>`;
+    return w;
+}
+function tjConfirmarEfectivo(t){
+    const w = document.createElement('div'); w.className='tarjeta';
+    w.innerHTML = `<h4><i class="fas fa-hand-holding-dollar"></i> ¿Pagaste ${money(t.monto)} en efectivo?</h4>`+
+        `<div class="acc">`+
+        `<button class="b-si" onclick="confEfectivo(${t.monto}, this)"><i class="fas fa-check"></i> Sí, pagué ${money(t.monto)}</button>`+
+        `<button class="b-no" onclick="confEfectivoOtro(this)">Pagué otro monto</button>`+
+        `</div>`;
+    return w;
+}
+function tjComprobante(t){
+    const w = document.createElement('div'); w.className='tarjeta';
+    w.innerHTML = `<h4><i class="fas fa-receipt"></i> Tu comprobante está listo</h4>`+
+        `<div style="color:var(--tx2);font-size:13px;">${esc((t.comprobante_tipo||'comprobante'))} ${esc(t.serie||'')}-${esc(t.numero||'')}</div>`+
+        (t.pdf_url?`<div class="acc"><a class="b-si" style="text-align:center;text-decoration:none;" href="${esc(t.pdf_url)}" target="_blank"><i class="fas fa-file-pdf"></i> Ver PDF</a></div>`:'');
+    return w;
+}
+async function confEfectivo(monto, btn){
+    btn.parentElement.querySelectorAll('button').forEach(b=>b.disabled=true);
+    const r = await fetch('/api/v1/servicios/'+SID+'/efectivo-confirmar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monto})});
+    const d = await r.json().catch(()=>({}));
+    toast(r.ok ? (d.estado==='PAGADO'?'¡Gracias! Pago confirmado.':'Lo revisaremos con la central.') : (d.detail||'No se pudo'));
+}
+async function confEfectivoOtro(btn){
+    const m = prompt('¿Cuánto pagaste en efectivo? (S/)');
+    if (m == null) return;
+    btn.parentElement.querySelectorAll('button').forEach(b=>b.disabled=true);
+    const r = await fetch('/api/v1/servicios/'+SID+'/efectivo-confirmar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monto:Number(m)})});
+    const d = await r.json().catch(()=>({}));
+    toast(r.ok ? 'Lo revisaremos con la central.' : (d.detail||'No se pudo'));
+}
+window.confEfectivo=confEfectivo; window.confEfectivoOtro=confEfectivoOtro;
+function pintaMsg(m){
+    if (m.tipo === 'tarjeta'){ let t={}; try{t=JSON.parse(m.contenido);}catch(e){} return tarjeta(t); }
+    const w = document.createElement('div');
+    if (m.tipo === 'sistema'){ w.className='b sis'; w.textContent=m.contenido; return w; }
+    w.className = 'b ' + (m.autor_rol==='cliente' ? 'mio' : 'otro') + (m.oculto_dato?' oculto':'');
+    w.textContent = m.contenido;
+    return w;
+}
+async function cargarChat(){
+    try {
+        const r = await fetch('/api/v1/servicios/'+SID+'/chat?rol=cliente&desde='+ultId);
+        if (r.status === 403){ document.getElementById('chat').innerHTML='<div class="b sis">No tienes acceso a este chat.</div>'; return; }
+        if (!r.ok) return;
+        const d = await r.json();
+        const cont = document.getElementById('chat');
+        (d.mensajes||[]).forEach(m => { cont.appendChild(pintaMsg(m)); ultId = Math.max(ultId, m.id); });
+        if (d.mensajes && d.mensajes.length) window.scrollTo(0, document.body.scrollHeight);
+        if (d.solo_lectura) document.getElementById('barra').classList.add('cerrado');
+    } catch(e){}
+}
+async function enviar(ev){
+    ev.preventDefault();
+    const inp = document.getElementById('msg'); const txt = inp.value.trim(); if(!txt) return false;
+    inp.value='';
+    const r = await fetch('/api/v1/servicios/'+SID+'/chat?rol=cliente',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo:'texto',contenido:txt})});
+    const d = await r.json().catch(()=>({}));
+    if (d.oculto_dato) toast(d.aviso || 'Ocultamos ese dato; usa el chat de MITA');
+    cargarChat();
+    return false;
+}
+async function decidir(pid, aceptar, btn){
+    if (!aceptar && !confirm('¿Rechazar la reparación? El técnico solo dejará el diagnóstico.')) return;
+    const acc = btn.parentElement; acc.querySelectorAll('button').forEach(b=>b.disabled=true);
+    const r = await fetch('/api/v1/servicios/presupuestos/'+pid+'/decision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({aceptar})});
+    const d = await r.json().catch(()=>({}));
+    if (r.ok){ acc.innerHTML = aceptar ? '<div style="color:var(--green);font-weight:700;text-align:center;width:100%;">Aceptaste el presupuesto ✓</div>' : '<div style="color:var(--tx2);text-align:center;width:100%;">Rechazaste la reparación</div>'; }
+    else { acc.querySelectorAll('button').forEach(b=>b.disabled=false); toast(d.detail || 'Ese presupuesto ya no está vigente'); }
+}
+window.enviar=enviar; window.decidir=decidir;
+
+function refrescar(){ cargarSeguimiento(); cargarChat(); }
+document.addEventListener('DOMContentLoaded', ()=>{ refrescar(); setInterval(cargarSeguimiento, 10000); setInterval(cargarChat, 4000); });
 </script>
 </body>
 </html>
