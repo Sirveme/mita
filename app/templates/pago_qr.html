@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="es-PE">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>MITA · Pagar con Yape o Plin</title>
+    <style>
+        :root { color-scheme: dark; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #0e0e1a; color: #e9edef; font-family: system-ui, 'Segoe UI', sans-serif; padding: 20px 16px 48px; }
+        .wrap { max-width: 460px; margin: 0 auto; }
+        h1 { font-size: 19px; margin: 0 0 2px; }
+        .sub { color: #8a8a9a; font-size: 13px; margin: 0 0 16px; }
+        .card { background: #12101a; border: 1px solid #2a2a4e; border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+        .monto { text-align: center; } .monto b { font-size: 40px; color: #22c55e; display: block; }
+        .qr { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .qr img { width: 210px; height: 210px; border-radius: 12px; background: #fff; object-fit: contain; }
+        .numero { font-size: 18px; font-weight: 700; letter-spacing: .5px; }
+        label { display: block; font-size: 13px; color: #c9bfe0; margin: 12px 0 5px; }
+        .ayuda { font-size: 12px; color: #8a8a9a; margin-top: 3px; }
+        input, select { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid #2a2a4e; background: #151520; color: #e9edef; font-size: 15px; }
+        .seg { display: flex; gap: 8px; }
+        .seg button { flex: 1; padding: 11px; border-radius: 10px; border: 1px solid #2a2a4e; background: #151520; color: #e9edef; font-weight: 700; cursor: pointer; }
+        .seg button.on { background: #22c55e; color: #06210f; border-color: #22c55e; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; background: #22c55e; color: #06210f; margin-top: 16px; }
+        .btn.sec { background: #181830; color: #e9edef; border: 1px solid #2a2a4e; font-weight: 700; }
+        .msg { margin-top: 14px; font-size: 14px; padding: 12px 14px; border-radius: 10px; display: none; }
+        .msg.show { display: block; }
+        .msg.info { background: rgba(212,175,55,.12); color: #d4af37; }
+        .msg.exito { background: rgba(34,197,94,.12); color: #22c55e; }
+        .msg.error { background: rgba(255,107,107,.12); color: #ff6b6b; }
+        .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: s 1s linear infinite; vertical-align: -2px; margin-right: 6px; }
+        @keyframes s { to { transform: rotate(360deg); } }
+        .oculto { display: none; }
+        details { margin-top: 12px; } summary { cursor: pointer; color: #c9bfe0; font-size: 13px; }
+        .fila2 { display: flex; gap: 8px; } .fila2 > div { flex: 1; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>Pagar con Yape o Plin</h1>
+        <p class="sub">Elige la app y dinos el titular; luego verás el QR.</p>
+
+        <div id="no-disp" class="card oculto" style="border-color:#ff6b6b">
+            El pago con QR no está disponible por ahora. Usa otro método de pago.
+        </div>
+
+        <!-- Paso 1: titular ANTES del QR -->
+        <div id="paso1" class="card oculto">
+            <label>¿Con qué app vas a pagar?</label>
+            <div class="seg">
+                <button type="button" id="c-yape" class="on" onclick="setCanal('yape')">Yape</button>
+                <button type="button" id="c-plin" onclick="setCanal('plin')">Plin</button>
+            </div>
+            <label>¿A nombre de quién está el Yape o Plin con el que vas a pagar?</label>
+            <input id="titular" placeholder="Nombre y apellido del titular" value="{{ cliente_nombre }}">
+            <div class="ayuda">Escríbelo como aparece en tu Yape o Plin (puede ser otro de tus nombres o el de un familiar).</div>
+            <div id="err1" class="ayuda" style="color:#ff6b6b"></div>
+            <details><summary>¿Tienes el código de operación?</summary>
+                <input id="codigo" style="margin-top:8px" placeholder="Código de operación (opcional)"></details>
+            <button class="btn" onclick="verQR()">Ver QR y pagar</button>
+        </div>
+
+        <!-- Paso 2: QR + vigilancia -->
+        <div id="paso2" class="oculto">
+            <div class="card monto"><span style="color:#8a8a9a;font-size:13px">Monto exacto a pagar</span><b id="monto">S/ 50.00</b></div>
+            <div class="card qr">
+                <img id="qr" alt="QR de MITA" src="">
+                <div class="numero" id="numero">—</div>
+                <div class="ayuda">Paga el <b>monto exacto</b>. Estamos verificando tu pago automáticamente.</div>
+            </div>
+
+            <div class="card oculto" id="card-voucher">
+                <label>¿Qué hora dice tu comprobante de pago?</label>
+                <div class="fila2">
+                    <div><input id="hora" type="time"></div>
+                    <div><button class="btn sec" style="margin-top:0" onclick="confirmarHora()">Confirmar hora</button></div>
+                </div>
+                <div class="ayuda">Nos ayuda a encontrar tu pago más rápido si hay varios al mismo tiempo.</div>
+            </div>
+
+            <div class="msg" id="msg"></div>
+            <button class="btn sec" id="btn-pague" onclick="yaPague()">Ya pagué (verificar ahora)</button>
+
+            <div id="opciones" class="oculto">
+                <button class="btn" onclick="reintentar()">Reintentar</button>
+                <button class="btn sec" onclick="location.href='/cliente/servicio/{{ solicitud_id }}/chats'">Subir voucher / Hablar con un asesor</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SID = {{ solicitud_id }};
+        const CONCEPTO = '{{ concepto }}';   // visita | reparacion (zMita-40)
+        let canal = 'yape', qrShownAt = 0, lastFetch = 0, stop = false, cad10 = false, ticker = null;
+        const $ = (id) => document.getElementById(id);
+        function setCanal(c) { canal = c; $('c-yape').classList.toggle('on', c === 'yape'); $('c-plin').classList.toggle('on', c === 'plin'); }
+        function msg(t, tipo, spin) { const m = $('msg'); m.innerHTML = (spin ? '<span class="spin"></span>' : '') + t; m.className = 'msg show ' + (tipo || 'info'); }
+        function dosPalabras(s) { return (s || '').trim().split(/\s+/).filter(w => w.replace(/[^a-záéíóúñ]/gi, '').length >= 2).length >= 2; }
+
+        async function cargar() {
+            const cfg = await (await fetch('/api/v1/pagos-qr/config')).json();
+            if (!cfg.habilitado) { $('no-disp').classList.remove('oculto'); return; }
+            $('paso1').classList.remove('oculto');   // titular ya viene prellenado desde el servidor
+        }
+
+        async function verQR() {
+            const tit = $('titular').value.trim();
+            if (!dosPalabras(tit)) { $('err1').textContent = 'Escribe nombre y apellido (al menos 2 palabras).'; return; }
+            $('err1').textContent = '';
+            const r = await fetch('/api/v1/pagos-qr/iniciar', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ solicitud_id: SID, concepto: CONCEPTO, canal, titular_declarado: tit, codigo_operacion: $('codigo').value })
+            });
+            if (!r.ok) { $('err1').textContent = 'No se pudo iniciar el pago.'; return; }
+            const d = await r.json();
+            $('monto').textContent = 'S/ ' + Number(d.monto).toFixed(2);
+            if (d.numero) $('numero').textContent = d.numero;
+            if (d.qr_imagen) $('qr').src = d.qr_imagen; else $('qr').style.display = 'none';
+            $('paso1').classList.add('oculto'); $('paso2').classList.remove('oculto');
+            // prellenar hora del voucher con la hora actual (local)
+            const now = new Date(); $('hora').value = now.toTimeString().slice(0, 5);
+            iniciarVigilancia();
+        }
+
+        function iniciarVigilancia() {
+            qrShownAt = Date.now(); lastFetch = 0; stop = false;
+            msg('Verificando tu pago automáticamente…', 'info', true);
+            if (ticker) clearInterval(ticker);
+            ticker = setInterval(tickLoop, 1000);
+        }
+        function cadencia() {
+            const el = (Date.now() - qrShownAt) / 1000;
+            if (el < 20) return 0;            // 0–20 s: no consultar
+            if (el < 180) return cad10 ? 10000 : 5000;  // 20 s–3 min: 5 s
+            if (el < 600) return 10000;       // 3–10 min: 10 s
+            return -1;                        // 10 min: parar
+        }
+        function tickLoop() {
+            if (stop || document.hidden) return;   // pausa con pestaña oculta
+            const d = cadencia();
+            if (d < 0) { stop = true; clearInterval(ticker); vencido(); return; }
+            if (d === 0) return;
+            // mostrar selector de hora tras 60 s
+            if ((Date.now() - qrShownAt) / 1000 > 60) $('card-voucher').classList.remove('oculto');
+            if (Date.now() - lastFetch >= d) { lastFetch = Date.now(); fetchEstado(); }
+        }
+
+        async function fetchEstado() {
+            try { manejar(await (await fetch('/api/v1/pagos-qr/estado/' + SID + '?concepto=' + CONCEPTO)).json()); } catch (e) {}
+        }
+
+        function manejar(d) {
+            if (!d) return;
+            if (d.cadencia_ms === 10000) cad10 = true;
+            if (d.mostrar_hora_voucher) $('card-voucher').classList.remove('oculto');
+            if (d.pagada) {
+                stop = true; if (ticker) clearInterval(ticker);
+                const ex = d.comprobante_estado === 'emitido' ? ' Tu comprobante está listo.' :
+                    (d.comprobante_estado === 'pendiente' ? ' Tu comprobante quedó en proceso.' : '');
+                if (CONCEPTO === 'reparacion') {
+                    stop = true; if (ticker) clearInterval(ticker);
+                    msg('¡Pago recibido! Gracias.' + ex, 'exito');
+                    setTimeout(() => location.href = '/cliente/servicio/' + SID + '/seguimiento', 2500);
+                    return;
+                }
+                msg('¡Pago recibido! Buscando un técnico para ti.' + ex, 'exito');
+                // zMita-35: paso de avisos tras el pago, y luego al servicio
+                const ir = () => location.href = '/cliente/servicio/' + SID + '/chats';
+                if (window.MitaPWA && window.MitaPWA.pasoAvisos) window.MitaPWA.pasoAvisos({ solicitud_id: SID, codigo: '#' + SID, onListo: ir });
+                else setTimeout(ir, 2500);
+                return;
+            }
+            if (d.conflicto) { stop = true; if (ticker) clearInterval(ticker); msg('Ese pago ya fue registrado en otra operación. Un asesor te ayudará.', 'error'); $('opciones').classList.remove('oculto'); return; }
+            if (d.media) { msg('Estamos verificando tu pago, te avisamos en unos minutos.', 'info', true); return; }
+            if (d.timeout) { vencido(); return; }
+            msg('Verificando tu pago…', 'info', true);
+        }
+
+        async function yaPague() {
+            lastFetch = Date.now();
+            try { manejar(await (await (await fetch('/api/v1/pagos-qr/ya-pague', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ solicitud_id: SID, concepto: CONCEPTO }) })).json())); } catch (e) {}
+        }
+        async function confirmarHora() {
+            const hhmm = $('hora').value; if (!hhmm) return;
+            const now = new Date(); const iso = now.toISOString().slice(0, 10) + 'T' + hhmm + ':00';
+            try { manejar(await (await (await fetch('/api/v1/pagos-qr/hora-voucher', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ solicitud_id: SID, concepto: CONCEPTO, hora: iso }) })).json())); } catch (e) {}
+        }
+        function vencido() { if (ticker) clearInterval(ticker); stop = true; msg('Aún no vemos tu pago.', 'error'); $('opciones').classList.remove('oculto'); }
+        function reintentar() { $('opciones').classList.add('oculto'); iniciarVigilancia(); }
+
+        document.addEventListener('visibilitychange', () => { if (!document.hidden && !stop && qrShownAt) { lastFetch = Date.now(); fetchEstado(); } });
+        cargar();
+    </script>
+</body>
+</html>

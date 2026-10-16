@@ -107,10 +107,37 @@
                         body: JSON.stringify({ endpoint: sub.endpoint })
                     });
                     const data = await resp.json();
-                    if (resp.ok && data.ok) msg('Aviso enviado ✓ Revisa tu pantalla (o bloquea el teléfono y espera).');
-                    else msg('No se pudo enviar el aviso. ' + (data.detail || ''), 'error');
+                    if (resp.ok && data.ok) {
+                        msg('Aviso enviado ✓ Revisa tu pantalla (o bloquea el teléfono y espera).');
+                        if (data.aviso_id) medirDemora(data.aviso_id);
+                    } else msg('No se pudo enviar el aviso. ' + (data.detail || data.error || ''), 'error');
                 } catch (e) { msg('Error de red al enviar.', 'error'); }
             };
+        });
+        async function medirDemora(avisoId) {
+            for (let i = 0; i < 15; i++) {
+                await new Promise(r => setTimeout(r, 1000));
+                try {
+                    const d = await (await fetch('/api/v1/push/envio/' + avisoId)).json();
+                    if (d.recibido) { msg('Aviso recibido ✓ Demora: ' + (d.demora_seg != null ? d.demora_seg + ' s' : 'medida') + '.'); return; }
+                } catch (e) {}
+            }
+            msg('Aviso enviado ✓ (sin confirmación de entrega todavía).');
+        }
+        // Banner iOS sin instalar
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if (window.MitaPWA && MitaPWA.esIOS() && !MitaPWA.esInstalada()) {
+                    const c = document.querySelector('.wrap');
+                    const b = document.createElement('div');
+                    b.className = 'card'; b.style.borderColor = '#d4af37';
+                    b.innerHTML = '<h2 style="color:#d4af37">En iPhone</h2>' +
+                        '<p style="font-size:14px;margin:0 0 10px">Primero agrega MITA a tu inicio y ábrela desde el ícono; recién ahí Safari permite los avisos.</p>' +
+                        '<button class="ghost" id="btn-guia-ios">➕ Ver cómo agregar MITA</button>';
+                    c.insertBefore(b, c.children[1]);
+                    document.getElementById('btn-guia-ios').onclick = () => MitaPWA.mostrarGuiaIOS();
+                }
+            }, 800);
         });
     </script>
 </body>
