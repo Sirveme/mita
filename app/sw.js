@@ -39,10 +39,16 @@ self.addEventListener('push', (event) => {
         badge: d.badge || BADGE,
         tag: d.tag || 'mita',
         renotify: true,
-        data: { url: url, ...(d.data || {}) },
+        data: { url: url, aviso_id: d.aviso_id || null, ...(d.data || {}) },
         vibrate: [80, 40, 80]
     };
-    event.waitUntil(self.registration.showNotification(titulo, opciones));
+    const mostrar = self.registration.showNotification(titulo, opciones);
+    // Confirmar entrega para medir la demora (no bloquea la notificación)
+    const confirmar = d.aviso_id ? fetch('/api/v1/push/recibido', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ aviso_id: d.aviso_id, recibido_en: new Date().toISOString() })
+    }).catch(() => {}) : Promise.resolve();
+    event.waitUntil(Promise.all([mostrar, confirmar]));
 });
 
 // ============================================

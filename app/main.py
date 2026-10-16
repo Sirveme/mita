@@ -62,6 +62,9 @@ from app.routes.ubicacion_api import router as ubicacion_api_router
 from app.routes.maps_api import router as maps_api_router
 from app.routes.chat_ia_api import router as chat_ia_router
 from app.routes.push_api import router as push_router
+from app.routes.pagook_api import router as pagook_router
+from app.routes.ofertas_api import router as ofertas_router
+from app.routes.servicio_api import router as servicio_router
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -84,17 +87,47 @@ async def lifespan(app: FastAPI):
     print(f"🔄 Refresh token: {settings.REFRESH_TOKEN_EXPIRE_DAYS} days")
     print(f"🌐 Host: {settings.HOST}:{settings.PORT}")
     print("=" * 60)
-    
+
+    # Seguridad (zMita-40, A2): en producción el shim de demo debe estar apagado.
+    from app.core.security import es_produccion
+    if es_produccion() and settings.DEMO_AUTH:
+        raise RuntimeError(
+            "DEMO_AUTH está activo en producción. El shim de autenticación de demostración "
+            "no puede usarse en producción: apágalo (DEMO_AUTH=false) para arrancar."
+        )
+
     # Asegurar la tabla de suscripciones push (idempotente). En Railway los SQL de
     # app/sql/ NO se corren solos al desplegar (hay que ejecutar setup_railway a mano),
     # así que garantizamos aquí que push_suscripciones exista para los avisos.
     try:
+        import os as _os
         from app.core.database import engine
-        from app.models.push_suscripcion import PushSuscripcion
+        from app.models.push_suscripcion import PushSuscripcion, PushEnvio
         PushSuscripcion.__table__.create(bind=engine, checkfirst=True)
-        print("✅ Tabla push_suscripciones verificada/creada")
+        PushEnvio.__table__.create(bind=engine, checkfirst=True)
+        # Columnas nuevas (dispositivo_id, ultimo_*, solicitudes.canal_avisos): el ORM ya las
+        # usa, pero ALTER no lo hace create_all. Aplicar la migración 30 (idempotente) al arrancar.
+        from app.models.pago_solicitud import PagoSolicitud
+        from app.models.oferta_servicio import OfertaServicio
+        from app.models.servicio_vivo import UbicacionServicio, MensajeServicio, Presupuesto
+        from app.models.cierre import CodigoVerificacion, CompradorPreferido, ComprobanteEmitido, CobroEfectivo
+        from app.models.liquidacion_mita import LiquidacionMita, LiquidacionItem, ConfiguracionHistorial
+        PagoSolicitud.__table__.create(bind=engine, checkfirst=True)
+        OfertaServicio.__table__.create(bind=engine, checkfirst=True)
+        for _m in (UbicacionServicio, MensajeServicio, Presupuesto,
+                   CodigoVerificacion, CompradorPreferido, ComprobanteEmitido, CobroEfectivo,
+                   LiquidacionMita, LiquidacionItem, ConfiguracionHistorial):
+            _m.__table__.create(bind=engine, checkfirst=True)
+        for nombre in ("30_push_envios_canal.sql", "31_pagos_solicitud.sql", "32_pagos_voucher.sql",
+                       "33_ofertas_servicio.sql", "34_servicio_vivo.sql", "35_cierre_identificacion.sql",
+                       "36_pago_concepto.sql", "37_comprobante_sunat.sql", "38_liquidacion.sql"):
+            sqlf = _os.path.join(_os.path.dirname(__file__), "sql", nombre)
+            if _os.path.exists(sqlf):
+                with open(sqlf, encoding="utf-8") as f, engine.begin() as conn:
+                    conn.exec_driver_sql(f.read())
+        print("✅ Avisos/pagos: tablas y columnas verificadas (push + canal_avisos + pagos_solicitud)")
     except Exception as e:
-        print(f"⚠️  No se pudo verificar push_suscripciones: {e}")
+        print(f"⚠️  No se pudieron verificar las tablas/columnas de avisos/pagos: {e}")
 
     # Cron de reasignación por timeout de respuesta de técnico
     try:
@@ -102,6 +135,20 @@ async def lifespan(app: FastAPI):
         iniciar_scheduler()
     except Exception as e:
         print(f"⚠️  No se pudo iniciar el cron de timeouts: {e}")
+
+    # Tarea de fondo de tiempos de ofertas (zMita-38, con advisory lock para multi-worker)
+    try:
+        from app.tasks.tiempos import iniciar as iniciar_tiempos
+        iniciar_tiempos()
+    except Exception as e:
+        print(f"⚠️  No se pudo iniciar la tarea de tiempos: {e}")
+
+    # Tarea de fondo de comprobantes: reconsulta el CDR de SUNAT (zMita-41)
+    try:
+        from app.tasks.comprobantes import iniciar as iniciar_comprobantes
+        iniciar_comprobantes()
+    except Exception as e:
+        print(f"⚠️  No se pudo iniciar la tarea de comprobantes: {e}")
 
     yield  # La app se ejecuta aquí
 
@@ -259,6 +306,13 @@ app.include_router(ubicacion_api_router)
 app.include_router(maps_api_router)
 app.include_router(chat_ia_router)
 app.include_router(push_router)
+app.include_router(pagook_router)
+app.include_router(ofertas_router)
+app.include_router(servicio_router)
+from app.routes.cierre_api import router as cierre_router
+app.include_router(cierre_router)
+from app.routes.liquidacion_api import router as liquidacion_router
+app.include_router(liquidacion_router)
 
 # Cuando estén listos:
 # from app.routes.clientes import router as clientes_router
@@ -460,6 +514,106 @@ async def service_worker():
 async def prueba_avisos_page(request: Request):
     """Página pública para probar instalación y avisos (sin datos personales)."""
     return templates.TemplateResponse("prueba_avisos.html", {"request": request})
+
+@app.get("/pagar/{solicitud_id}", response_class=HTMLResponse)
+async def pagar_qr_page(request: Request, solicitud_id: int, concepto: str = "visita"):
+    """Pantalla de pago con QR Yape/Plin (zMita-34 v2 / zMita-36; concepto visita|reparacion, zMita-40)."""
+    from app.core.database import get_db
+    nombre = ""
+    concepto = "reparacion" if (concepto or "").lower() == "reparacion" else "visita"
+    db = next(get_db())
+    try:
+        from app.models.solicitud_mita import Solicitud
+        s = db.query(Solicitud).get(solicitud_id)
+        nombre = (getattr(s, "cliente_nombre", None) or "") if s else ""
+    finally:
+        db.close()
+    return templates.TemplateResponse("pago_qr.html",
+                                      {"request": request, "solicitud_id": solicitud_id,
+                                       "cliente_nombre": nombre, "concepto": concepto})
+
+@app.get("/tecnico/servicios/{solicitud_id}", response_class=HTMLResponse)
+async def tecnico_oferta_page(request: Request, solicitud_id: int):
+    """Pantalla de la oferta de servicio para el técnico (etapa 4)."""
+    return templates.TemplateResponse("tecnico/oferta.html", {"request": request, "solicitud_id": solicitud_id})
+
+@app.get("/admin/en-curso", response_class=HTMLResponse)
+async def admin_en_curso_page(request: Request):
+    """Torre: técnicos en camino con ETA, última ubicación y alertas."""
+    from app.core.database import get_db
+    from app.routes.main import _guard_admin
+    db = next(get_db())
+    try:
+        redir = await _guard_admin(request, db)
+        if redir:
+            return redir
+    finally:
+        db.close()
+    return templates.TemplateResponse("admin/en_curso.html", {"request": request})
+
+
+@app.get("/tecnico/mi-liquidacion", response_class=HTMLResponse)
+async def tecnico_mi_liquidacion_page(request: Request):
+    """Técnico: 'Tu liquidación' (periodo actual, historial, detalle y subida del RxH)."""
+    return templates.TemplateResponse("tecnico/mi_liquidacion.html", {"request": request})
+
+
+@app.get("/admin/liquidaciones-mita", response_class=HTMLResponse)
+async def admin_liquidaciones_mita_page(request: Request):
+    """Torre: liquidaciones por periodo, con RxH, pago y export XLSX (zMita-41)."""
+    from app.core.database import get_db
+    from app.routes.main import _guard_admin
+    db = next(get_db())
+    try:
+        redir = await _guard_admin(request, db)
+        if redir:
+            return redir
+    finally:
+        db.close()
+    return templates.TemplateResponse("admin/liquidaciones_mita.html", {"request": request})
+
+
+@app.get("/admin/cierres", response_class=HTMLResponse)
+async def admin_cierres_page(request: Request):
+    """Torre: cierres (por cobrar, efectivo por validar, comprobantes, conformidad, totales del día)."""
+    from app.core.database import get_db
+    from app.routes.main import _guard_admin
+    db = next(get_db())
+    try:
+        redir = await _guard_admin(request, db)
+        if redir:
+            return redir
+    finally:
+        db.close()
+    return templates.TemplateResponse("admin/cierres.html", {"request": request})
+
+@app.get("/admin/buscando", response_class=HTMLResponse)
+async def admin_buscando_page(request: Request):
+    """Torre de control: solicitudes buscando técnico (etapa 4)."""
+    from app.core.database import get_db
+    from app.routes.main import _guard_admin
+    db = next(get_db())
+    try:
+        redir = await _guard_admin(request, db)
+        if redir:
+            return redir
+    finally:
+        db.close()
+    return templates.TemplateResponse("admin/buscando.html", {"request": request})
+
+@app.get("/admin/pagos-qr", response_class=HTMLResponse)
+async def admin_pagos_qr_page(request: Request):
+    """Torre de control: pagos QR (PagoOK) pendientes/media/conflictos (zMita-34 v2)."""
+    from app.core.database import get_db
+    from app.routes.main import _guard_admin
+    db = next(get_db())
+    try:
+        redir = await _guard_admin(request, db)
+        if redir:
+            return redir
+    finally:
+        db.close()
+    return templates.TemplateResponse("admin/pagos_qr.html", {"request": request})
 
 @app.get("/admin/push", response_class=HTMLResponse)
 async def admin_push_page(request: Request):
