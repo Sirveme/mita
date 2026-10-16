@@ -17,6 +17,21 @@
     const esInstalada = () => window.matchMedia('(display-mode: standalone)').matches ||
         window.navigator.standalone === true;
 
+    // Identificador local estable del dispositivo (para no acumular suscripciones).
+    function dispositivoId() {
+        try {
+            let id = localStorage.getItem('mita_device_id');
+            if (!id) {
+                id = (crypto && crypto.randomUUID) ? crypto.randomUUID()
+                    : (Date.now().toString(36) + Math.random().toString(36).slice(2));
+                localStorage.setItem('mita_device_id', id);
+            }
+            return id;
+        } catch (e) {
+            return 'sin-storage-' + Math.random().toString(36).slice(2);
+        }
+    }
+
     function plataforma() {
         const u = navigator.userAgent.toLowerCase();
         if (/iphone|ipad|ipod/.test(u) || esIOS()) return 'ios';
@@ -28,7 +43,9 @@
 
     function navegador() {
         const u = navigator.userAgent;
-        if (/edg\//i.test(u)) return 'Edge';
+        if (/edg\//i.test(u) || /edgios/i.test(u)) return 'Edge';
+        if (/crios/i.test(u)) return 'Chrome';           // Chrome en iOS
+        if (/fxios/i.test(u)) return 'Firefox';          // Firefox en iOS
         if (/chrome\//i.test(u) && !/edg\//i.test(u)) return 'Chrome';
         if (/firefox\//i.test(u)) return 'Firefox';
         if (/safari\//i.test(u) && !/chrome/i.test(u)) return 'Safari';
@@ -70,18 +87,21 @@
         return 'no-disponible';
     }
 
-    // ---- UI: chip discreto de instalar (landing) ----
+    // ---- UI: chip discreto de instalar (landing). En iOS dice "Agregar a inicio". ----
     function mostrarChipInstalar() {
         try { if (localStorage.getItem('mita_pwa_chip') === 'off') return; } catch (e) {}
-        if (document.getElementById('mita-pwa-chip')) return;
+        if (document.getElementById('mita-pwa-chip') || esInstalada()) return;
+        const ios = esIOS();
+        const etiqueta = ios ? 'Agrega MITA a inicio' : 'Instala MITA';
+        const accion = ios ? 'Agregar' : 'Instalar';
         const c = document.createElement('div');
         c.id = 'mita-pwa-chip';
         c.style.cssText = 'position:fixed;left:16px;bottom:16px;z-index:9996;display:flex;align-items:center;gap:10px;background:#12101a;color:#e9edef;border:1px solid #2a2a4e;border-radius:14px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.45);font-family:system-ui,sans-serif;font-size:14px;max-width:84vw';
-        c.innerHTML = '<img src="/static/img/mita/icon-192.png" width="28" height="28" style="border-radius:7px" alt="MITA"><span>Instala MITA</span>' +
-            '<button type="button" id="mita-pwa-chip-ok" style="background:#22c55e;color:#06210f;border:none;border-radius:9px;padding:7px 12px;font-weight:700;cursor:pointer">Instalar</button>' +
+        c.innerHTML = '<img src="/static/img/mita/icon-192.png" width="28" height="28" style="border-radius:7px" alt="MITA"><span>' + etiqueta + '</span>' +
+            '<button type="button" id="mita-pwa-chip-ok" style="background:#22c55e;color:#06210f;border:none;border-radius:9px;padding:7px 12px;font-weight:700;cursor:pointer">' + accion + '</button>' +
             '<button type="button" id="mita-pwa-chip-x" aria-label="Cerrar" style="background:transparent;color:#8a8a9a;border:none;cursor:pointer;font-size:16px">✕</button>';
         document.body.appendChild(c);
-        document.getElementById('mita-pwa-chip-ok').onclick = () => (esIOS() ? mostrarGuiaIOS() : instalar());
+        document.getElementById('mita-pwa-chip-ok').onclick = () => (ios ? mostrarGuiaIOS() : instalar());
         document.getElementById('mita-pwa-chip-x').onclick = () => { quitarChip(); try { localStorage.setItem('mita_pwa_chip', 'off'); } catch (e) {} };
     }
     function quitarChip() { const c = document.getElementById('mita-pwa-chip'); if (c) c.remove(); }
@@ -155,7 +175,7 @@
                     applicationServerKey: urlBase64ToUint8Array(clave)
                 });
             }
-            const body = { subscription: sub.toJSON(), plataforma: plataforma() };
+            const body = { subscription: sub.toJSON(), plataforma: plataforma(), dispositivo_id: dispositivoId() };
             if (opts.solicitud_id) body.solicitud_id = opts.solicitud_id;
             if (opts.rol) body.rol = opts.rol;
             const resp = await fetch('/api/v1/push/suscribir', {
@@ -195,15 +215,94 @@
         };
     }
 
+    // ---- Canal de avisos / WhatsApp ----
+    async function _setCanal(solicitudId, canal) {
+        if (!solicitudId) return;
+        try {
+            await fetch('/api/v1/push/canal', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ solicitud_id: solicitudId, canal: canal })
+            });
+        } catch (e) {}
+    }
+    async function _linkWhatsApp(codigo) {
+        let num = '';
+        try { num = (await (await fetch('/api/v1/push/canal-config')).json()).whatsapp_numero || ''; } catch (e) {}
+        const texto = encodeURIComponent('Hola MITA, quiero recibir avisos de mi solicitud ' + (codigo || ''));
+        return num ? ('https://wa.me/' + num + '?text=' + texto) : null;
+    }
+
+    // ---- Paso de avisos tras el pago/confirmación (Parte A) ----
+    // opts: { solicitud_id, codigo, onListo }  -> devuelve {canal}
+    function pasoAvisos(opts) {
+        opts = opts || {};
+        const sid = opts.solicitud_id;
+        const codigo = opts.codigo || (sid ? ('#' + sid) : '');
+        return new Promise((resolve) => {
+            if (document.getElementById('mita-paso-avisos')) { resolve({ canal: 'ninguno', cerrado: true }); return; }
+            const iosSinApp = esIOS() && !esInstalada();
+            const ov = document.createElement('div');
+            ov.id = 'mita-paso-avisos';
+            ov.style.cssText = 'position:fixed;inset:0;z-index:10001;background:rgba(6,4,12,.6);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;font-family:system-ui,sans-serif';
+            const btn = (id, txt, primario) => '<button type="button" id="' + id + '" style="width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:10px;' +
+                (primario ? 'background:#22c55e;color:#06210f' : 'background:#181830;color:#e9edef;border:1px solid #2a2a4e') + '">' + txt + '</button>';
+            let cuerpo;
+            if (iosSinApp) {
+                cuerpo = '<p style="color:#c9bfe0;font-size:14px;margin:0 0 14px">Para avisarte cuando tu técnico esté en camino:</p>' +
+                    btn('mita-pa-wa', '💬 Recibir avisos por WhatsApp', true) +
+                    btn('mita-pa-ios', '➕ O agrega MITA a tu inicio', false) +
+                    btn('mita-pa-no', 'Ahora no', false);
+            } else {
+                cuerpo = '<p style="color:#c9bfe0;font-size:14px;margin:0 0 14px">Te avisamos en tu teléfono apenas un técnico acepte y cuando esté en camino.</p>' +
+                    btn('mita-pa-si', '🔔 Sí, avisarme', true) +
+                    btn('mita-pa-no', 'Ahora no', false);
+            }
+            ov.innerHTML = '<div style="background:#12101a;color:#e9edef;border-radius:18px 18px 0 0;max-width:460px;width:100%;padding:22px 20px 28px;box-shadow:0 -10px 40px rgba(0,0,0,.5)">' +
+                '<b style="font-size:17px;display:block;margin-bottom:6px">¿Te avisamos cuando tu técnico esté en camino?</b>' +
+                cuerpo +
+                '<div id="mita-pa-msg" style="margin-top:12px;font-size:13px;color:#22c55e;min-height:16px"></div></div>';
+            document.body.appendChild(ov);
+            const msg = (t, err) => { const m = document.getElementById('mita-pa-msg'); if (m) { m.textContent = t; m.style.color = err ? '#ff6b6b' : '#22c55e'; } };
+            const cerrar = (r) => { try { ov.remove(); } catch (e) {} if (opts.onListo) { try { opts.onListo(r); } catch (e) {} } resolve(r); };
+
+            const si = document.getElementById('mita-pa-si');
+            if (si) si.onclick = async () => {
+                si.disabled = true; msg('Pidiendo permiso…');
+                const r = await activarAvisos({ solicitud_id: sid, rol: 'cliente' });
+                if (r.ok) { msg('¡Listo! Te avisaremos ✓'); setTimeout(() => cerrar({ canal: 'push', res: r }), 700); }
+                else { msg(r.error || 'No se pudo activar.', true); si.disabled = false; }
+            };
+            const wa = document.getElementById('mita-pa-wa');
+            if (wa) wa.onclick = async () => {
+                await _setCanal(sid, 'whatsapp');
+                const link = await _linkWhatsApp(codigo);
+                if (link) { window.open(link, '_blank'); cerrar({ canal: 'whatsapp' }); }
+                else msg('Aún no hay número de WhatsApp configurado. Te avisaremos por la app.', true);
+            };
+            const iosb = document.getElementById('mita-pa-ios');
+            if (iosb) iosb.onclick = () => mostrarGuiaIOS();
+            const no = document.getElementById('mita-pa-no');
+            if (no) no.onclick = async () => { await _setCanal(sid, 'ninguno'); cerrar({ canal: 'ninguno' }); };
+        });
+    }
+
     window.MitaPWA = {
-        esIOS, esInstalada, puedeInstalar, instalar, mostrarGuiaIOS,
-        activarAvisos, suscripcionActual, diagnostico, plataforma, navegador, registrarSW
+        esIOS, esInstalada, puedeInstalar, instalar, mostrarGuiaIOS, mostrarChipInstalar,
+        activarAvisos, suscripcionActual, diagnostico, plataforma, navegador, registrarSW,
+        dispositivoId, pasoAvisos
     };
 
     // Auto-init
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', registrarSW);
-    } else {
+    function _init() {
         registrarSW();
+        // iOS no dispara beforeinstallprompt: ofrecer la guía de forma visible en el landing.
+        if (location.pathname === '/' && esIOS() && !esInstalada()) {
+            setTimeout(mostrarChipInstalar, 1200);
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _init);
+    } else {
+        _init();
     }
 })();

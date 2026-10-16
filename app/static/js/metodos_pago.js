@@ -368,6 +368,7 @@ function onYapePagoExitoso(data) {
         mensajeExito.textContent = '¡Tu pago con Yape fue confirmado! Ahora buscaremos un mecánico disponible.';
     }
     mostrarModal('modalExito');
+    try { ofrecerAvisosPago(); } catch (e) {}
 
     // Redirigir después de 2 segundos
     setTimeout(() => {
@@ -493,7 +494,8 @@ async function enviarPagoAlBackend(tokenId) {
             
             ocultarModal('modalCargando');
             mostrarModal('modalExito');
-            
+            try { ofrecerAvisosPago(); } catch (e) {}
+
             // Redirigir después de 2 segundos
             setTimeout(() => {
                 irABuscarMecanico();
@@ -592,8 +594,20 @@ async function enviarComprobante() {
         }
 
         mostrarModal('modalPendiente');
+        try { ofrecerAvisosPago(); } catch (e) {}
 
     }, 2000);
+}
+
+// zMita-35: paso de avisos tras confirmar el pago (push / WhatsApp / guía iOS).
+function ofrecerAvisosPago() {
+    if (!window.MitaPWA || !window.MitaPWA.pasoAvisos) return;
+    let sid = null;
+    try {
+        const s = JSON.parse(localStorage.getItem('solicitud_actual') || '{}');
+        sid = s.id || s.solicitud_id || null;
+    } catch (e) {}
+    window.MitaPWA.pasoAvisos({ solicitud_id: sid, codigo: sid ? ('#' + sid) : '' });
 }
 
 // ============================================
