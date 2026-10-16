@@ -37,6 +37,21 @@ class Settings(BaseSettings):
     GOOGLE_MAPS_API_KEY: Optional[str] = None
     GOOGLE_MAPS_SERVER_KEY: Optional[str] = None   # key sin restricción de referrer, solo backend
 
+    # SMS / OTP (zMita-39). Sin proveedor configurado el OTP no bloquea: celular 'no_verificado'.
+    SMS_PROVEEDOR: Optional[str] = None            # twilio | nexmo | labsmobile | ... (vacío = sin proveedor)
+    SMS_API_KEY: Optional[str] = None
+    SMS_API_SECRET: Optional[str] = None
+    SMS_REMITENTE: Optional[str] = "MITA"
+
+    # Facturalo.pro — emisión real de comprobantes (zMita-41). Contrato: docs/api-v1-emision.md
+    FACTURALO_BASE_URL: str = "https://facturalo.pro"
+    FACTURALO_API_KEY: Optional[str] = None        # X-API-Key (fpl_...). Nunca en el frontend.
+    FACTURALO_API_SECRET: Optional[str] = None     # X-API-Secret.
+    # pruebas -> emite en serie de pruebas (B999/F999); produccion -> serie automática del emisor (B940/F940...).
+    FACTURALO_MODO: str = "pruebas"
+    # Los montos de MITA ya incluyen IGV: precio_unitario (sin IGV) = monto / 1.18. Si fueran netos, pon false.
+    FACTURALO_IGV_INCLUIDO: bool = True
+
     # OpenAI (chat IA de solicitudes)
     OPENAI_API_KEY: Optional[str] = None
 
@@ -53,9 +68,17 @@ class Settings(BaseSettings):
     VAPID_PRIVATE_KEY: Optional[str] = None
     VAPID_SUBJECT: str = "mailto:avisos@mita.pe"
 
+    # PagoOK — validación de pagos Yape/Plin por consulta (pull) — zMita-34 v2
+    PAGOOK_BASE_URL: str = "https://pagook.pro/api/v1"
+    PAGOOK_API_KEY: Optional[str] = None   # credencial cuenta_api de MITA; nunca en el frontend
+
     # Environment
     ENVIRONMENT: str = "production"
     DEBUG: bool = False
+    # Shim de autenticación de demostración (zMita-40, Parte A2). NUNCA en producción.
+    DEMO_AUTH: bool = False
+    # Cobro con tarjeta (pasarela heredada Culqi/Tunki). Off por defecto hasta que opere para MITA.
+    PASARELA_ACTIVA: bool = False
     PORT: int = 8000
     HOST: str = "0.0.0.0"
     

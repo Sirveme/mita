@@ -107,18 +107,45 @@ def decode_token(token: str) -> dict:
         )
 
 
+_ENTORNOS_NO_PROD = {"development", "dev", "desarrollo", "local", "test", "testing", "qa"}
+
+
+def es_produccion() -> bool:
+    """Lo SEGURO es el valor por defecto: ante la duda, producción (demo apagado, nada simulado).
+    Solo se considera NO producción si ENVIRONMENT es explícitamente un entorno de desarrollo.
+    Si ENVIRONMENT falta/está vacío pero Railway marca el entorno (RAILWAY_ENVIRONMENT[_NAME]),
+    o si es un valor desconocido, se asume producción."""
+    import os
+    env = (settings.ENVIRONMENT or "").strip().lower()
+    if env in _ENTORNOS_NO_PROD:
+        return False
+    if env in ("production", "produccion", "prod", "staging"):
+        return True
+    # vacío o desconocido
+    if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+        return True
+    return True   # default seguro = producción
+
+
 def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
 ) -> Usuario:
     """
-    🔧 MODO DEMO: Retorna usuario fake temporalmente
+    ⚠️ Shim "MODO DEMO": devuelve un usuario fake (id=999) para las rutas HEREDADAS
+    de pagos (Culqi/Tunki) durante el desarrollo. NO lee el request, así que ningún
+    header/query/cookie puede "encenderlo". En PRODUCCIÓN está apagado por completo:
+    no autentica a nadie (401). El flujo real de MITA usa login_mita.get_current_user
+    (cookie de sesión), no este shim.
     """
-    # Crear objeto fake sin usar modelos
+    if es_produccion():
+        # En producción el shim jamás autentica. Las rutas que lo usan exigen auth real.
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No autenticado")
+
     class FakeCliente:
         id = 999
         usuario_id = 999
-    
+
     class FakeUser:
         id = 999
         email = "demo@serviplus.com"
@@ -127,7 +154,7 @@ def get_current_user(
         telefono = "999999999"
         activo = True
         cliente = FakeCliente()
-    
+
     return FakeUser()
 
 
