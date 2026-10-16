@@ -91,6 +91,13 @@ def procesar_timeouts_sync() -> int:
             except Exception:
                 db.rollback()
                 logger.exception("Error procesando timeout de solicitud %s", s.id)
+        # Etapa 4 (zMita-37): alerta/reenvío/aviso de las ofertas
+        try:
+            from app.services import ofertas
+            ofertas.procesar_tiempos(db)
+        except Exception:
+            db.rollback()
+            logger.exception("Error procesando tiempos de ofertas")
         return len(sols)
     finally:
         db.close()
