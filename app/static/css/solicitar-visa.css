@@ -9,7 +9,7 @@
     --v-card: #252542;
     --v-card2: #2c2c50;
     --v-border: #33335a;
-    --v-gold: #d4a853;
+    --v-gold: var(--accent, #d4af37);
     --v-gold-soft: rgba(212,168,83,.18);
     --v-text: #ffffff;
     --v-text2: #a0a0b0;
