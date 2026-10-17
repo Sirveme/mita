@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es-PE">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MITA · Configurar cobro QR</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #0e0e1a; color: #e9edef; font-family: system-ui, 'Segoe UI', sans-serif; padding: 24px 16px 48px; }
+        .wrap { max-width: 560px; margin: 0 auto; }
+        h1 { font-size: 20px; margin: 0 0 4px; }
+        .sub { color: #8a8a9a; font-size: 14px; margin: 0 0 18px; }
+        .card { background: #15131f; border: 1px solid #2a2a4e; border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+        label { display: block; color: #a6a6bd; font-size: 13px; margin: 12px 0 5px; }
+        input[type=text] { width: 100%; background: #0e0e1a; border: 1px solid #2a2a4e; color: #e9edef; border-radius: 10px; padding: 11px 13px; font-size: 15px; }
+        .help { color: #8a8a9a; font-size: 12px; margin-top: 4px; }
+        .qr-prev { background: #fff; width: 180px; height: 180px; border-radius: 12px; object-fit: contain; display: none; margin-top: 10px; }
+        .qr-none { color: #8a8a9a; font-size: 13px; margin-top: 10px; }
+        button { background: #22c55e; color: #06210f; border: none; border-radius: 10px; padding: 13px 18px; font-weight: 800; font-size: 15px; cursor: pointer; width: 100%; margin-top: 16px; }
+        .msg { min-height: 18px; margin-top: 12px; font-size: 14px; }
+        .msg.ok { color: #22c55e; } .msg.err { color: #ff6b6b; }
+        input[type=file] { color: #c9bfe0; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>Cobro QR (Yape / Plin)</h1>
+        <p class="sub">Número, titular y la imagen del QR que ve el cliente al pagar la visita.</p>
+
+        <div class="card">
+            <label for="numero">Número Yape / Plin</label>
+            <input type="text" id="numero" inputmode="numeric" placeholder="987 654 321">
+            <div class="help">9 dígitos, empieza con 9, <b>sin +51</b>. Los espacios se ignoran.</div>
+
+            <label for="titular">A nombre de (opcional)</label>
+            <input type="text" id="titular" placeholder="Nombre del titular (se muestra al cliente si lo pones)">
+            <div class="help">Déjalo vacío para no mostrarlo.</div>
+
+            <label>Imagen del QR</label>
+            <input type="file" id="imagen" accept="image/png,image/jpeg,image/webp">
+            <div class="help">PNG, JPG o WEBP, máximo 2 MB. Se sube como archivo.</div>
+            <img id="qr-prev" class="qr-prev" alt="QR actual">
+            <div id="qr-none" class="qr-none">No hay imagen cargada todavía.</div>
+
+            <button onclick="guardar()">Guardar</button>
+            <div class="msg" id="msg"></div>
+        </div>
+    </div>
+    <script>
+        const $ = (id) => document.getElementById(id);
+        let imagenData = '';   // '' = no se cambia; data URL si se eligió una nueva
+        function msg(t, ok) { const m = $('msg'); m.textContent = t || ''; m.className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+        async function cargar() {
+            try {
+                const d = await (await fetch('/api/v1/admin/pago-qr')).json();
+                $('numero').value = d.numero || '';
+                $('titular').value = d.titular || '';
+                if (d.imagen) { $('qr-prev').src = d.imagen; $('qr-prev').style.display = 'block'; $('qr-none').style.display = 'none'; }
+            } catch (e) { msg('No se pudo cargar la configuración.', false); }
+        }
+
+        $('imagen').addEventListener('change', (e) => {
+            const f = e.target.files[0]; if (!f) return;
+            if (!['image/png', 'image/jpeg', 'image/webp'].includes(f.type)) { msg('La imagen debe ser PNG, JPG o WEBP.', false); e.target.value = ''; return; }
+            if (f.size > 2 * 1024 * 1024) { msg('La imagen supera los 2 MB.', false); e.target.value = ''; return; }
+            const r = new FileReader();
+            r.onload = () => { imagenData = r.result; $('qr-prev').src = r.result; $('qr-prev').style.display = 'block'; $('qr-none').style.display = 'none'; msg('', true); };
+            r.readAsDataURL(f);
+        });
+
+        async function guardar() {
+            msg('', true);
+            const body = { numero: $('numero').value, titular: $('titular').value };
+            if (imagenData) body.imagen = imagenData;
+            try {
+                const r = await fetch('/api/v1/admin/pago-qr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const d = await r.json().catch(() => ({}));
+                if (r.ok) { msg('Guardado ✓', true); imagenData = ''; }
+                else msg(d.detail || 'No se pudo guardar.', false);
+            } catch (e) { msg('Error de conexión.', false); }
+        }
+        window.guardar = guardar;
+        cargar();
+    </script>
+</body>
+</html>
