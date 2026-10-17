@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap">
     <style>
-        :root { --bg:#0e0e1a; --panel:#181830; --panel2:#252542; --tx:#e9edef; --tx2:#8a8a9a; --green:#22c55e; --gold:#d4af37; --border:#2a2a4e; }
+        :root { --bg:#0e0e1a; --panel:#181830; --panel2:#252542; --tx:#e9edef; --tx2:#8a8a9a; --green:#22c55e; --gold:var(--accent, #d4af37); --border:#2a2a4e; }
         * { margin:0; padding:0; box-sizing:border-box; }
         html,body { overflow-x:hidden; }
         body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--tx); }
@@ -108,7 +108,7 @@ function conformidadHTML(){
         `<div id="stars">${[1,2,3,4,5].map(star).join('')}</div>`+
         `<textarea id="conf-com" rows="2" placeholder="Comentario (opcional)" style="width:100%;margin-top:8px;background:#0e0e1a;color:var(--tx);border:1px solid var(--border);border-radius:10px;padding:8px;font-family:inherit;"></textarea>`;
 }
-function setEstrellas(n){ _estrellas = n; for(let i=1;i<=5;i++){ const el=document.getElementById('st-'+i); if(el) el.style.color = i<=n ? '#d4af37' : '#3a3a56'; } }
+function setEstrellas(n){ _estrellas = n; for(let i=1;i<=5;i++){ const el=document.getElementById('st-'+i); if(el) el.style.color = i<=n ? 'var(--accent, #d4af37)' : '#3a3a56'; } }
 async function conf(resuelto){
     const comentario = (document.getElementById('conf-com')||{}).value || '';
     const r = await fetch('/api/v1/servicios/'+SID+'/conformidad',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({resuelto,estrellas:_estrellas||null,comentario})});
