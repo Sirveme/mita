@@ -400,14 +400,15 @@
                     lat: geo ? geo.lat : null, lng: geo ? geo.lng : null,
                     fecha_programada: (this.estado && this.estado.horario_elegido) || data.fecha_programada || null
                 };
-                const r = await fetch('/api/v1/solicitudes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                const d = await r.json();
-                if (r.ok && d.id) {
-                    if (this.onComplete) { try { this.onComplete({ id: d.id, ...data }); } catch (e) {} }
-                    let pagoQR = false;
-                    try { pagoQR = !!(await (await fetch('/api/v1/pagos-qr/config')).json()).habilitado; } catch (e) {}
-                    this._elegirMetodoPago(d.id, pagoQR);   // zMita-37: método de pago (QR o efectivo)
-                } else { if (btn) btn.disabled = false; this.agregarMensajeBot('No se pudo crear la solicitud. Intenta por el menú.'); }
+                let id;
+                try { id = await MitaFlujo.crearSolicitud(payload); }   // camino único (zMita-43)
+                catch (e) { if (btn) btn.disabled = false; this.agregarMensajeBot('No se pudo crear la solicitud. Intenta por el menú.'); return; }
+                if (this.onComplete) { try { this.onComplete({ id: id, ...data }); } catch (e) {} }
+                // Paso "Tu comprobante" (zMita-44) antes del método de pago.
+                const comp = await MitaFlujo.pedirComprobante(id);
+                if (comp && comp.volver) { if (btn) btn.disabled = false; return; }
+                const pagoQR = await MitaFlujo.configQR();
+                this._elegirMetodoPago(id, pagoQR);   // zMita-37: método de pago (QR o efectivo)
             } catch (e) { if (btn) btn.disabled = false; this.agregarMensajeBot('Error al crear la solicitud.'); }
         },
 
@@ -425,21 +426,15 @@
             if (pagoQR) {
                 const qr = document.createElement('button');
                 qr.className = 'btn-opcion'; qr.type = 'button'; qr.textContent = '📲 Pagar con Yape o Plin';
-                qr.addEventListener('click', () => { window.location.href = '/pagar/' + solicitudId; });
+                qr.addEventListener('click', () => { MitaFlujo.irAPagarQR(solicitudId); });   // camino único
                 c.appendChild(qr);
             }
             const ef = document.createElement('button');
             ef.className = 'btn-opcion'; ef.type = 'button'; ef.textContent = '💵 Pagar en efectivo al técnico';
             ef.addEventListener('click', async () => {
                 c.style.display = 'none';
-                try {
-                    await fetch('/api/v1/pagos/efectivo', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ solicitud_id: solicitudId })
-                    });
-                } catch (e) {}
                 this.agregarMensajeBot('¡Listo! Pagas en efectivo al técnico. Buscando un técnico para ti.');
-                this._ofrecerAvisos(solicitudId);
+                await MitaFlujo.pagar(solicitudId, 'efectivo');   // difunde + paso de avisos + servicio
             });
             c.appendChild(ef);
         },

@@ -240,11 +240,16 @@
         } catch (e) { alert('No se pudo registrar.'); }
     }
 
-    function renderPagos() {
+    async function renderPagos() {
         $('#v-monto').textContent = money(CFG.tarifa_visita);
+        // El QR se muestra si hay número o imagen configurados (zMita-42), aunque falte PagoOK.
+        let qrCfg = {};
+        try { qrCfg = await (await fetch('/api/v1/pagos-qr/config')).json(); } catch (e) {}
         const ops = [];
+        if (qrCfg.habilitado) ops.push({ k: 'qr', icon: 'fa-qrcode', t: 'Yape o Plin (QR)', s: 'Pagas al instante' });
         if (CFG.permitir_efectivo) ops.push({ k: 'efectivo', icon: 'fa-hand-holding-dollar', t: 'Efectivo al técnico', s: 'Pagas cuando llegue' });
-        ops.push({ k: 'tarjeta', icon: 'fa-credit-card', t: 'Pagar con tarjeta', s: 'Visa, Mastercard, etc.' });
+        if (CFG.pasarela_activa) ops.push({ k: 'tarjeta', icon: 'fa-credit-card', t: 'Pagar con tarjeta', s: 'Visa, Mastercard, etc.' });
+        if (!ops.length) ops.push({ k: 'efectivo', icon: 'fa-hand-holding-dollar', t: 'Efectivo al técnico', s: 'Pagas cuando llegue' });
         estado.metodo = ops[0].k;
         $('#v-pagos').innerHTML = ops.map((o, i) => `
             <div class="v-pay-opt ${i === 0 ? 'sel' : ''}" data-k="${o.k}">
@@ -257,30 +262,27 @@
         }));
     }
 
-    // -------- Crear solicitud + pago --------
+    // -------- Crear solicitud + pago (camino único compartido con el chat: MitaFlujo) --------
     async function crearSolicitud() {
         const t = TIPOS[estado.tipoKey];
         const problemaTexto = `[${estado.area.nombre} › ${t.label}] ${estado.problema.nombre}` + (estado.descripcion ? ` — ${estado.descripcion}` : '');
-        const r = await fetch('/api/v1/solicitudes', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                problema: problemaTexto, categoria_id: estado.area.categoria_id || 1,
-                direccion: estado.direccion, distrito: estado.distrito || null,
-                referencia: estado.referencia || null, telefono: estado.telefono || null,
-                lat: estado.lat || null, lng: estado.lng || null,
-                metodo_pago: estado.metodo, pago_adelantado: false
-            })
+        return await MitaFlujo.crearSolicitud({
+            problema: problemaTexto, categoria_id: estado.area.categoria_id || 1,
+            direccion: estado.direccion, distrito: estado.distrito || null,
+            referencia: estado.referencia || null, telefono: estado.telefono || null,
+            lat: estado.lat || null, lng: estado.lng || null,
+            metodo_pago: estado.metodo, pago_adelantado: false
         });
-        if (!r.ok) throw new Error('crear');
-        const d = await r.json();
-        if (d.id) fetch(`/api/v1/asignacion/iniciar/${d.id}`, { method: 'POST' }).catch(() => {});
-        return d.id;
     }
 
     async function confirmar() {
         const btn = $('#v-submit'); btn.disabled = true;
         try {
             estado.solicitudId = await crearSolicitud();
+            // Paso "Tu comprobante" (zMita-44) entre crear y pagar. ← vuelve al método de pago.
+            const comp = await MitaFlujo.pedirComprobante(estado.solicitudId);
+            if (comp && comp.volver) { btn.disabled = false; return; }
+            if (estado.metodo === 'qr') { MitaFlujo.irAPagarQR(estado.solicitudId); return; }
             if (estado.metodo === 'tarjeta') {
                 const r = await fetch('/api/v1/pagos/iniciar', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -292,8 +294,8 @@
                 $('#izi-btn-monto').textContent = money(CFG.tarifa_visita);
                 screen('screen-izipay'); btn.disabled = false; return;   // stub: form IziPay in-app
             }
-            estado.pagoMetodo = 'efectivo'; estado.pagoComprobante = null;
-            buscarTecnicos();
+            // Efectivo: mismo camino que el chat (difunde + paso de avisos + pantalla del servicio).
+            await MitaFlujo.pagar(estado.solicitudId, 'efectivo');
         } catch (e) { alert('No se pudo enviar la solicitud. Intenta de nuevo.'); }
         finally { btn.disabled = false; }
     }
@@ -310,27 +312,23 @@
         } catch (e) {}
         $('#v-paying').classList.remove('open'); btn.disabled = false;
         estado.pagoMetodo = 'tarjeta'; estado.pagoComprobante = comprobante;
-        buscarTecnicos();
+        MitaFlujo.pasoAvisosYSeguir(estado.solicitudId);   // mismo camino que el chat
     }
 
-    // ---- Selección de técnico (post-pago) ----
+    // ---- Buscando técnico (post-pago) — modelo de difusión: el cliente NO elige técnico ----
     async function buscarTecnicos() {
         cerrarModal();
         $('#v-tecnicos').classList.add('open');
-        $('#v-tec-buscando').hidden = false; $('#v-tec-lista').hidden = true;
+        $('#v-tec-buscando').hidden = false;
+        window.__solId = estado.solicitudId;
+        const ver = $('#v-tec-ver'); if (ver) ver.href = '/cliente/servicio/' + estado.solicitudId + '/chats';
         $('#v-tec-num').textContent = 'Solicitud #' + String(estado.solicitudId || 0).padStart(5, '0');
-        // Flujo real: notificar a técnicos EN_SERVICIO y esperar que uno acepte
-        let notificados = 0;
-        try { const b = await (await fetch('/api/v1/solicitudes/' + estado.solicitudId + '/buscar-tecnico', { method: 'POST' })).json(); notificados = b.tecnicos || 0; } catch (e) {}
-        if (notificados > 0) { esperarAceptacion(); return; }
-        // Fallback (nadie EN_SERVICIO): selección demo para no bloquear el flujo
-        let tecnicos = [];
-        try { const d = await (await fetch('/api/v1/tecnicos-disponibles?categoria_id=' + (estado.area.categoria_id || ''))).json(); tecnicos = d.tecnicos || []; } catch (e) {}
-        await new Promise(r => setTimeout(r, 1200));
-        renderTecnicos(tecnicos);
+        // Se notifica a TODOS los técnicos de la especialidad; el primero que acepta toma el servicio.
+        try { await fetch('/api/v1/solicitudes/' + estado.solicitudId + '/buscar-tecnico', { method: 'POST' }); } catch (e) {}
+        esperarAceptacion();
     }
     function esperarAceptacion() {
-        const h = $('#v-tec-buscando').querySelector('h2'); if (h) h.textContent = 'Buscando técnico… esperando confirmación';
+        const h = $('#v-tec-buscando').querySelector('h2'); if (h) h.textContent = 'Buscando un técnico disponible…';
         let intentos = 0;
         const iv = setInterval(async () => {
             intentos++;
@@ -342,37 +340,12 @@
                 }
                 if (s.estado === 'SIN_TECNICO') {
                     clearInterval(iv);
-                    $('#v-tec-buscando').innerHTML = '<h2>No hay técnicos disponibles ahora</h2><p style="color:var(--v-text2)">Te avisaremos apenas uno se conecte. Puedes cerrar esta ventana.</p>';
+                    $('#v-tec-buscando').innerHTML = '<h2>No hay técnicos disponibles ahora</h2><p style="color:var(--v-text2)">Te avisaremos apenas uno se conecte.</p><a class="v-btn" style="margin-top:16px;display:inline-flex;text-decoration:none;" href="/cliente/servicio/' + estado.solicitudId + '/chats">Ver mi solicitud</a>';
                     return;
                 }
             } catch (e) {}
             if (intentos > 40) clearInterval(iv);   // ~2 min
         }, 3000);
-    }
-    function renderTecnicos(tecnicos) {
-        $('#v-tec-buscando').hidden = true; $('#v-tec-lista').hidden = false;
-        $('#v-tec-cards').innerHTML = tecnicos.map((t, i) => `
-            <div class="v-tec-card">
-                <div class="ava"><i class="fas fa-user"></i></div>
-                <div class="body"><b>${esc(t.nombre)}</b>
-                    <div class="stars">⭐ ${t.rating} <span>(${t.total_servicios} servicios)</span></div>
-                    <div class="sub">${esc(t.especialidad || 'Técnico')} · <i class="fas fa-location-dot"></i> ${esc(t.tiempo_estimado || '~20 min')} de ti</div>
-                </div>
-                <button type="button" class="v-tec-elegir" data-i="${i}">ELEGIR</button>
-            </div>`).join('') || '<p style="color:var(--v-text2)">No hay técnicos en línea ahora — usa la asignación automática.</p>';
-        $('#v-tec-cards').querySelectorAll('.v-tec-elegir').forEach(b => b.addEventListener('click', () => elegirTecnico(tecnicos[+b.dataset.i])));
-    }
-    async function elegirTecnico(t) { await asignar(t ? { tecnico_id: t.id, tecnico_nombre: t.nombre, rating: t.rating, total_servicios: t.total_servicios } : { auto: true }); }
-    async function asignarAuto() { await asignar({ auto: true }); }
-    async function asignar(payload) {
-        try {
-            const d = await (await fetch('/api/v1/solicitudes/' + estado.solicitudId + '/asignar-tecnico', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            })).json();
-            estado.tecnico = d.tecnico || null;
-            $('#v-tecnicos').classList.remove('open');
-            mostrarExito();
-        } catch (e) { alert('No se pudo asignar el técnico.'); }
     }
 
     function mostrarExito() {
@@ -445,7 +418,6 @@
         on('#btn-a-pago', 'click', irAPago);
         on('#v-submit', 'click', confirmar);
         on('#izi-pagar', 'click', pagarIzipay);
-        on('#v-tec-auto', 'click', asignarAuto);
         on('#v-wl-btn', 'click', avisarme);
         document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => screen('screen-' + b.dataset.back)));
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#v-modal').classList.contains('open')) navBack(); });
