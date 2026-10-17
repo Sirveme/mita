@@ -19,6 +19,7 @@ class PagoSolicitud(Base):
     # Lo declarado por el cliente al mostrar el QR / tocar "Ya pagué"
     canal = Column(String(20))                      # yape / plin
     monto_esperado = Column(Numeric(10, 2))         # exacto, p.ej. 50.00
+    monto_recibido = Column(Numeric(10, 2))         # si llegó un monto distinto (zMita-45 C)
     titular_declarado = Column(String(150))         # nombre del TITULAR del medio de pago
     codigo_operacion = Column(String(50))
     qr_mostrado_en = Column(DateTime)

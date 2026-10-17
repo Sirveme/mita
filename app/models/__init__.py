@@ -64,3 +64,4 @@ from app.models.cierre import (
     CodigoVerificacion, CompradorPreferido, ComprobanteEmitido, CobroEfectivo,
 )
 from app.models.liquidacion_mita import LiquidacionMita, LiquidacionItem, ConfiguracionHistorial
+from app.models.cliente_prueba import ClientePrueba

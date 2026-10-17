@@ -116,3 +116,7 @@ class Solicitud(Base):
     conformidad_ok = Column(Boolean, nullable=True)            # ¿quedó resuelto?
     conformidad_estrellas = Column(Integer, nullable=True)     # 1..5
     conformidad_comentario = Column(Text, nullable=True)
+
+    # Modo ensayo (zMita-45 D): servicio de un cliente de prueba (monto reducido, serie B999,
+    # marca ENSAYO en la torre, excluido de la liquidación).
+    ensayo = Column(Boolean, default=False)
