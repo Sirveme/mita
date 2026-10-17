@@ -245,20 +245,48 @@
                 return;
             }
             if (d.conflicto) { stop = true; if (ticker) clearInterval(ticker); msg('Ese pago ya fue registrado en otra operación. Un asesor te ayudará.', 'error'); $('opciones').classList.remove('oculto'); return; }
+            if (d.monto_distinto) { msg('Recibimos ' + money(d.monto_recibido) + ', pero la visita es ' + money(d.monto_esperado) + '. Un asesor te contactará para completarlo o devolverlo.', 'info'); return; }
             if (d.por_verificar) { msg('Recibimos tu aviso. Un asesor confirma tu pago en breve con tu comprobante.', 'info', true); return; }
+            if (d.error) { msg('Estamos verificando tu pago, puede tardar unos minutos.', 'info', true); return; }
             if (d.media) { msg('Estamos verificando tu pago, te avisamos en unos minutos.', 'info', true); return; }
             if (d.timeout) { vencido(); return; }
             msg('Verificando tu pago…', 'info', true);
         }
+        function money(v) { return 'S/ ' + (Number(v) || 0).toFixed(2); }
 
-        async function yaPague() {
-            lastFetch = Date.now();
-            try { manejar(await (await (await fetch('/api/v1/pagos-qr/ya-pague', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ solicitud_id: SID, concepto: CONCEPTO }) })).json())); } catch (e) {}
+        // Fetch con tope de 10 s (navegador -> MITA). zMita-45.
+        async function postJSON(ruta, extra) {
+            const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 10000);
+            try {
+                const r = await fetch('/api/v1/pagos-qr/' + ruta, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
+                    body: JSON.stringify(Object.assign({ solicitud_id: SID, concepto: CONCEPTO }, extra || {}))
+                });
+                return await r.json();
+            } catch (e) { return { error: 'red' }; }
+            finally { clearTimeout(to); }
         }
-        async function confirmarHora() {
+
+        // Botones siempre con respuesta: "Consultando…" 0.8 s, resultado visible, y si hay
+        // una consulta en vuelo el toque se ENCOLA (no se ignora).
+        let consultando = false, encolado = null;
+        async function accion(ruta, extra, okMsg) {
+            if (consultando) { encolado = { ruta, extra, okMsg }; msg('Consultando…', 'info', true); return; }
+            consultando = true; msg('Consultando…', 'info', true);
+            const t0 = Date.now(); lastFetch = Date.now();
+            const d = await postJSON(ruta, extra);
+            const dt = Date.now() - t0; if (dt < 800) await new Promise(r => setTimeout(r, 800 - dt));
+            consultando = false;
+            if (d.en_vuelo) { setTimeout(() => accion(ruta, extra, okMsg), 1200); return; }   // encola/reintenta
+            if (okMsg && !d.pagada && !d.error && !d.monto_distinto) msg(okMsg, 'info', true);
+            manejar(d);
+            if (encolado) { const q = encolado; encolado = null; accion(q.ruta, q.extra, q.okMsg); }
+        }
+        function yaPague() { accion('ya-pague', {}); }
+        function confirmarHora() {
             const hhmm = $('hora').value; if (!hhmm) return;
             const now = new Date(); const iso = now.toISOString().slice(0, 10) + 'T' + hhmm + ':00';
-            try { manejar(await (await (await fetch('/api/v1/pagos-qr/hora-voucher', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ solicitud_id: SID, concepto: CONCEPTO, hora: iso }) })).json())); } catch (e) {}
+            accion('hora-voucher', { hora: iso }, 'Hora registrada ✓');
         }
         function vencido() { if (ticker) clearInterval(ticker); stop = true; msg('Aún no vemos tu pago.', 'error'); $('opciones').classList.remove('oculto'); }
         function reintentar() { $('opciones').classList.add('oculto'); iniciarVigilancia(); }
