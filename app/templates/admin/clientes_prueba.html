@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es-PE">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MITA · Clientes de prueba</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #0e0e1a; color: #e9edef; font-family: system-ui, 'Segoe UI', sans-serif; padding: 24px 16px 48px; }
+        .wrap { max-width: 640px; margin: 0 auto; }
+        h1 { font-size: 20px; margin: 0 0 4px; }
+        .sub { color: #8a8a9a; font-size: 14px; margin: 0 0 16px; }
+        .card { background: #15131f; border: 1px solid #2a2a4e; border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+        label { display: block; color: #a6a6bd; font-size: 13px; margin: 10px 0 4px; }
+        input { width: 100%; background: #0e0e1a; border: 1px solid #2a2a4e; color: #e9edef; border-radius: 10px; padding: 10px 12px; }
+        .row { display: flex; gap: 10px; } .row > div { flex: 1; }
+        button { background: #22c55e; color: #06210f; border: none; border-radius: 10px; padding: 11px 16px; font-weight: 800; cursor: pointer; margin-top: 12px; }
+        button.del { background: transparent; color: #ff6b6b; border: 1px solid #ff6b6b; padding: 6px 10px; font-weight: 700; font-size: 12px; margin: 0; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 6px; }
+        th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #1c1c30; }
+        th { color: #8a8a9a; font-weight: 600; }
+        .msg { min-height: 18px; margin-top: 10px; font-size: 14px; } .msg.ok { color: #22c55e; } .msg.err { color: #ff6b6b; }
+        .pill { background: rgba(212,175,55,.15); color: #d4af37; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>Clientes de prueba (modo ensayo)</h1>
+        <p class="sub">Sus servicios cuestan <span class="pill" id="monto">S/ 1.00</span>, salen en serie B999 y no entran en la liquidación. No afecta a los demás clientes.</p>
+
+        <div class="card">
+            <div class="row">
+                <div><label>DNI (8 dígitos)</label><input id="dni" inputmode="numeric" placeholder="12345678"></div>
+                <div><label>Celular (9 dígitos)</label><input id="celular" inputmode="numeric" placeholder="987654321"></div>
+            </div>
+            <label>Nota (opcional)</label><input id="nota" placeholder="Para qué es la prueba">
+            <button onclick="agregar()">Agregar cliente de prueba</button>
+            <div class="msg" id="msg"></div>
+        </div>
+
+        <div class="card">
+            <table><thead><tr><th>DNI</th><th>Celular</th><th>Nota</th><th></th></tr></thead>
+                <tbody id="filas"><tr><td colspan="4" style="color:#8a8a9a;text-align:center;padding:16px;">Cargando…</td></tr></tbody></table>
+        </div>
+    </div>
+    <script>
+        const $ = (id) => document.getElementById(id);
+        const money = (v) => 'S/ ' + (Number(v) || 0).toFixed(2);
+        const msg = (t, ok) => { const m = $('msg'); m.textContent = t || ''; m.className = 'msg ' + (ok ? 'ok' : 'err'); };
+        async function cargar() {
+            let d; try { const r = await fetch('/api/v1/admin/clientes-prueba'); if (!r.ok) { $('filas').innerHTML = '<tr><td colspan="4">No autorizado.</td></tr>'; return; } d = await r.json(); } catch (e) { return; }
+            $('monto').textContent = money(d.monto_ensayo);
+            const rows = d.items || [];
+            $('filas').innerHTML = rows.length ? rows.map(r =>
+                `<tr><td>${r.dni || '—'}</td><td>${r.celular || '—'}</td><td>${(r.nota || '').replace(/</g, '&lt;')}</td><td><button class="del" onclick="quitar(${r.id})">Quitar</button></td></tr>`
+            ).join('') : '<tr><td colspan="4" style="color:#8a8a9a;text-align:center;padding:16px;">Sin clientes de prueba.</td></tr>';
+        }
+        async function agregar() {
+            msg('', true);
+            const body = { dni: $('dni').value, celular: $('celular').value, nota: $('nota').value };
+            const r = await fetch('/api/v1/admin/clientes-prueba', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const d = await r.json().catch(() => ({}));
+            if (r.ok) { msg('Agregado ✓', true); $('dni').value = ''; $('celular').value = ''; $('nota').value = ''; cargar(); }
+            else msg(d.detail || 'No se pudo agregar.', false);
+        }
+        async function quitar(id) {
+            if (!confirm('¿Quitar este cliente de prueba?')) return;
+            const r = await fetch('/api/v1/admin/clientes-prueba/' + id, { method: 'DELETE' });
+            if (r.ok) cargar(); else msg('No se pudo quitar.', false);
+        }
+        window.agregar = agregar; window.quitar = quitar;
+        cargar();
+    </script>
+</body>
+</html>
