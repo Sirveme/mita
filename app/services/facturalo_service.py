@@ -58,12 +58,13 @@ def _llamar_api(metodo: str, ruta: str, json=None, params=None, timeout=25):
     return r.status_code, body
 
 
-def _serie_para(tipo_comp: str) -> Optional[str]:
-    """En modo pruebas forzamos la serie 999 (B999/F999). En producción, serie automática
-    del emisor (B940/F940...), configurada en Facturalo. Las notas van sin serie: la API
-    elige la que corresponde a la letra del documento modificado (B->BC.., F->FC..)."""
-    if (settings.FACTURALO_MODO or "pruebas").lower() == "produccion":
-        return None
+def _serie_para(tipo_comp: str, ensayo: bool = False) -> Optional[str]:
+    """En pruebas (o si es un ENSAYO, zMita-45) forzamos la serie 999 (B999/F999), aunque
+    FACTURALO_MODO=produccion. En producción (no ensayo), serie automática del emisor
+    (B940/F940...). Las notas van sin serie: la API elige la letra correcta (B->BC.., F->FC..)."""
+    pruebas = ensayo or (settings.FACTURALO_MODO or "pruebas").lower() != "produccion"
+    if not pruebas:
+        return None   # producción: serie automática del emisor (B940/F940...)
     if tipo_comp == "boleta":
         return "B999"
     if tipo_comp == "factura":
@@ -123,8 +124,9 @@ def _normaliza_emision(status: int, body: dict) -> dict:
 
 
 def emitir(cliente: dict, items: list, tipo_comp: str, referencia_externa: str,
-           igv_incluido: Optional[bool] = None) -> dict:
-    """Emite boleta/factura. Devuelve la respuesta normalizada (estado 'encolado' al inicio)."""
+           igv_incluido: Optional[bool] = None, ensayo: bool = False) -> dict:
+    """Emite boleta/factura. Devuelve la respuesta normalizada (estado 'encolado' al inicio).
+    `ensayo=True` fuerza la serie de pruebas (B999/F999) aunque FACTURALO_MODO=produccion."""
     if igv_incluido is None:
         igv_incluido = bool(settings.FACTURALO_IGV_INCLUIDO)
     if tipo_comp == "factura" and (cliente.get("doc_tipo") or "").upper() != "RUC":
@@ -138,7 +140,7 @@ def emitir(cliente: dict, items: list, tipo_comp: str, referencia_externa: str,
             "forma_pago": "Contado",
             "enviar_email": bool(cliente.get("email")),
             "referencia_externa": referencia_externa[:100]}
-    serie = _serie_para(tipo_comp)
+    serie = _serie_para(tipo_comp, ensayo=ensayo)
     if serie:
         body["serie"] = serie
     status, resp = _llamar_api("POST", "/comprobantes", json=body)

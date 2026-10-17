@@ -130,7 +130,8 @@ def generar(db, lunes: date = None, creado_por="sistema") -> dict:
 
     sols = (db.query(Solicitud)
             .filter(Solicitud.estado == "CERRADO", Solicitud.tecnico_id.isnot(None),
-                    Solicitud.cerrado_en >= ini_utc, Solicitud.cerrado_en < fin_utc)
+                    Solicitud.cerrado_en >= ini_utc, Solicitud.cerrado_en < fin_utc,
+                    (Solicitud.ensayo.is_(False)) | (Solicitud.ensayo.is_(None)))   # excluir ENSAYO
             .all())
     por_tecnico = {}
     for s in sols:

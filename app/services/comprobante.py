@@ -76,7 +76,15 @@ def emitir(db, solicitud_id, concepto, tipo_comp, cliente, items, monto) -> dict
         db.commit()
         return {"ok": True, "id": ce.id, "estado": "enviando", "reutilizado": True}
 
-    r = fact.emitir(cliente, items, tipo_comp, ref)
+    # Ensayo (zMita-45 D): serie de pruebas aunque FACTURALO_MODO=produccion.
+    ensayo = False
+    try:
+        from app.models.solicitud_mita import Solicitud
+        _s = db.query(Solicitud).get(solicitud_id)
+        ensayo = bool(getattr(_s, "ensayo", False)) if _s else False
+    except Exception:
+        ensayo = False
+    r = fact.emitir(cliente, items, tipo_comp, ref, ensayo=ensayo)
     if not r.get("ok"):
         ce.estado = "pendiente"; db.commit()
         _alerta_torre(f"Comprobante solicitud #{solicitud_id} ({concepto}) no se pudo emitir: "

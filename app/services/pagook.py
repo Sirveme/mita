@@ -75,7 +75,7 @@ def consultar(monto, fecha_hora_declarada, canal=None, nombre_pagador_declarado=
         cuerpo["codigo_operacion"] = codigo_operacion
     _cuenta_minuto()
     try:
-        r = httpx.post(f"{_base()}/pagos/consultar", headers=_headers(), json=cuerpo, timeout=10)
+        r = httpx.post(f"{_base()}/pagos/consultar", headers=_headers(), json=cuerpo, timeout=8)
     except Exception as e:
         logger.warning("[pagook] consultar red: %s", e)
         return {"status": 0, "error": str(e)}
@@ -91,7 +91,7 @@ def marcar_usado(pago_id, referencia_externa, sistema="Mita.pe") -> dict:
     import httpx
     try:
         r = httpx.post(f"{_base()}/pagos/{pago_id}/marcar-usado", headers=_headers(),
-                       json={"referencia_externa": referencia_externa, "sistema": sistema}, timeout=10)
+                       json={"referencia_externa": referencia_externa, "sistema": sistema}, timeout=8)
     except Exception as e:
         logger.warning("[pagook] marcar-usado red: %s", e)
         return {"status": 0, "error": str(e)}
@@ -100,6 +100,23 @@ def marcar_usado(pago_id, referencia_externa, sistema="Mita.pe") -> dict:
     except Exception:
         data = {}
     return {"status": r.status_code, "body": data}
+
+
+def ping() -> dict:
+    """Consulta REAL de prueba a PagoOK para /admin/estado (no solo que exista la clave).
+    ok=responde; False=caído o credencial inválida."""
+    if not configurado():
+        return {"ok": False, "motivo": "sin_credencial"}
+    cuando = _lima_iso(datetime.utcnow())
+    res = consultar("1.00", cuando, canal="yape", ventana_minutos=1)
+    st = res.get("status")
+    if st == 200:
+        return {"ok": True, "status": 200}
+    if st in (400, 422):             # responde (validación) -> está vivo
+        return {"ok": True, "status": st, "nota": "responde"}
+    if st in (401, 403):
+        return {"ok": False, "status": st, "motivo": "credencial"}
+    return {"ok": False, "status": st or 0, "motivo": "sin_respuesta"}
 
 
 # ----------------------------------------------------------------------------
@@ -111,9 +128,34 @@ def _resp(ps, mensaje=None, extra=None):
     out = {"estado": ps.estado, "nivel": ps.nivel, "pagada": ps.estado == "pagada",
            "posible_reuso": bool(ps.posible_reuso),
            "comprobante_estado": ps.comprobante_estado, "mensaje": mensaje}
+    if ps.estado == "monto_distinto":
+        out["monto_distinto"] = True
+        out["monto_recibido"] = float(getattr(ps, "monto_recibido", None) or 0)
+        out["monto_esperado"] = float(ps.monto_esperado or 0)
     if extra:
         out.update(extra)
     return out
+
+
+def registrar_monto_distinto(db, ps, monto_recibido, titular=None, hora=None, pago_id=None) -> dict:
+    """Parte C (zMita-45): llegó un pago del titular declarado con un monto DISTINTO al esperado.
+    Nunca se marca 'pagada' solo; va a la torre ('Monto distinto') y el cliente recibe aviso."""
+    ps.estado = "monto_distinto"
+    try:
+        ps.monto_recibido = float(monto_recibido)
+    except (TypeError, ValueError):
+        ps.monto_recibido = None
+    if pago_id:
+        ps.pago_id = pago_id
+    cruda = {"monto_distinto": {"recibido": float(monto_recibido or 0),
+                               "esperado": float(ps.monto_esperado or 0),
+                               "titular": titular or ps.titular_declarado,
+                               "hora": (hora.isoformat() if hasattr(hora, "isoformat") else hora)}}
+    ps.respuesta_cruda = json.dumps(cruda, ensure_ascii=False)[:8000]
+    db.commit()
+    _alerta_torre(f"Monto distinto solicitud #{ps.solicitud_id}: recibido S/{float(monto_recibido or 0):.2f} "
+                  f"vs esperado S/{float(ps.monto_esperado or 0):.2f}. titular={titular or ps.titular_declarado!r}")
+    return _resp(ps, "Recibimos tu pago por un monto distinto; un asesor te contactará.")
 
 
 def _alerta_torre(texto):
