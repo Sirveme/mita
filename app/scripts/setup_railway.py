@@ -78,6 +78,8 @@ SQL_FILES = [
     "36_pago_concepto.sql",               # cobro QR por concepto visita/reparación (zMita-40)
     "37_comprobante_sunat.sql",           # estado SUNAT real del comprobante + NC (zMita-41)
     "38_liquidacion.sql",                 # liquidación a técnicos (etapa 8, zMita-41)
+    "39_umbral_boleta.sql",               # umbral de documento en boleta (zMita-44)
+    "40_pago_qr_titular.sql",             # titular del QR, opcional (zMita-44.1)
 ]
 
 # (etiqueta, módulo, función)
