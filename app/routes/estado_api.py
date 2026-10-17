@@ -44,6 +44,14 @@ async def estado(request: Request, db: Session = Depends(get_db)):
         except Exception:
             fact_ping = {"ok": False}
 
+    # Prueba REAL a PagoOK (no solo que exista la clave) — zMita-45.
+    pagook_ping = {"ok": False, "motivo": "sin_credencial"}
+    if pagook.configurado():
+        try:
+            pagook_ping = pagook.ping()
+        except Exception:
+            pagook_ping = {"ok": False, "motivo": "sin_respuesta"}
+
     def item(ok, detalle, falta=None, extra=None):
         d = {"ok": bool(ok), "detalle": detalle}
         if not ok and falta:
@@ -55,8 +63,13 @@ async def estado(request: Request, db: Session = Depends(get_db)):
     return {
         "entorno": item(es_produccion(), f"ENVIRONMENT={settings.ENVIRONMENT or '(vacío → producción)'}",
                         extra={"demo_auth": bool(settings.DEMO_AUTH), "produccion": es_produccion()}),
-        "pagook": item(pagook.configurado(), "Validación automática de pagos",
-                       falta="PAGOOK_API_KEY. Sin ella el pago QR igual se muestra, pero lo valida la torre."),
+        "pagook": item(bool(pagook_ping.get("ok")),
+                       ("PagoOK responde la consulta de prueba" if pagook_ping.get("ok")
+                        else ("Credencial inválida (PagoOK rechazó la prueba)" if pagook_ping.get("motivo") == "credencial"
+                              else ("Sin credencial" if pagook_ping.get("motivo") == "sin_credencial"
+                                    else "PagoOK no respondió la consulta de prueba"))),
+                       falta="Sin PagoOK operativo el pago QR igual se muestra, pero lo valida la torre.",
+                       extra={"status": pagook_ping.get("status")}),
         "qr": item(qr_num or qr_img, f"Número: {'sí' if qr_num else 'no'} · Imagen: {'sí' if qr_img else 'no'}",
                    falta="Configura pago_qr_numero o pago_qr_imagen en el panel.",
                    extra={"titular": bool((f.get('pago_qr_titular') or '').strip())}),

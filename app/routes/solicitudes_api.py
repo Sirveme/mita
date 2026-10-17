@@ -89,6 +89,13 @@ def crear_solicitud(data: SolicitudCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(solicitud)
 
+    # Modo ensayo (zMita-45 D): si el cliente es de prueba, marca ENSAYO y baja el costo.
+    try:
+        from app.services import ensayo
+        ensayo.marcar(db, solicitud)
+    except Exception:
+        pass
+
     # Aviso push al cliente: recibimos tu solicitud (zMita-33)
     try:
         from app.services import push as _push

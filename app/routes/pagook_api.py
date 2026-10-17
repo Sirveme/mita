@@ -193,7 +193,8 @@ async def admin_pendientes(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=403, detail="Solo administración")
     rows = (db.query(PagoSolicitud)
             .filter(PagoSolicitud.estado.in_(["esperando_pago", "verificando", "media_pendiente",
-                                              "sin_coincidencia", "conflicto", "por_verificar"]))
+                                              "sin_coincidencia", "conflicto", "por_verificar",
+                                              "monto_distinto", "devolucion"]))
             .order_by(PagoSolicitud.id.desc()).limit(100).all())
     out = []
     for r in rows:
@@ -236,6 +237,42 @@ async def admin_usar(request: Request, data: dict = Body(...), db: Session = Dep
         ps.estado = "conflicto"; db.commit()
         raise HTTPException(status_code=409, detail="Ese pago ya fue registrado en otra operación")
     raise HTTPException(status_code=502, detail=f"marcar-usado status {m.get('status')}")
+
+
+@router.post("/admin/monto-distinto")
+async def admin_monto_distinto(request: Request, data: dict = Body(...), db: Session = Depends(get_db)):
+    """Torre: decide un caso 'Monto distinto' (zMita-45 C). accion:
+    aceptar_igual (con motivo) | pedir_diferencia | marcar_devolucion. Nunca auto-pagada."""
+    if not await _es_admin(request, db):
+        raise HTTPException(status_code=403, detail="Solo administración")
+    ps = db.query(PagoSolicitud).get(int(data.get("pago_solicitud_id") or 0))
+    if not ps:
+        raise HTTPException(status_code=404, detail="No existe")
+    accion = (data.get("accion") or "").strip()
+    motivo = (data.get("motivo") or "").strip()
+    u = None
+    try:
+        from app.routes.login_mita import get_current_user
+        u = await get_current_user(request, db)
+    except Exception:
+        pass
+    quien = str(getattr(u, "id", "torre"))
+    if accion == "aceptar_igual":
+        if not motivo:
+            raise HTTPException(status_code=422, detail="El motivo es obligatorio para aceptar un monto distinto")
+        ps.referencia_externa = pagook._referencia(ps)
+        logger.warning("[pagook][TORRE] aceptar monto distinto sol #%s por %s: %s", ps.solicitud_id, quien, motivo)
+        from app.services.pagook import _al_pagar
+        return {"ok": True, "resultado": _al_pagar(db, ps, operador=True)}
+    if accion == "pedir_diferencia":
+        ps.estado = "monto_distinto"; db.commit()
+        logger.warning("[pagook][TORRE] pedir diferencia sol #%s por %s", ps.solicitud_id, quien)
+        return {"ok": True, "estado": "monto_distinto"}
+    if accion == "marcar_devolucion":
+        ps.estado = "devolucion"; db.commit()
+        logger.warning("[pagook][TORRE] marcar devolución sol #%s por %s: %s", ps.solicitud_id, quien, motivo)
+        return {"ok": True, "estado": "devolucion"}
+    raise HTTPException(status_code=422, detail="Acción inválida")
 
 
 @router.post("/admin/confirmar-manual")
