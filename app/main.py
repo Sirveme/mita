@@ -120,7 +120,7 @@ async def lifespan(app: FastAPI):
             _m.__table__.create(bind=engine, checkfirst=True)
         for nombre in ("30_push_envios_canal.sql", "31_pagos_solicitud.sql", "32_pagos_voucher.sql",
                        "33_ofertas_servicio.sql", "34_servicio_vivo.sql", "35_cierre_identificacion.sql",
-                       "36_pago_concepto.sql", "37_comprobante_sunat.sql", "38_liquidacion.sql"):
+                       "36_pago_concepto.sql", "37_comprobante_sunat.sql", "38_liquidacion.sql", "39_umbral_boleta.sql", "40_pago_qr_titular.sql"):
             sqlf = _os.path.join(_os.path.dirname(__file__), "sql", nombre)
             if _os.path.exists(sqlf):
                 with open(sqlf, encoding="utf-8") as f, engine.begin() as conn:
@@ -313,6 +313,10 @@ from app.routes.cierre_api import router as cierre_router
 app.include_router(cierre_router)
 from app.routes.liquidacion_api import router as liquidacion_router
 app.include_router(liquidacion_router)
+from app.routes.estado_api import router as estado_router
+app.include_router(estado_router)
+from app.routes.pago_qr_admin import router as pago_qr_admin_router
+app.include_router(pago_qr_admin_router)
 
 # Cuando estén listos:
 # from app.routes.clientes import router as clientes_router
@@ -374,35 +378,19 @@ async def tecnico_perfil_page(request: Request):
 # RUTAS HTML - CLIENTE
 # ============================================
 
-@app.get("/cliente/solicitud-aceite", response_class=HTMLResponse)
-async def cliente_solicitud_aceite_page(request: Request):
-    """Solicitud de servicio de cambio de aceite"""
-    return templates.TemplateResponse("cliente/solicitud_aceite.html", {"request": request})
+# Flujo heredado de "mecánico" (elección de técnico, vehículos): retirado del recorrido del
+# cliente (zMita-42, Parte C). Las rutas redirigen al flujo actual; el código NO se borra.
+from fastapi.responses import RedirectResponse as _Redir
 
-@app.get("/cliente/calendario-horarios", response_class=HTMLResponse)
-async def cliente_calendario_horarios_page(request: Request):
-    """Selección de fecha y hora del servicio"""
-    return templates.TemplateResponse("cliente/calendario_horarios.html", {"request": request})
-
-@app.get("/cliente/metodos-pago", response_class=HTMLResponse)
-async def cliente_metodos_pago_page(request: Request):
-    """Selección de método de pago"""
-    return templates.TemplateResponse("cliente/metodos_pago.html", {"request": request})
-
-@app.get("/cliente/buscando-mecanico", response_class=HTMLResponse)
-async def cliente_buscando_mecanico_page(request: Request):
-    """Pantalla de búsqueda de mecánico"""
-    return templates.TemplateResponse("cliente/buscando_mecanico.html", {"request": request})
-
-@app.get("/cliente/mecanico-asignado", response_class=HTMLResponse)
-async def cliente_mecanico_asignado_page(request: Request):
-    """Pantalla de mecánico asignado"""
-    return templates.TemplateResponse("cliente/mecanico_asignado.html", {"request": request})
-
-@app.get("/cliente/seguimiento", response_class=HTMLResponse)
-async def cliente_seguimiento_page(request: Request):
-    """Seguimiento del servicio"""
-    return templates.TemplateResponse("cliente/seguimiento.html", {"request": request})
+@app.get("/cliente/solicitud-aceite")
+@app.get("/cliente/calendario-horarios")
+@app.get("/cliente/metodos-pago")
+@app.get("/cliente/buscando-mecanico")
+@app.get("/cliente/mecanico-asignado")
+@app.get("/cliente/seguimiento")
+async def _cliente_flujo_heredado(request: Request):
+    """Pantallas del modelo antiguo (incluye elección de técnico). Se redirige al flujo actual."""
+    return _Redir(url="/cliente/home", status_code=302)
 
 
 
@@ -571,6 +559,36 @@ async def admin_liquidaciones_mita_page(request: Request):
     finally:
         db.close()
     return templates.TemplateResponse("admin/liquidaciones_mita.html", {"request": request})
+
+
+@app.get("/admin/pago-qr", response_class=HTMLResponse)
+async def admin_pago_qr_page(request: Request):
+    """Config del cobro QR (número, titular e imagen del QR) — zMita-44.1."""
+    from app.core.database import get_db
+    from app.routes.main import _guard_admin
+    db = next(get_db())
+    try:
+        redir = await _guard_admin(request, db)
+        if redir:
+            return redir
+    finally:
+        db.close()
+    return templates.TemplateResponse("admin/pago_qr_config.html", {"request": request})
+
+
+@app.get("/admin/estado", response_class=HTMLResponse)
+async def admin_estado_page(request: Request):
+    """Torre: estado del sistema (integraciones) — zMita-42 Parte A3."""
+    from app.core.database import get_db
+    from app.routes.main import _guard_admin
+    db = next(get_db())
+    try:
+        redir = await _guard_admin(request, db)
+        if redir:
+            return redir
+    finally:
+        db.close()
+    return templates.TemplateResponse("admin/estado.html", {"request": request})
 
 
 @app.get("/admin/cierres", response_class=HTMLResponse)
