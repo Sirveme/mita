@@ -112,15 +112,16 @@ async def lifespan(app: FastAPI):
         from app.models.servicio_vivo import UbicacionServicio, MensajeServicio, Presupuesto
         from app.models.cierre import CodigoVerificacion, CompradorPreferido, ComprobanteEmitido, CobroEfectivo
         from app.models.liquidacion_mita import LiquidacionMita, LiquidacionItem, ConfiguracionHistorial
+        from app.models.cliente_prueba import ClientePrueba
         PagoSolicitud.__table__.create(bind=engine, checkfirst=True)
         OfertaServicio.__table__.create(bind=engine, checkfirst=True)
         for _m in (UbicacionServicio, MensajeServicio, Presupuesto,
                    CodigoVerificacion, CompradorPreferido, ComprobanteEmitido, CobroEfectivo,
-                   LiquidacionMita, LiquidacionItem, ConfiguracionHistorial):
+                   LiquidacionMita, LiquidacionItem, ConfiguracionHistorial, ClientePrueba):
             _m.__table__.create(bind=engine, checkfirst=True)
         for nombre in ("30_push_envios_canal.sql", "31_pagos_solicitud.sql", "32_pagos_voucher.sql",
                        "33_ofertas_servicio.sql", "34_servicio_vivo.sql", "35_cierre_identificacion.sql",
-                       "36_pago_concepto.sql", "37_comprobante_sunat.sql", "38_liquidacion.sql", "39_umbral_boleta.sql", "40_pago_qr_titular.sql"):
+                       "36_pago_concepto.sql", "37_comprobante_sunat.sql", "38_liquidacion.sql", "39_umbral_boleta.sql", "40_pago_qr_titular.sql", "41_ensayo_monto.sql"):
             sqlf = _os.path.join(_os.path.dirname(__file__), "sql", nombre)
             if _os.path.exists(sqlf):
                 with open(sqlf, encoding="utf-8") as f, engine.begin() as conn:
@@ -241,6 +242,21 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Templates
 templates = Jinja2Templates(directory="app/templates")
 
+
+# ============================================
+# PÁGINA 404 (zMita-45 E): HTML con diseño MITA para rutas de página; JSON para /api
+# ============================================
+from starlette.exceptions import HTTPException as _StarletteHTTPException
+from fastapi.exception_handlers import http_exception_handler as _default_http_exc
+
+
+@app.exception_handler(_StarletteHTTPException)
+async def _mita_http_exception(request: Request, exc: _StarletteHTTPException):
+    if exc.status_code == 404 and not request.url.path.startswith(("/api", "/static")):
+        return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+    return await _default_http_exc(request, exc)
+
+
 # ============================================
 # REGISTRAR ROUTERS
 # ============================================
@@ -317,6 +333,8 @@ from app.routes.estado_api import router as estado_router
 app.include_router(estado_router)
 from app.routes.pago_qr_admin import router as pago_qr_admin_router
 app.include_router(pago_qr_admin_router)
+from app.routes.ensayo_admin import router as ensayo_admin_router
+app.include_router(ensayo_admin_router)
 
 # Cuando estén listos:
 # from app.routes.clientes import router as clientes_router
@@ -559,6 +577,21 @@ async def admin_liquidaciones_mita_page(request: Request):
     finally:
         db.close()
     return templates.TemplateResponse("admin/liquidaciones_mita.html", {"request": request})
+
+
+@app.get("/admin/clientes-prueba", response_class=HTMLResponse)
+async def admin_clientes_prueba_page(request: Request):
+    """Panel: clientes de prueba (modo ensayo) — zMita-45 D."""
+    from app.core.database import get_db
+    from app.routes.main import _guard_admin
+    db = next(get_db())
+    try:
+        redir = await _guard_admin(request, db)
+        if redir:
+            return redir
+    finally:
+        db.close()
+    return templates.TemplateResponse("admin/clientes_prueba.html", {"request": request})
 
 
 @app.get("/admin/pago-qr", response_class=HTMLResponse)
