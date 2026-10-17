@@ -42,9 +42,18 @@ async def _es_admin(request: Request, db: Session) -> bool:
 
 @router.get("/config")
 async def config(db: Session = Depends(get_db)):
-    """Datos para la pantalla de pago. Si no hay credencial, la opción QR no se muestra."""
+    """Datos para la pantalla de pago (zMita-42). El QR se muestra si hay número O imagen;
+    la validación automática (PagoOK) es independiente: sin credencial, el pago lo confirma la torre."""
     numero, qr = _numero_qr(db)
-    return {"habilitado": pagook.configurado(), "numero": numero, "qr_imagen": qr}
+    titular = ""
+    try:
+        from app.models.chat_conocimiento import ChatConocimiento
+        row = db.query(ChatConocimiento).filter(ChatConocimiento.clave == "pago_qr_titular").first()
+        titular = (row.contenido or "").strip() if row else ""
+    except Exception:
+        pass
+    return {"habilitado": bool(numero or qr), "numero": numero, "qr_imagen": qr,
+            "auto_validacion": pagook.configurado(), "titular": titular}
 
 
 def _solicitud(db, solicitud_id):
@@ -65,8 +74,10 @@ def _ps_actual(db, solicitud_id, concepto="visita"):
 
 @router.post("/iniciar")
 async def iniciar(data: dict = Body(...), db: Session = Depends(get_db)):
-    """Muestra el QR: crea el pago en 'esperando_pago' con monto/canal/titular."""
-    if not pagook.configurado():
+    """Muestra el QR: crea el pago en 'esperando_pago'. Sin PagoOK igual se muestra;
+    la validación la hace la torre (nunca se marca pagado solo)."""
+    numero, qr_img = _numero_qr(db)
+    if not (numero or qr_img):
         raise HTTPException(status_code=503, detail="Pago por QR no disponible")
     sid = data.get("solicitud_id")
     if not sid:
@@ -182,7 +193,7 @@ async def admin_pendientes(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=403, detail="Solo administración")
     rows = (db.query(PagoSolicitud)
             .filter(PagoSolicitud.estado.in_(["esperando_pago", "verificando", "media_pendiente",
-                                              "sin_coincidencia", "conflicto"]))
+                                              "sin_coincidencia", "conflicto", "por_verificar"]))
             .order_by(PagoSolicitud.id.desc()).limit(100).all())
     out = []
     for r in rows:
@@ -225,3 +236,29 @@ async def admin_usar(request: Request, data: dict = Body(...), db: Session = Dep
         ps.estado = "conflicto"; db.commit()
         raise HTTPException(status_code=409, detail="Ese pago ya fue registrado en otra operación")
     raise HTTPException(status_code=502, detail=f"marcar-usado status {m.get('status')}")
+
+
+@router.post("/admin/confirmar-manual")
+async def admin_confirmar_manual(request: Request, data: dict = Body(...), db: Session = Depends(get_db)):
+    """La torre confirma a mano un pago 'por_verificar' (sin PagoOK), tras ver el voucher.
+    Es la ÚNICA forma de marcar pagado sin PagoOK, y queda registrada (operador + nota)."""
+    if not await _es_admin(request, db):
+        raise HTTPException(status_code=403, detail="Solo administración")
+    ps = db.query(PagoSolicitud).get(int(data.get("pago_solicitud_id") or 0))
+    if not ps:
+        raise HTTPException(status_code=404, detail="No existe")
+    if ps.estado == "pagada":
+        return {"ok": True, "ya_pagada": True}
+    nota = (data.get("nota") or "").strip()
+    u = None
+    try:
+        from app.routes.login_mita import get_current_user
+        u = await get_current_user(request, db)
+    except Exception:
+        pass
+    ps.referencia_externa = pagook._referencia(ps)
+    ps.respuesta_cruda = json.dumps({"confirmacion_manual": {"por": getattr(u, "id", "torre"), "nota": nota,
+                                     "cuando": datetime.utcnow().isoformat()}}, ensure_ascii=False)[:8000]
+    from app.services.pagook import _al_pagar
+    res = _al_pagar(db, ps, operador=True)
+    return {"ok": True, "resultado": res, "manual": True}

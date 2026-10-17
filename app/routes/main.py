@@ -78,13 +78,16 @@ async def home_cliente_clasico(request: Request):
     """Home anterior (dashboard con FABs), por si se necesita."""
     return templates.TemplateResponse("cliente/home_cliente.html", {"request": request})
 
-@router.get("/cliente/buscando", response_class=HTMLResponse)
+# Pantallas heredadas standalone: retiradas del recorrido del cliente (zMita-42, Parte C).
+@router.get("/cliente/buscando")
 async def buscando_tecnico(request: Request):
-    return templates.TemplateResponse("cliente/buscando_tecnico.html", {"request": request})
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/cliente/home", status_code=302)
 
-@router.get("/cliente/seguimiento", response_class=HTMLResponse)
+@router.get("/cliente/seguimiento")
 async def seguimiento_servicio(request: Request):
-    return templates.TemplateResponse("cliente/seguimiento.html", {"request": request})
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/cliente/home", status_code=302)
 
 # Flujo MITA v2: describe problema → categoría → técnico → dirección → chat
 @router.get("/cliente/solicitar", response_class=HTMLResponse)

@@ -53,7 +53,10 @@ async def comprador_get(sid: int, db: Session = Depends(get_db)):
         recordado = {"tipo_comprobante": cp.tipo_comprobante, "doc_tipo": cp.doc_tipo,
                      "doc_numero": cp.doc_numero, "razon_social": cp.razon_social,
                      "direccion_fiscal": cp.direccion_fiscal}
+    from app.services import sms
     return {"celular_estado": s.celular_estado, "celular_verificado": bool(s.celular_verificado),
+            "cliente_nombre": s.cliente_nombre or "", "total_visita": float(s.costo_visita or 50),
+            "umbral_boleta": identificacion.umbral_boleta(db), "sms_provider": sms.hay_proveedor(),
             "actual": {"tipo_comprobante": s.comprador_tipo_comprobante, "doc_tipo": s.comprador_doc_tipo,
                        "doc_numero": s.comprador_doc_numero, "razon_social": s.comprador_nombre,
                        "direccion_fiscal": s.comprador_direccion_fiscal},
