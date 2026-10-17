@@ -261,7 +261,10 @@ def _emitir(db, solicitud, reintento=False) -> dict:
 
     doc_tipo = solicitud.comprador_doc_tipo
     doc_num = solicitud.comprador_doc_numero
-    if not doc_tipo or not doc_num:
+    tipo_comp = (solicitud.comprador_tipo_comprobante or "boleta")
+    nombre = solicitud.comprador_nombre or (solicitud.cliente_nombre or "Cliente")
+
+    def _pendiente(mensaje):
         from app.models.cierre import ComprobanteEmitido
         ce = (db.query(ComprobanteEmitido).filter(ComprobanteEmitido.solicitud_id == solicitud.id,
                                                   ComprobanteEmitido.concepto == concepto).first())
@@ -269,13 +272,27 @@ def _emitir(db, solicitud, reintento=False) -> dict:
             ce = ComprobanteEmitido(solicitud_id=solicitud.id, concepto=concepto, monto=monto)
             db.add(ce)
         ce.estado = "pendiente"; db.commit()
-        _alerta_torre(f"Comprobante pendiente solicitud #{solicitud.id}: falta el documento del comprador.")
-        return {"ok": False, "pendiente": True, "mensaje": "Falta identificar al comprador."}
+        _alerta_torre(f"Comprobante pendiente solicitud #{solicitud.id}: {mensaje}")
+        return {"ok": False, "pendiente": True, "mensaje": mensaje}
 
-    tipo_comp = (solicitud.comprador_tipo_comprobante or "boleta")
-    cliente = {"doc_tipo": doc_tipo, "doc_numero": doc_num,
-               "razon_social": solicitud.comprador_nombre or "Cliente",
-               "direccion": solicitud.comprador_direccion_fiscal}
+    if doc_tipo and doc_num:
+        cliente = {"doc_tipo": doc_tipo, "doc_numero": doc_num, "razon_social": nombre,
+                   "direccion": solicitud.comprador_direccion_fiscal}
+    elif tipo_comp == "factura":
+        return _pendiente("Falta el RUC para la factura.")
+    else:
+        # Boleta sin documento: solo válida bajo el umbral. Si el total lo supera, pedir DNI.
+        from app.services.identificacion import umbral_boleta
+        if monto >= umbral_boleta(db):
+            try:
+                from app.services import servicio
+                servicio.mensaje_sistema(db, solicitud.id,
+                    f"Por el monto (S/ {monto:.2f}) necesitamos tu DNI para la boleta. "
+                    f"Complétalo para enviarte el comprobante.")
+            except Exception:
+                pass
+            return _pendiente(f"Boleta de S/ {monto:.2f} requiere DNI (supera el umbral).")
+        cliente = {"doc_tipo": None, "doc_numero": "", "razon_social": nombre, "direccion": None}
     return comprobante.emitir(db, solicitud.id, concepto, tipo_comp, cliente, items, monto)
 
 

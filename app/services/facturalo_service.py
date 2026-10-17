@@ -78,8 +78,14 @@ def _precio_sin_igv(monto: float, igv_incluido: bool) -> float:
 
 def _cliente_payload(cliente: dict) -> dict:
     doc_tipo = (cliente.get("doc_tipo") or "").upper()
-    out = {"tipo_documento": DOC.get(doc_tipo, "0"),
-           "numero_documento": (cliente.get("doc_numero") or "").strip(),
+    tipo = DOC.get(doc_tipo, "0")
+    numero = (cliente.get("doc_numero") or "").strip()
+    # Boleta sin documento (tipo_documento "0"): SUNAT exige numero_documento "0"
+    # (nunca vacío ni "-"), con el nombre real en razon_social.
+    if tipo == "0" or not numero:
+        tipo = "0"; numero = "0"
+    out = {"tipo_documento": tipo,
+           "numero_documento": numero,
            "razon_social": (cliente.get("razon_social") or "Cliente").strip()[:200]}
     if cliente.get("direccion"):
         out["direccion"] = cliente["direccion"][:200]
@@ -189,3 +195,10 @@ def buscar_referencia(referencia_externa: str) -> dict:
 
 def pdf_url(comprobante_id: str, formato: str = "A4") -> str:
     return f"{_base()}/comprobantes/{comprobante_id}/pdf?formato={formato}"
+
+
+def ping() -> dict:
+    """Healthcheck sin auth: GET /api/v1/estado. Para el panel /admin/estado."""
+    status, body = _llamar_api("GET", "/estado", timeout=8)
+    return {"ok": status == 200 and bool(body.get("exito")),
+            "estado": body.get("estado"), "status": status}

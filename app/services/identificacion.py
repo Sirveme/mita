@@ -52,14 +52,49 @@ def comprador_recordado(db, celular: str):
     return db.query(CompradorPreferido).filter(CompradorPreferido.celular == cel).first()
 
 
+def umbral_boleta(db) -> float:
+    """Monto a partir del cual la boleta exige documento del comprador (config, def S/ 700)."""
+    try:
+        from app.services.config_service import ConfigService
+        return float(ConfigService.get(db, "umbral_boleta_identificada", 700) or 700)
+    except Exception:
+        return 700.0
+
+
 def guardar_comprador(db, solicitud, data: dict) -> dict:
     """Valida el documento, lo escribe en la solicitud y lo recuerda por celular.
 
-    data: {tipo_comprobante, doc_tipo, doc_numero, razon_social, direccion_fiscal?}."""
+    data: {tipo_comprobante, doc_tipo, doc_numero, razon_social, direccion_fiscal?, total?}.
+    Boleta: el documento es opcional bajo el umbral, obligatorio al llegar/superarlo."""
     tipo_comp = (data.get("tipo_comprobante") or "").strip().lower()
     doc_tipo = data.get("doc_tipo")
     doc_numero = (data.get("doc_numero") or "").strip()
     nombre = (data.get("razon_social") or "").strip()
+    if tipo_comp not in ("boleta", "factura"):
+        tipo_comp = "boleta"
+
+    # Monto del comprobante para decidir si la boleta exige documento.
+    try:
+        total = float(data.get("total")) if data.get("total") not in (None, "") else float(solicitud.costo_visita or 0)
+    except (TypeError, ValueError):
+        total = float(solicitud.costo_visita or 0)
+    umbral = umbral_boleta(db)
+
+    # Boleta sin documento: permitida solo bajo el umbral.
+    if tipo_comp == "boleta" and not doc_numero:
+        if total >= umbral:
+            return {"ok": False, "requiere_doc": True,
+                    "mensaje": f"Por el monto (S/ {total:.2f}) necesitamos tu DNI para la boleta."}
+        if not nombre:
+            return {"ok": False, "mensaje": "Falta tu nombre para la boleta."}
+        solicitud.comprador_tipo_comprobante = "boleta"
+        solicitud.comprador_doc_tipo = None
+        solicitud.comprador_doc_numero = None
+        solicitud.comprador_nombre = nombre
+        solicitud.comprador_direccion_fiscal = None
+        db.commit()
+        _recordar(db, solicitud, "boleta", None, None, nombre, None)
+        return {"ok": True, "tipo_comprobante": "boleta", "tipo": None}
 
     ok, tipo_n, msg = validar_documento(doc_tipo, doc_numero)
     if not ok:
@@ -68,8 +103,6 @@ def guardar_comprador(db, solicitud, data: dict) -> dict:
     # Coherencia: factura exige RUC
     if tipo_comp == "factura" and tipo_n != "RUC":
         return {"ok": False, "mensaje": "La factura requiere un RUC."}
-    if tipo_comp not in ("boleta", "factura"):
-        tipo_comp = tipo_comprobante_por_documento(tipo_n)
     if not nombre:
         return {"ok": False, "mensaje": "Falta el nombre o la razón social."}
 
@@ -78,18 +111,22 @@ def guardar_comprador(db, solicitud, data: dict) -> dict:
     solicitud.comprador_doc_numero = doc_numero
     solicitud.comprador_nombre = nombre
     solicitud.comprador_direccion_fiscal = (data.get("direccion_fiscal") or None)
-
-    # Recordar por celular (upsert)
-    cel = "".join(ch for ch in (solicitud.cliente_telefono or "") if ch.isdigit())[-9:]
-    if len(cel) == 9:
-        cp = db.query(CompradorPreferido).filter(CompradorPreferido.celular == cel).first()
-        if not cp:
-            cp = CompradorPreferido(celular=cel)
-            db.add(cp)
-        cp.tipo_comprobante = tipo_comp
-        cp.doc_tipo = tipo_n
-        cp.doc_numero = doc_numero
-        cp.razon_social = nombre
-        cp.direccion_fiscal = solicitud.comprador_direccion_fiscal
     db.commit()
+    _recordar(db, solicitud, tipo_comp, tipo_n, doc_numero, nombre, solicitud.comprador_direccion_fiscal)
     return {"ok": True, "tipo_comprobante": tipo_comp, "tipo": tipo_n}
+
+
+def _recordar(db, solicitud, tipo_comp, tipo_n, doc_numero, nombre, direccion):
+    """Guarda/actualiza los datos del comprador por celular para el próximo servicio."""
+    cel = "".join(ch for ch in (solicitud.cliente_telefono or "") if ch.isdigit())[-9:]
+    if len(cel) != 9:
+        return
+    cp = db.query(CompradorPreferido).filter(CompradorPreferido.celular == cel).first()
+    if not cp:
+        cp = CompradorPreferido(celular=cel); db.add(cp)
+    cp.tipo_comprobante = tipo_comp
+    cp.doc_tipo = tipo_n
+    cp.doc_numero = doc_numero
+    cp.razon_social = nombre
+    cp.direccion_fiscal = direccion
+    db.commit()

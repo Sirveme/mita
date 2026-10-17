@@ -217,6 +217,18 @@ def verificar_pago(db, ps, forzar=False, operador=False, voucher=False) -> dict:
     if ps.estado == "pagada":
         return _resp(ps, "Pago confirmado.")
 
+    # Sin credencial de PagoOK (zMita-42): el QR igual se muestra, pero NO se valida solo.
+    # El pago queda "por verificar" y lo confirma la torre con el voucher.
+    if not configurado():
+        if ps.estado != "por_verificar":
+            ps.estado = "por_verificar"
+            _alerta_torre(f"Pago por verificar (sin PagoOK) solicitud #{ps.solicitud_id}: "
+                          f"confirmar con el voucher. monto S/{float(ps.monto_esperado or 0):.2f} "
+                          f"canal {ps.canal} titular {ps.titular_declarado!r}")
+            db.commit()
+        return _resp(ps, "Estamos verificando tu pago; un asesor lo confirma en breve.",
+                     {"por_verificar": True})
+
     inicio = ps.qr_mostrado_en or ps.fecha_hora_declarada
     vencido = bool(inicio and datetime.utcnow() - inicio > timedelta(minutes=VENTANA_MAX_MIN))
 
@@ -416,22 +428,34 @@ def _emitir_comprobante(db, ps, sol):
     Facturalo real (estado honesto). Si falta algo, queda 'pendiente' (no revierte el pago)."""
     from app.services.documento import validar_documento, tipo_comprobante_por_documento
     from app.services import comprobante as _comp
-    tipo_doc = ps.comprador_doc_tipo or (getattr(sol, "comprador_doc_tipo", None) if sol else None)
-    num_doc = ps.comprador_doc_numero or (getattr(sol, "comprador_doc_numero", None) if sol else None)
-    nombre = (ps.comprador_nombre or (getattr(sol, "comprador_nombre", None) if sol else None)
+    # Preferir el comprador identificado en la solicitud (paso "Tu comprobante", zMita-44);
+    # el de la pantalla de pago es respaldo.
+    sol_doc_tipo = getattr(sol, "comprador_doc_tipo", None) if sol else None
+    sol_doc_num = getattr(sol, "comprador_doc_numero", None) if sol else None
+    tipo_doc = sol_doc_tipo or ps.comprador_doc_tipo
+    num_doc = sol_doc_num or ps.comprador_doc_numero
+    nombre = ((getattr(sol, "comprador_nombre", None) if sol else None) or ps.comprador_nombre
               or (getattr(sol, "cliente_nombre", None) if sol else None) or "Cliente")
-    if not tipo_doc or not num_doc:
-        ps.comprobante_estado = "pendiente"
-        _alerta_torre(f"Comprobante pendiente solicitud #{ps.solicitud_id}: falta documento del comprador.")
-        return
-    ok, tipo_n, msg = validar_documento(tipo_doc, num_doc)
-    if not ok:
-        ps.comprobante_estado = "pendiente"
-        _alerta_torre(f"Comprobante pendiente solicitud #{ps.solicitud_id}: documento inválido ({msg}).")
-        return
-    tipo_comp = tipo_comprobante_por_documento(tipo_n)
-    cliente = {"doc_tipo": tipo_n, "doc_numero": num_doc, "razon_social": nombre}
+    tipo_elegido = (getattr(sol, "comprador_tipo_comprobante", None) if sol else None) or ""
     monto = float(ps.monto_esperado or 0)
+
+    if tipo_doc and num_doc:
+        ok, tipo_n, msg = validar_documento(tipo_doc, num_doc)
+        if not ok:
+            ps.comprobante_estado = "pendiente"
+            _alerta_torre(f"Comprobante pendiente solicitud #{ps.solicitud_id}: documento inválido ({msg}).")
+            return
+        tipo_comp = tipo_comprobante_por_documento(tipo_n)
+        cliente = {"doc_tipo": tipo_n, "doc_numero": num_doc, "razon_social": nombre}
+    elif tipo_elegido == "factura":
+        # Factura pedida pero sin RUC válido -> no se puede emitir.
+        ps.comprobante_estado = "pendiente"
+        _alerta_torre(f"Comprobante pendiente solicitud #{ps.solicitud_id}: factura sin RUC.")
+        return
+    else:
+        # Boleta SIN documento (válida para montos pequeños como la visita): tipo_documento 0.
+        tipo_comp = "boleta"
+        cliente = {"doc_tipo": None, "doc_numero": "", "razon_social": nombre}
     r = _comp.emitir(db, ps.solicitud_id, "visita", tipo_comp, cliente,
                      items=[{"descripcion": "Visita técnica MITA", "monto": monto}], monto=monto)
     ps.comprobante_tipo = tipo_comp
