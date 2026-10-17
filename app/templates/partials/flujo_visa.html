@@ -99,18 +99,15 @@
 
 <div class="v-paying" id="v-paying"><div class="spin"></div><div>Redirigiendo al pago seguro…</div></div>
 
-<!-- POST-PAGO A: selección de técnico -->
+<!-- POST-PAGO A: buscando técnico (difusión; el cliente NO elige técnico) -->
 <div class="v-overlay" id="v-tecnicos">
     <div class="v-overlay-box">
         <div id="v-tec-buscando" class="v-tec-buscando">
             <div class="spin"></div>
-            <h2>Buscando técnicos disponibles…</h2>
+            <h2>Buscando un técnico disponible…</h2>
+            <p style="color:var(--v-text2);">Avisamos a los técnicos de tu especialidad. El primero que acepte toma tu servicio.</p>
             <p id="v-tec-num" style="color:var(--v-text2);"></p>
-        </div>
-        <div id="v-tec-lista" hidden>
-            <div class="v-tec-head"><i class="fas fa-user-gear"></i> Técnicos disponibles para tu servicio</div>
-            <div id="v-tec-cards"></div>
-            <button type="button" class="v-photo-btn" id="v-tec-auto" style="margin-top:14px;"><i class="fas fa-wand-magic-sparkles"></i> ¿Ninguno disponible? Que MITA asigne automáticamente</button>
+            <a class="v-btn" style="margin-top:16px;display:inline-flex;text-decoration:none;" href="/cliente/servicio/0/chats" id="v-tec-ver" onclick="this.href='/cliente/servicio/'+(window.__solId||0)+'/chats'">Ver mi solicitud</a>
         </div>
     </div>
 </div>
